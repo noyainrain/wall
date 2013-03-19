@@ -1,0 +1,33 @@
+/*
+ * Wall
+ */
+
+input {
+    width: 100%;
+}
+
+#post-menu button {
+    color:      white;
+    background: black;
+    border:     none;
+    box-shadow: 0.1em 0.1em 0.2em rgba(0, 0, 0, 0.5);
+    cursor:     pointer;
+    display:    inline-block;
+    padding:    0.3em;
+}
+
+#post-new-panel {
+    display: none;
+}
+
+#notification {
+    text-align: center;
+    color:      white;
+    background: rgba(0, 0, 0, 0.9);
+    display:    none;
+    position:   fixed;
+    left:       0;
+    top:        0;
+    padding:    0.3em;
+    width:      100%;
+}
