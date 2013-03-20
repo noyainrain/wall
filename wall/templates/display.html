@@ -5,20 +5,20 @@
         <meta charset="utf-8">
         <title>Wall</title>
         <link href="/static/style.css" rel="stylesheet">
-        
-        <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+
+        <script src="/static/jquery.js"></script>
         <script src="/static/wall.js"></script>
         {% for script in app.js_scripts %}
             <script src="/static/{{ script }}"></script>
         {% end %}
-        
+
         <script>
             $(function() {
                 new wall.DisplayUi({{ json_encode(app.js_modules) }});
             });
         </script>
     </head>
-    
+
     <body>
         <div id="post"></div>
     </body>

@@ -6,23 +6,23 @@
         <meta name="viewport" content="width=device-width">
         <title>Wall Client</title>
         <link href="/static/style.css" rel="stylesheet">
-        
-        <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+
+        <script src="/static/jquery.js"></script>
         <script src="/static/wall.js"></script>
         {% for script in app.js_scripts %}
             <script src="/static/{{ script }}"></script>
         {% end %}
-        
+
         <script>
             $(function() {
                 new wall.ClientUi({{ json_encode(app.js_modules) }});
             });
         </script>
     </head>
-    
+
     <body>
         <div id="header"><h1>Wall</h1></div>
-        
+
         <div id="content">
             <div id="post"></div>
             <h2>Post</h2>
@@ -32,7 +32,7 @@
                 <p><button id="post-new">Post</button></p>
             </div>
         </div>
-        
+
         <div id="notification"></div>
     </body>
 </html>
