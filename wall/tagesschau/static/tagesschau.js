@@ -15,11 +15,18 @@ ns.Brick.prototype = {
     postTitle: "Tagesschau",
     
     initPost: function(elem, post) {
-        this.window = open("http://www.tagesschau.de/multimedia/livestreams/index.html", "browser");
+		console.log(post.status)
+		if(post.status != "") {
+			elem.text("Could not connect to tagesschau.de");		
+		} else {
+			this.window = open(post.url, "browser");
+		}
     },
     
     cleanupPost: function() {
-        this.window.close();
+		if (this.window) {
+        	this.window.close();
+		}
     },
     
     clientInitPost: function(elem, post) {
