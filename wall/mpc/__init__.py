@@ -16,9 +16,9 @@ class Brick(_Brick):
 
     def post_new(self, type, **args):
 
-    	m = mpdclient2.connect()
-	if not m:
-       		return MpcPost(randstr(), "offline", m.currentsong())
+        m = mpdclient2.connect()
+        if not m:
+            return MpcPost(randstr(), "offline", m.currentsong())
 
         return MpcPost(randstr(), "online", m.currentsong())
 
@@ -26,5 +26,5 @@ class MpcPost(object):
     def __init__(self, id, status, currentsong):
         self.id       = id
         self.status   = status
-	self.currentsong = currentsong
+        self.currentsong = currentsong
         self.__type__ = type(self).__name__

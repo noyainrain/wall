@@ -26,9 +26,9 @@ ns.Brick.prototype = {
 	artist = post.currentsong.artist;
 	album = post.currentsong.album;
 	title = post.currentsong.title;
-        $("<p>Artist:" + artist + "</p>").appendTo(elem);
-        $("<p>Title:" + title + "</p>").appendTo(elem);
-        $("<p>From Album: " + album + "</p>").appendTo(elem);
+        $("<p><h4>Artist:</h4><h1> " + artist + "</h1></p>").appendTo(elem);
+        $("<p><h4>Title:</h4><h1> " + title + "</h2></p>").appendTo(elem);
+        $("<p><h4>From Album:</h4><h1> " + album + "</h1></p>").appendTo(elem);
 
     },
     
