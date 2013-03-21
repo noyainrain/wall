@@ -18,14 +18,14 @@ ns.Brick.prototype = {
     postTitle: "MPC",
    
     initPost: function(elem, post) {
-	if (post.currentsong.status === "offline") {
-        	$("<p>Could not connect to mpd</p>").appendTo(elem);
-		return;
-        }
+    if (post.currentsong.status === "offline") {
+        $("<p>Could not connect to mpd</p>").appendTo(elem);
+        return;
+    }
 
-	artist = post.currentsong.artist;
-	album = post.currentsong.album;
-	title = post.currentsong.title;
+    artist = post.currentsong.artist;
+    album = post.currentsong.album;
+    title = post.currentsong.title;
         $("<p><h4>Artist:</h4><h1> " + artist + "</h1></p>").appendTo(elem);
         $("<p><h4>Title:</h4><h1> " + title + "</h2></p>").appendTo(elem);
         $("<p><h4>From Album:</h4><h1> " + album + "</h1></p>").appendTo(elem);
@@ -36,14 +36,14 @@ ns.Brick.prototype = {
     },
     
     clientInitPost: function(elem, post) {
-	if (post.currentsong.status === "offline") {
-        	$("<p>Could not connect to mpd</p>").appendTo(elem);
-		return;
-        }
+    if (post.currentsong.status === "offline") {
+        $("<p>Could not connect to mpd</p>").appendTo(elem);
+        return;
+    }
 
 
-	artist = post.currentsong.artist;
-	title = post.currentsong.title;
+    var artist = post.currentsong.artist;
+    var title = post.currentsong.title;
         $("<p>Now playing: " + artist + "-" + title + "</p>").appendTo(elem);
     },
     
