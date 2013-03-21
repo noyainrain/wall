@@ -41,7 +41,7 @@ ns.Ui.prototype = {
     
     _closed: function(event) {
         console.debug("disconnected");
-        //this.notify("Disconnected.");
+        this.notify("Disconnected.");
     },
     
     _received: function(event) {
