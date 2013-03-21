@@ -30,7 +30,7 @@ class WallApp(Application):
         
         # initialize bricks
         # TODO: make this configurable
-        bricks = ['wall.url', 'wall.mpc']
+        bricks = ['wall.url', 'wall.mpc', 'wall.tagesschau']
         for name in bricks:
             module = __import__(name, globals(), locals(), [b'foo'])
             brick = module.Brick(self)
