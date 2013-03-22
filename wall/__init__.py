@@ -4,7 +4,8 @@
 from __future__ import (division, absolute_import, print_function,
     unicode_literals)
 
-import sys, os, json, subprocess
+import sys, os, json
+from subprocess import Popen
 from string import ascii_lowercase
 from random import choice
 from tornado.ioloop import IOLoop
@@ -69,6 +70,8 @@ class WallApp(Application):
         post_type = msg.data.pop('type')
         self.post_new(post_type, **msg.data)
         msg.frm.send(Message('post_new'))
+        # wake display
+        Popen('DISPLAY=:0.0 xset dpms force on', shell=True)
     
     def post_new(self, type, **args):
         try:
@@ -98,9 +101,6 @@ class Socket(WebSocketHandler):
         self.app.clients.remove(self)
     
     def on_message(self, msgstr):
-        # wake display on plugin activity
-        subprocess.Popen("DISPLAY=:0.0 xset dpms force on", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
         print('received: ' + msgstr)
         msg = Message.parse(msgstr, self)
         handle = self.app.msg_handlers[msg.type]
