@@ -15,7 +15,7 @@ ns.Brick.prototype = {
     postTitle: "Volume",
    
     initPost: function(elem, post) {
-        $("<p><h3>Volume:</h3><h1> " + post.volume + "</h1></p>").appendTo(elem);
+        $("<h3>Volume:</h3><h1> " + post.volume + "</h1>").appendTo(elem);
     },
     
     cleanupPost: function() {
@@ -24,15 +24,15 @@ ns.Brick.prototype = {
     clientInitPost: function(elem, post) {
         $("<p>Volume: " + post.volume + "</p>").appendTo(elem);
     },
-
+    
     clientCleanupPost: function() {
-	},
+    },
     
     clientInitPostNewPanel: function(elem) {
     },
     
     clientCleanupPostNewPanel: function() {
-	},
+    },
     
     clientQueryPostNewPanel: function() {
     },
