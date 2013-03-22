@@ -18,9 +18,9 @@ class Brick(_Brick):
     def post_new(self, type, **args):
 
         # TODO: read device and interval from config
-        soundcard = "0"
-        mixer = "Master"
-        cmd_getvol = "amixer -c " + soundcard + " sget '" + mixer + "'"
+        soundcard = '0'
+        mixer = 'Master'
+        cmd_getvol = 'amixer -c {0} sget {1}'.format(soundcard, mixer)
 
         getvol = subprocess.Popen(cmd_getvol, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         getvol_output = getvol.stdout.read()
