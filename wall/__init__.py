@@ -5,6 +5,7 @@ from __future__ import (division, absolute_import, print_function,
     unicode_literals)
 
 import sys, os, json
+from subprocess import Popen
 from string import ascii_lowercase
 from random import choice
 from tornado.ioloop import IOLoop
@@ -30,7 +31,7 @@ class WallApp(Application):
         
         # initialize bricks
         # TODO: make this configurable
-        bricks = ['wall.url', 'wall.mpc', 'wall.tagesschau']
+        bricks = ['wall.url', 'wall.mpc', 'wall.tagesschau', 'wall.volume']
         for name in bricks:
             module = __import__(name, globals(), locals(), [b'foo'])
             brick = module.Brick(self)
@@ -69,6 +70,8 @@ class WallApp(Application):
         post_type = msg.data.pop('type')
         self.post_new(post_type, **msg.data)
         msg.frm.send(Message('post_new'))
+        # wake display
+        Popen('DISPLAY=:0.0 xset dpms force on', shell=True)
     
     def post_new(self, type, **args):
         try:
