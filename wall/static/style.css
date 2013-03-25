@@ -1,19 +1,53 @@
+@import url(/wall/static/normalize.css);
 /*
  * Wall
  */
 
 input {
-    width: 100%;
+    width: 99%;
+	height: 30px;
+}
+
+body {
+	color: #333;
+	background-color: #fff;
+	font: normal 20px Helvetica, Arial, Verdana, sans-serif;
+}
+
+#header {
+	background-color: #ddd;
+	width: 99%;
+	border-color: 	#aaa;
+	border-width:	1px;
+    border:     	2px;
+	border-radius:	6px;
+    box-shadow: 	0.1em 0.1em 0.2em rgba(0, 0, 0, 0.5);
+}
+
+#header h1 {
+	font: normal 32px Helvetica, Arial, Verdana, sans-serif;
+	color: #333;
+	text-align: center;
+	vertical-align: middle;
+	padding: 10px;
 }
 
 #post-menu button {
-    color:      white;
-    background: black;
-    border:     none;
-    box-shadow: 0.1em 0.1em 0.2em rgba(0, 0, 0, 0.5);
-    cursor:     pointer;
-    display:    inline-block;
-    padding:    0.3em;
+	height: 		100px;
+	widht: 			100px;
+    color:      	#333;
+    background: 	#ddd;
+	border-color: 	#aaa;
+	border-width:	1px;
+    border:     	2px;
+	border-radius:	6px;
+    box-shadow: 	0.1em 0.1em 0.2em rgba(0, 0, 0, 0.5);
+    cursor:     	pointer;
+    padding:    	1.5em;
+	display:		inline-block;
+	font-size:		22px;
+	font-weight:	bold;
+	margin:			10px;
 }
 
 #post-new-panel {
