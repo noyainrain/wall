@@ -7,8 +7,6 @@ from __future__ import (division, absolute_import, print_function,
 from wall import Brick as _Brick, randstr
 
 import feedparser
-import json, urllib2
-import pprint
 
 class Brick(_Brick):
     id        = 'tagesschau'
