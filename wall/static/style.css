@@ -5,49 +5,50 @@
 
 input {
     width: 99%;
-	height: 30px;
 }
 
 body {
-	color: #333;
-	background-color: #fff;
-	font: normal 20px Helvetica, Arial, Verdana, sans-serif;
+    color:              #333;
+    background-color:   #fff;
+    font-size:          62.5%;
+    font:               normal Helvetica, Arial, Verdana, sans-serif;
 }
 
 #header {
-	background-color: #ddd;
-	width: 99%;
-	border-color: 	#aaa;
-	border-width:	1px;
-    border:     	2px;
-	border-radius:	6px;
-    box-shadow: 	0.1em 0.1em 0.2em rgba(0, 0, 0, 0.5);
+    background-color:   #ddd;
+    width:              99%;
+    border-color:       #aaa;
+    border-width:       1px;
+    border:             2px;
+    border-radius:      6px;
+    box-shadow:         0.1em 0.1em 0.2em rgba(0, 0, 0, 0.5);
 }
 
 #header h1 {
-	font: normal 32px Helvetica, Arial, Verdana, sans-serif;
-	color: #333;
-	text-align: center;
-	vertical-align: middle;
-	padding: 10px;
+    font:           bold 3.0rem Helvetica, Arial, Verdana, sans-serif;
+    color:          #444;
+    text-align:     center;
+    vertical-align: middle;
+    padding:        10px;
+    margin:         1.0rem;
 }
 
 #post-menu button {
-	height: 		100px;
-	widht: 			100px;
-    color:      	#333;
-    background: 	#ddd;
-	border-color: 	#aaa;
-	border-width:	1px;
-    border:     	2px;
-	border-radius:	6px;
-    box-shadow: 	0.1em 0.1em 0.2em rgba(0, 0, 0, 0.5);
-    cursor:     	pointer;
-    padding:    	1.5em;
-	display:		inline-block;
-	font-size:		22px;
-	font-weight:	bold;
-	margin:			10px;
+    height:         5rem;
+    widht:          5rem;
+    color:          #444;
+    background:     #ddd;
+    border-color:   #aaa;
+    border-width:   0.1rem;
+    border:         0.1rem;
+    border-radius:  0.5rem;
+    box-shadow:     0.1em 0.1em 0.2em rgba(0, 0, 0, 0.5);
+    cursor:         pointer;
+    padding:        1.5em;
+    display:        inline-block;
+    font-size:      1.4rem;
+    font-weight:    bold;
+    margin:         1.0rem;
 }
 
 #post-new-panel {
