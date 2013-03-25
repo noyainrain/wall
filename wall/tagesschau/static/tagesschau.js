@@ -15,14 +15,11 @@ ns.Brick.prototype = {
     postTitle: "Tagesschau",
     
     initPost: function(elem, post) {
-		foo = "<center><video id=\"video1\" autoplay>" + "<source src=\"" + post.url + "\" type=\'video/mp4; codecs=\"avc1.42E01E, mp4a.40.2\"\' />" + "<video></center>";
-		elem.html(foo);
+		elem.html("<video style=\"display: block; margin: 0 auto;\" id=\"video1\" autoplay>" + "<source src=\"" + post.url + "\" type=\'video/mp4; codecs=\"avc1.42E01E, mp4a.40.2\"\' />" + "<video>");
     },
     
     cleanupPost: function() {
-		if (this.window) {
-        	this.window.close();
-		}
+		this.window && this.window.close();
     },
     
     clientInitPost: function(elem, post) {
