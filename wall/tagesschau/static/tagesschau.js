@@ -15,12 +15,8 @@ ns.Brick.prototype = {
     postTitle: "Tagesschau",
     
     initPost: function(elem, post) {
-		console.log(post.status)
-		if(post.status != "") {
-			elem.text("Could not connect to tagesschau.de");		
-		} else {
-			this.window = open(post.url, "browser");
-		}
+		foo = "<center><video id=\"video1\" autoplay>" + "<source src=\"" + post.url + "\" type=\'video/mp4; codecs=\"avc1.42E01E, mp4a.40.2\"\' />" + "<video></center>";
+		elem.html(foo);
     },
     
     cleanupPost: function() {
@@ -30,7 +26,7 @@ ns.Brick.prototype = {
     },
     
     clientInitPost: function(elem, post) {
-        $("<a>").attr("href", "http://www.tagesschau.de/multimedia/livestreams/index.html").text("Tagesschau Livestream").appendTo(elem);
+		$("<p>").text("Tagesschau").appendTo(elem);
     },
     
     clientCleanupPost: function() {},
