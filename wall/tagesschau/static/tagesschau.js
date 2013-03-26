@@ -7,7 +7,6 @@ wall.tagesschau = {};
 
 ns.Brick = function(ui) {
     this.ui     = ui;
-    this.window = null;
 };
 
 ns.Brick.prototype = {
@@ -20,7 +19,6 @@ ns.Brick.prototype = {
     },
     
     cleanupPost: function() {
-		this.window && this.window.close();
     },
     
     clientInitPost: function(elem, post) {
