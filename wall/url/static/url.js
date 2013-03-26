@@ -13,6 +13,7 @@ ns.Brick = function(ui) {
 ns.Brick.prototype = {
     postType:  "UrlPost",
     postTitle: "URL",
+    id:        "url",
     
     initPost: function(elem, post) {
         this.window = open(post.url, "browser");

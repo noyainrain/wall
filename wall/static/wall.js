@@ -84,8 +84,11 @@ ns.ClientUi = function(bricks) {
         $('<button>')
             .text(brick.postTitle)
             .click(brick, $.proxy(this._showPostNewPanelClicked, this))
+            .css('background-image', "url(/static/" + brick.id + "/" + brick.id + ".svg)")
             .appendTo($("#post-menu"));
+        $("#post-menu").append(" ");
     }
+    $("#post-menu").append("<span class=\"stretch\"></span>");
     
     $("#post-new").click($.proxy(this._postNewClicked, this));
 };
