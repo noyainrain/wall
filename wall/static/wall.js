@@ -49,24 +49,24 @@ ns.Ui.prototype = {
         var msg = JSON.parse(event.data);
         this.msgHandlers[msg.type](msg);
     }
-}
+};
 
 /* ==== DisplayUi ==== */
 
 ns.DisplayUi = function(bricks) {
     ns.Ui.call(this, bricks);
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
-}
+};
 
 $.extend(ns.DisplayUi.prototype, ns.Ui.prototype, {
     _postedMsg: function(msg) {
         if (this.currentBrick) {
-            this.currentBrick.cleanupPost($("#post"));
-            $("#post").empty();
+            this.currentBrick.cleanupPost($("#content"));
+            $("#content").empty();
         }
         this.currentPost = msg.data;
         this.currentBrick = this.postHandlers[this.currentPost.__type__];
-        this.currentBrick.initPost($("#post"), this.currentPost);
+        this.currentBrick.initPost($("#content"), this.currentPost);
     }
 });
 
@@ -75,11 +75,11 @@ $.extend(ns.DisplayUi.prototype, ns.Ui.prototype, {
 ns.ClientUi = function(bricks) {
     ns.Ui.call(this, bricks);
     
-    this.msgHandlers["posted"]   = $.proxy(this._postedMsg,  this);
+    this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
     this.msgHandlers["post_new"] = $.proxy(this._postNewMsg, this);
     
     // initialize post menu
-    for(var i = 0; i < this.bricks.length; i++) {
+    for(var i = 0, length = this.bricks.length; i < length; i++) {
         var brick = this.bricks[i];
         $('<button>')
             .text(brick.postTitle)
@@ -88,8 +88,7 @@ ns.ClientUi = function(bricks) {
             .appendTo($("#post-menu"));
         $("#post-menu").append(" ");
     }
-    $("#post-menu").append("<span class=\"stretch\"></span>");
-    
+        
     $("#post-new").click($.proxy(this._postNewClicked, this));
 };
 
@@ -131,11 +130,11 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
     _postedMsg: function(msg) {
         if (this.currentBrick) {
             this.currentBrick.clientCleanupPost($("#post"));
-            $("#post").empty();
+            $("#post").empty().hide();
         }
         this.currentPost = msg.data;
         this.currentBrick = this.postHandlers[this.currentPost.__type__];
-        this.currentBrick.clientInitPost($("#post"), this.currentPost);
+        this.currentBrick.clientInitPost($("#post").show(), this.currentPost);
     },
     
     _postNewMsg: function(msg) {
@@ -147,4 +146,4 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
     }
 });
 
-}(wall))
+}(wall));
