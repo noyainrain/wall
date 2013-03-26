@@ -3,21 +3,11 @@
  * Wall
  */
 
-input {
-    width: 99%;
-}
-
-html {
-    background:     #333;
-}
-
 body {
     color:              #333;
+    background:         #333;
     font-size:          62.5%;
     font:               normal Helvetica, Arial, Verdana, sans-serif;
-    top:                0;
-    left:               0;
-    margin:             0;
 }
 
 #header {
@@ -38,9 +28,7 @@ body {
 }
 
 #content {
-    left:               0;
-    margin:             0;
-    padding:            0rem 1.0rem 0rem 0;
+    padding:            0 1.0rem 0 0;
 }
 
 .stretch {
@@ -59,12 +47,11 @@ body {
     background:             #666;
     background-repeat:      no-repeat;
     background-size:        2.5rem 2.5rem;
-    background-position:    center center;
+    background-position:    center 50%;
 
     border:         0.1rem;
     border-color:   #aaa;
     border-width:   0.1rem;
-    border-radius:  0rem;
     box-shadow:     3px 3px 2px #222;
 
     cursor:         pointer;
@@ -88,7 +75,6 @@ body {
     border:         0.1rem;
     border-color:   #aaa;
     border-width:   0.1rem;
-    border-radius:  0rem;
     box-shadow:     3px 3px 2px #222;
 
     cursor:         pointer;
