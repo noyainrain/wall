@@ -16,6 +16,7 @@ ns.Brick = function(ui) {
 ns.Brick.prototype = {
     postType:  "MpcPost",
     postTitle: "MPC",
+    id:        "mpc",
    
     initPost: function(elem, post) {
     if (post.currentsong.status === "offline") {
@@ -44,7 +45,9 @@ ns.Brick.prototype = {
 
     var artist = post.currentsong.artist;
     var title = post.currentsong.title;
-        $("<p>Now playing: " + artist + "-" + title + "</p>").appendTo(elem);
+        $("<p><small>Now playing:<small></p>").appendTo(elem);
+        $("<p>" + artist + "</p>").appendTo(elem);
+        $("<p>" + title + "</p>").appendTo(elem);
     },
     
     clientCleanupPost: function() {},

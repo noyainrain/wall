@@ -13,7 +13,8 @@ ns.Brick = function(ui) {
 ns.Brick.prototype = {
     postType:  "VolumePost",
     postTitle: "Volume",
-   
+    id:        "volume",
+
     initPost: function(elem, post) {
         $("<h3>Volume:</h3><h1> " + post.volume + "</h1>").appendTo(elem);
     },
