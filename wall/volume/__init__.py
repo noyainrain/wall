@@ -5,7 +5,7 @@
 
 # Python forward compatibility
 from __future__ import (division, absolute_import, print_function,
-    unicode_literals)
+        unicode_literals)
 
 from wall import Brick as _Brick, randstr, Message
 import subprocess, re

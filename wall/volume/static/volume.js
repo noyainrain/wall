@@ -19,14 +19,15 @@ ns.Brick.prototype = {
     id:        "volume",
 
     updateVolume: function(msg) {
-        // client
+        // update client
         $("#volume-client-label").text(msg.data.volume);
 
-        // display
+        // update display
         $("#volume-display-label").text(msg.data.volume);
     },
 
     setVolume: function(event) {
+        // send msg to server
         if ($(event.target).attr("id") == "volume-up") {
             this.ui.send({type: "volume.set", data: "up"}); 
         } else {
@@ -35,6 +36,7 @@ ns.Brick.prototype = {
     },
 
     initPost: function(elem, post) {
+        // display interface
         $("<small>Volume:</small><p id=\"volume-display-label\">" + post.volume + "</p>").appendTo(elem);
     },
 
@@ -42,7 +44,8 @@ ns.Brick.prototype = {
     },
 
     clientInitPost: function(elem, post) {
-
+        // client interface
+        //
         var x = $("<div id=\"volume-box\">");
 
         $("<button id=\"volume-down\">")
@@ -76,6 +79,6 @@ ns.Brick.prototype = {
 
     clientPostedNew: function(error) {
     }
-};
+    };
 
 }(wall.volume))

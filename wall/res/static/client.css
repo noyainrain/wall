@@ -49,9 +49,9 @@ body {
 
     background: #666 no-repeat center 50%;
     background-size: 2.5rem 2.5rem;
-    
+
     border: none;
-    box-shadow: 3px 3px 2px #222;  
+    box-shadow: 0.2rem 0.2rem 0.2rem #222;  
     color: #eee;
     font-size: 0.6rem;
 }
@@ -62,7 +62,7 @@ body {
     margin-bottom: 1rem;
     color: #222;
     background: #eee;
-    box-shadow: 3px 3px 2px #222;
+    box-shadow: 0.2rem 0.2rem 0.2rem #222;
 }
 
 #post p {
@@ -90,10 +90,11 @@ body {
 }
 
 /* volume-plugin */
+
 #volume-client-label {
     color:                  #444;
     font-size:              2.0rem;
-    text-shadow:            1px 1px 1px #666;
+    text-shadow:            0.05rem 0.05rem 0.05rem #666;
     margin:                 0 1.0rem 0 1.0rem;
     vertical-align:         middle;
 }
