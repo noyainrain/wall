@@ -1,0 +1,15 @@
+/* Basic display stylesheet */
+
+@import url(/static/normalize.css);
+
+* {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+body {
+    color: #eee;
+    background: #333;
+    font-family: Helvetica, Arial, Verdana, sans-serif;
+}

@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
     <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width">
-        <title>Wall Client</title>
-        <link href="/static/style.css" rel="stylesheet">
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
 
+        <title>Wall Client</title>
+        <link href="/static/client.css" rel="stylesheet" />
+        
         <script src="/static/jquery.js"></script>
         <script src="/static/wall.js"></script>
         {% for script in app.js_scripts %}
@@ -21,16 +21,21 @@
     </head>
 
     <body>
-        <div id="header"><h1>Wall</h1></div>
+        <div id="header">
+            <h1>Wall</h1>
+        </div>
 
         <div id="content">
             <div id="post"></div>
-            <p id="post-menu"></p>
+            <div id="post-menu"></div>
             <div id="post-new-panel">
                 <div id="post-new-panel-content"></div>
-                <p><button id="post-new">Post</button></p>
+                <p>
+                    <button id="post-new">Post</button>
+                </p>
             </div>
         </div>
+        
         <div id="notification"></div>
     </body>
 </html>
