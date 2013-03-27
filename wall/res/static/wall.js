@@ -86,7 +86,6 @@ ns.ClientUi = function(bricks) {
             .click(brick, $.proxy(this._showPostNewPanelClicked, this))
             .css('background-image', "url(/static/" + brick.id + "/" + brick.id + ".svg)")
             .appendTo($("#post-menu"));
-        $("#post-menu").append(" ");
     }
         
     $("#post-new").click($.proxy(this._postNewClicked, this));
