@@ -104,11 +104,11 @@ class Socket(WebSocketHandler):
         print('received: ' + msgstr)
         msg = Message.parse(msgstr, self)
         handle = self.app.msg_handlers[msg.type]
-        try:
-            handle(msg)
-        except Exception as e:
-            e = {'args': e.args, '__type__': type(e).__name__}
-            self.send(Message(msg.type, e))
+        #try:
+        handle(msg)
+        #except Exception as e:
+        #    e = {'args': e.args, '__type__': type(e).__name__}
+        #    self.send(Message(msg.type, e))
 
 class Message(object):
     @classmethod
