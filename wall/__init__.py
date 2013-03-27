@@ -5,6 +5,8 @@ from __future__ import (division, absolute_import, print_function,
     unicode_literals)
 
 import sys, os, json
+from logging import StreamHandler, Formatter, getLogger, DEBUG
+from ConfigParser import SafeConfigParser, Error as ConfigParserError
 from subprocess import Popen
 from string import ascii_lowercase
 from random import choice
@@ -12,26 +14,43 @@ from tornado.ioloop import IOLoop
 from tornado.web import Application, RequestHandler, StaticFileHandler
 from tornado.websocket import WebSocketHandler
 
-static_path   = os.path.join(os.path.dirname(__file__), 'static')
-template_path = os.path.join(os.path.dirname(__file__), 'templates')
+res_path      = os.path.join(os.path.dirname(__file__), 'res')
+static_path   = os.path.join(res_path, 'static')
+template_path = os.path.join(res_path, 'templates')
 
 class WallApp(Application):
-    def __init__(self):
+    def __init__(self, config_path=None):
         super(WallApp, self).__init__(template_path=template_path,
-            autoescape=None, debug=True)
+            autoescape=None)
         
+        self.logger        = getLogger('wall')
         self.bricks        = []
         self.post_handlers = {}
         self.clients       = []
         self.posts         = {}
         self.current_post  = None
+        self._init         = True
+        
+        config_paths = [os.path.join(res_path, 'default.cfg')]
+        if config_path:
+            config_paths.append(config_path)
+        try:
+            parser = SafeConfigParser()
+            parser.read(config_paths)
+            self.config = dict(parser.items('wall'))
+        except ConfigParserError as e:
+            self.logger.error('failed to parse config file')
+            self._init = False
+            return
+        
+        # set Tornado debug mode
+        self.settings['debug'] = (self.config['debug'] == 'True')
         
         # setup message handlers
         self.msg_handlers = {'post_new': self.post_new_msg}
         
         # initialize bricks
-        # TODO: make this configurable
-        bricks = ['wall.url', 'wall.mpc', 'wall.tagesschau', 'wall.volume']
+        bricks = self.config['bricks'].split()
         for name in bricks:
             module = __import__(name, globals(), locals(), [b'foo'])
             brick = module.Brick(self)
@@ -59,7 +78,10 @@ class WallApp(Application):
         return [b.id + '/' + b.js_script for b in self.bricks]
 
     def run(self):
+        if not self._init:
+            return
         self.listen(8080)
+        self.logger.info('server started')
         IOLoop.instance().start()
     
     def sendall(self, msg):
@@ -151,13 +173,42 @@ class Brick(object):
 def randstr(length=8, charset=ascii_lowercase):
     return ''.join(choice(charset) for i in xrange(length))
 
+def _setup_logger():
+    logger = getLogger('wall')
+    logger.setLevel(DEBUG)
+    handler = StreamHandler()
+    handler.setFormatter(
+        Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s'))
+    logger.addHandler(handler)
+_setup_logger()
+
 # ==== Tests ====
 
 from unittest import TestCase
+from tempfile import NamedTemporaryFile
 
 class WallTest(TestCase):
     def setUp(self):
         self.app = WallApp()
+    
+    def test_init(self):
+        # without config file
+        app = WallApp()
+        self.assertTrue(app._init)
+        
+        # valid config file
+        f = NamedTemporaryFile(delete=False)
+        f.write('[wall]\ndebug = True\n')
+        f.close()
+        app = WallApp(f.name)
+        self.assertTrue(app._init)
+        
+        # invalid config file
+        f = NamedTemporaryFile(delete=False)
+        f.write('foo')
+        f.close()
+        app = WallApp(f.name)
+        self.assertFalse(app._init)
     
     def test_post_new(self):
         self.app.post_new('UrlPost', url='http://example.org/')
