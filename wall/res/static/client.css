@@ -37,13 +37,15 @@ body {
 
 #post-menu {
     margin-top: 2rem;
+    font-size: 0; /* remove whitespaces between inline block elements */
+    margin-left: 1rem; /* compansate right margin of last button in each row */
 }
 
 #post-menu button {
     height: 5rem;
     width: 5rem;
     padding: 4rem 0.2rem 0.2rem 0.2rem;
-    margin: 0 0 1rem 1rem;
+    margin: 0 1rem 1rem 0;
 
     background: #666 no-repeat center 50%;
     background-size: 2.5rem 2.5rem;
@@ -52,10 +54,6 @@ body {
     box-shadow: 3px 3px 2px #222;  
     color: #eee;
     font-size: 0.6rem;
-}
-
-#post-menu button:first-child {
-    margin: 0;
 }
 
 /* current post */
