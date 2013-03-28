@@ -73,8 +73,14 @@ $.extend(ns.DisplayUi.prototype, ns.Ui.prototype, {
 /* ==== ClientUi ==== */
 
 ns.ClientUi = function(bricks) {
-    ns.Ui.call(this, bricks);
     
+    if(!this.isBrowserSupported()){
+        $('#content').html('<div id="browser_not_supported">Your browser is not supported. Please use a decent browser like <a href="https://play.google.com/store/apps/details?id=org.mozilla.firefox">Firefox</a> or <a href="https://play.google.com/store/apps/details?id=com.android.chrome">Chrome</a>.</div>');
+        return;
+    }
+
+    ns.Ui.call(this, bricks);
+
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
     this.msgHandlers["post_new"] = $.proxy(this._postNewMsg, this);
     
@@ -92,6 +98,10 @@ ns.ClientUi = function(bricks) {
 };
 
 $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
+    isBrowserSupported: function(){
+        return 'WebSocket' in window;
+    },
+
     notify: function(msg) {
         $("#notification").text(msg).show();
     },
