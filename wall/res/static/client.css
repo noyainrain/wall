@@ -1,0 +1,90 @@
+/* Basic client stylesheet */
+
+@import url(/static/normalize.css);
+
+* {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+body {
+    color: #eee;
+    background: #333;
+    font-family: Helvetica, Arial, Verdana, sans-serif;
+}
+
+#header {
+    padding: 1rem;
+}
+
+/* replace me with a nice logo */
+#header h1 {
+    font-weight: bold;
+    font-size: 3rem;
+    color: #eee;
+    text-align: center;
+    margin: 0;
+}
+
+#post-menu {
+    text-align: center;
+}
+
+#content {
+    padding: 1rem;
+}
+
+#post-menu {
+    margin-top: 2rem;
+    font-size: 0; /* remove whitespaces between inline block elements */
+    margin-left: 1rem; /* compansate right margin of last button in each row */
+}
+
+#post-menu button {
+    height: 5rem;
+    width: 5rem;
+    padding: 4rem 0.2rem 0.2rem 0.2rem;
+    margin: 0 1rem 1rem 0;
+
+    background: #666 no-repeat center 50%;
+    background-size: 2.5rem 2.5rem;
+    
+    border: none;
+    box-shadow: 3px 3px 2px #222;  
+    color: #eee;
+    font-size: 0.6rem;
+}
+
+/* current post */
+#post {
+    display: none;
+    margin-bottom: 1rem;
+    color: #222;
+    background: #eee;
+    box-shadow: 3px 3px 2px #222;
+}
+
+#post p {
+    margin: 0;
+    padding: 0.4rem;
+    color: #333;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+#post-new-panel {
+    display: none;
+}
+
+#notification {
+    text-align: center;
+    color: white;
+    background: rgba(0, 0, 0, 0.9);
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    padding: 0.3em;
+    width: 100%;
+}
