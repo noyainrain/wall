@@ -6,17 +6,18 @@ wall.omfgdogs = {};
 (function(ns) {
 
 ns.Brick = function(ui) {
-    this.ui     = ui;
+    wall.Brick.call(this, ui);
     this.window = null;
 };
 
-ns.Brick.prototype = {
-    postType:  "OmfgDogsPost",
-    postTitle: "OMFGDogs",
-    id:        "omfgdogs",
+$.extend(ns.Brick.prototype, wall.Brick.prototype, {
+    id:         "omfgdogs",
+    postType:   "OmfgDogsPost",
+    postTitle:  "OMFGDogs",
+    postSingle: true,
     
     initPost: function(elem, post) {
-        this.window = open('http://www.omfgdogs.com', "browser");
+        this.window = open("http://www.omfgdogs.com", "browser");
     },
     
     cleanupPost: function() {
@@ -24,20 +25,8 @@ ns.Brick.prototype = {
     },
     
     clientInitPost: function(elem, post) {
-    },
-    
-    clientCleanupPost: function() {},
-    
-    clientInitPostNewPanel: function(elem) {
-    },
-    
-    clientCleanupPostNewPanel: function() {},
-    
-    clientQueryPostNewPanel: function() {
-    },
-    
-    clientPostedNew: function(error) {
+        elem.text("OMFG! Dogs!");
     }
-};
+});
 
 }(wall.omfgdogs))
