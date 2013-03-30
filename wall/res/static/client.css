@@ -14,6 +14,10 @@ body {
     font-family: Helvetica, Arial, Verdana, sans-serif;
 }
 
+#browser_not_supported {
+    font-size: 1.5rem;
+}
+
 #header {
     padding: 1rem;
 }
