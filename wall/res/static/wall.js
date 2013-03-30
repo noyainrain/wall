@@ -75,7 +75,7 @@ $.extend(ns.DisplayUi.prototype, ns.Ui.prototype, {
 ns.ClientUi = function(bricks) {
     
     if(!this.isBrowserSupported()){
-        $('#content').html('<div id="browser_not_supported">Your browser is not supported. Please use a decent browser like <a href="https://play.google.com/store/apps/details?id=org.mozilla.firefox">Firefox</a> or <a href="https://play.google.com/store/apps/details?id=com.android.chrome">Chrome</a>.</div>');
+        $('#content').html('<div id="browser_not_supported">Your browser is outdated. Please use a decent browser like <a href="https://play.google.com/store/apps/details?id=org.mozilla.firefox">Firefox</a> or <a href="https://play.google.com/store/apps/details?id=com.android.chrome">Chrome</a>.</div>');
         return;
     }
 
