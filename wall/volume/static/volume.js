@@ -9,14 +9,15 @@ wall.volume = {};
 (function(ns) {
 
 ns.Brick = function(ui) {
-    this.ui     = ui;
+    wall.Brick.call(this, ui);
     this.ui.msgHandlers["volume.update"] = this.updateVolume;
 };
 
-ns.Brick.prototype = {
-    postType:  "VolumePost",
-    postTitle: "Volume",
-    id:        "volume",
+$.extend(ns.Brick.prototype, wall.Brick.prototype, {
+    id:         "volume",
+    postType:   "VolumePost",
+    postTitle:  "Volume",
+    postSingle: true,
 
     updateVolume: function(msg) {
         // update client
@@ -78,6 +79,6 @@ ns.Brick.prototype = {
 
     clientPostedNew: function(error) {
     }
-    };
+});
 
 }(wall.volume))
