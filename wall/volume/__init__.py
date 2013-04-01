@@ -14,6 +14,7 @@ class Brick(_Brick):
     id        = 'volume'
     js_module = 'wall.volume'
     post_type = 'VolumePost'
+    stylesheet = 'volume.css'
 
     # for client interface
     def set_volume(self, msg):
