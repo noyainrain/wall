@@ -35,3 +35,4 @@ Software Used
 -------------
 
 normalize.css - https://github.com/necolas/normalize.css
+Clarity Icons - https://github.com/jcubic/Clarity
