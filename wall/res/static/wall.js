@@ -34,7 +34,7 @@ ns.Ui.prototype = {
     },
     
     _connect: function() {
-        console.debug("connecting...");
+        console.log("connecting...");
         this.socket = new WebSocket("ws://" + location.host + "/api/socket/");
         this.socket.addEventListener("open",    $.proxy(this._opened,   this));
         this.socket.addEventListener("close",   $.proxy(this._closed,   this));
@@ -42,16 +42,16 @@ ns.Ui.prototype = {
     },
     
     _opened: function(event) {
-        console.debug("connected");
+        console.log("connected");
     },
     
     _closed: function(event) {
-        console.debug("disconnected");
+        console.log("disconnected");
         setTimeout($.proxy(this._connect, this), 1000);
     },
     
     _received: function(event) {
-        console.debug("received: " + event.data);
+        console.log("received: " + event.data);
         var msg = JSON.parse(event.data);
         this.msgHandlers[msg.type](msg);
     }
