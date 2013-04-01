@@ -45,24 +45,23 @@ ns.Brick.prototype = {
 
     clientInitPost: function(elem, post) {
         // client interface
-        //
-        var x = $("<div id=\"volume-box\">");
+        var vbox = $("<div id=\"volume-box\">");
 
         $("<button id=\"volume-down\">")
             .click($.proxy(this.setVolume, this))
             .css('background-image', "url(/static/" + this.id + "/" + "down.svg)")
             .addClass("volume_button")
-            .appendTo(x);
+            .appendTo(vbox);
 
-        $("<span id=\"volume-client-label\">" + post.volume + "</span>").appendTo(x);
+        $("<span id=\"volume-client-label\">" + post.volume + "</span>").appendTo(vbox);
 
         $("<button id=\"volume-up\">")
             .click($.proxy(this.setVolume, this))
             .css('background-image', "url(/static/" + this.id + "/" + "up.svg)")
             .addClass("volume_button")
-            .appendTo(x);
+            .appendTo(vbox);
 
-        x.appendTo(elem);
+        vbox.appendTo(elem);
     },
 
     clientCleanupPost: function() {
