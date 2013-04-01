@@ -77,6 +77,10 @@ class WallApp(Application):
     def js_scripts(self):
         return [b.id + '/' + b.js_script for b in self.bricks]
 
+    @property
+    def stylesheets(self):
+        return [b.id + '/' + b.stylesheet for b in self.bricks]
+
     def run(self):
         if not self._init:
             return
@@ -160,12 +164,14 @@ class Brick(object):
     js_script   = None # default: <id>.js
     static_path = None # default: <module_dir>/static
     post_type   = None
+    stylesheet  = None # default: <module_dir>/static/<id>.css
     
     def __init__(self, app):
         self.app = app
         self.js_script = self.js_script or self.id + '.js'
         self.static_path = self.static_path or os.path.join(
             os.path.dirname(sys.modules[self.__module__].__file__), 'static')
+        self.stylesheet = self.id + '.css'
     
     def post_new(self, type, **args):
         pass
