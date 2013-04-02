@@ -1,0 +1,36 @@
+#volume-client-label {
+    color: #444;
+    font-size: 2.0rem;
+    text-shadow: 0.05rem 0.05rem 0.05rem #666;
+    margin: 0 1.0rem 0 1.0rem;
+    vertical-align: middle;
+}
+
+#volume-box {
+    background-color: #eee;
+    text-align: center;
+    line-height: 3.2rem;
+}
+
+.volume_button {
+    height: 3.2rem;
+    width: 3.2rem;
+    padding: 0.2rem;
+    margin: 0.2rem;
+
+    background: #eee;
+    background-repeat: no-repeat;
+    background-size: 1.5rem 1.5rem;
+    background-position: center 50%;
+
+    border: none;
+
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
+
+    color: #eee;
+    font-size: 0.6rem;
+    font-weight: normal;
+}
+
