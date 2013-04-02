@@ -164,7 +164,7 @@ class Brick(object):
     js_script   = None # default: <id>.js
     static_path = None # default: <module_dir>/static
     post_type   = None
-    stylesheet  = None # default: <module_dir>/static/<id.css> if existant
+    stylesheet  = None # default: <module_dir>/static/<id>.css if existant
     
     def __init__(self, app):
         self.app = app
