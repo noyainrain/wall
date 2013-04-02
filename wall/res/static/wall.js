@@ -13,6 +13,7 @@ ns.Ui = function(bricks) {
     this.msgHandlers  = {};
     this.currentPost  = null;
     this.currentBrick = null;
+    this.socket       = null;
     
     // initialize bricks (inspired by server's wall.WallApp.__init__)
     for (var i = 0; i < bricks.length; i++) {
@@ -24,10 +25,7 @@ ns.Ui = function(bricks) {
         this.postHandlers[brick.postType] = brick;
     }
     
-    this.socket = new WebSocket("ws://" + location.host + "/api/socket/");
-    this.socket.addEventListener("open",    $.proxy(this._opened,   this));
-    this.socket.addEventListener("close",   $.proxy(this._closed,   this));
-    this.socket.addEventListener("message", $.proxy(this._received, this));
+    this._connect();
 };
 
 ns.Ui.prototype = {
@@ -35,17 +33,25 @@ ns.Ui.prototype = {
         this.socket.send(JSON.stringify(msg));
     },
     
+    _connect: function() {
+        console.log("connecting...");
+        this.socket = new WebSocket("ws://" + location.host + "/api/socket/");
+        this.socket.addEventListener("open",    $.proxy(this._opened,   this));
+        this.socket.addEventListener("close",   $.proxy(this._closed,   this));
+        this.socket.addEventListener("message", $.proxy(this._received, this));
+    },
+    
     _opened: function(event) {
-        console.debug("connected");
+        console.log("connected");
     },
     
     _closed: function(event) {
-        console.debug("disconnected");
-        this.notify("Disconnected.");
+        console.log("disconnected");
+        setTimeout($.proxy(this._connect, this), 1000);
     },
     
     _received: function(event) {
-        console.debug("received: " + event.data);
+        console.log("received: " + event.data);
         var msg = JSON.parse(event.data);
         this.msgHandlers[msg.type](msg);
     }
