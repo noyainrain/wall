@@ -171,6 +171,9 @@ class Brick(object):
         self.js_script = self.js_script or self.id + '.js'
         self.static_path = self.static_path or os.path.join(
             os.path.dirname(sys.modules[self.__module__].__file__), 'static')
+        # brick brings its own stylesheet
+        if os.path.exists(os.path.join(self.static_path, self.id + '.css')):
+            self.stylesheet = self.id + '.css'
     
     def post_new(self, type, **args):
         pass
