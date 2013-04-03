@@ -53,7 +53,7 @@ ns.Ui.prototype = {
     _received: function(event) {
         console.log("received: " + event.data);
         var msg = JSON.parse(event.data);
-        this.msgHandlers[msg.type](msg);
+        this.msgHandlers[msg.type] && this.msgHandlers[msg.type](msg);
     }
 };
 
@@ -136,7 +136,9 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
     
     closePostNewScreen: function() {
         var brick = $("#post-new").data("brick");
-        brick.clientCleanupPostNewScreen();
+        if(brick){
+            brick.clientCleanupPostNewScreen();
+        }
         this.showScreen($("#main"));
     },
     
