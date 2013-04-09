@@ -21,11 +21,13 @@ class Brick(_Brick):
     def post_new(self, type, **args):
         url = args['url'].strip()
         title = args['title'].strip()
-        print(title)
         if not url:
             raise ValueError('url')
         if not url.startswith(('http://', 'https://')):
             url = 'http://' + url
+        if not title:
+            title = 'No title'
+
         return YoutubePost(randstr(), url, title)
     
     def search(self, query, callback):
