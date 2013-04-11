@@ -10,5 +10,6 @@
 
 #youtube-player-container {
     overflow: hidden;
+    font-size: 0;
 }
 
