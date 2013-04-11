@@ -1,0 +1,17 @@
+/* 
+ * Wall
+ * 
+ * Colors:
+ *  - text:                  #eee
+ *  - background:            #333
+ *  - background, secondary: #222
+ *  - delimiter:             #555
+ */
+
+
+#tagesschau-video-tag {
+    width: 100%;
+    position: absolute;
+    top: 50%;
+}
+
