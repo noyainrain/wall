@@ -12,6 +12,18 @@
 
 @import url(/static/normalize.css);
 
+/* fontsquirrel.com fonts */
+@font-face {
+    font-family: 'CabinSketchRegular';
+    src: url('/static/fonts/CabinSketch-Regular-webfont.eot');
+    src: url('/static/fonts/CabinSketch-Regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('/static/fonts/CabinSketch-Regular-webfont.woff') format('woff'),
+         url('/static/fonts/CabinSketch-Regular-webfont.ttf') format('truetype'),
+         url('/static/fonts/CabinSketch-Regular-webfont.svg#CabinSketchRegular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
 /* ==== General ==== */
 
 * {
@@ -87,7 +99,7 @@ ul.select p {
 body {
     color: #eee;
     background: #333;
-    font-family: Helvetica, Arial, Verdana, sans-serif;
+    font-family: Arial, Verdana, sans-serif;
 }
 
 #browser_not_supported {
@@ -97,11 +109,12 @@ body {
 /* TODO: replace me with a nice logo */
 #header {
     background: #222;
-    padding: 0.25rem 1rem;
+    padding: 0.95rem 0 0 0;
 }
 #header h1 {
-    font-weight: bold;
-    font-size: 2rem;
+    font-family: 'CabinSketchRegular', normal;
+    line-height: 5.0rem;
+    font-size: 4rem;
     text-align: center;
     margin: 0;
 }
@@ -130,11 +143,11 @@ body {
 #post-menu button {
     height: 5rem;
     width: 5rem;
-    padding: 4rem 0.2rem 0.2rem 0.2rem;
+    padding: 3.75rem 0.2rem 0.2rem 0.2rem;
     margin: 0 1rem 1rem 0;
 
     background: #666 no-repeat center 50%;
-    background-size: 2.5rem 2.5rem;
+    background-size: 2.4rem 2.4rem;
 
     border: none;
     box-shadow: 0.2rem 0.2rem 0.2rem #222;  
@@ -152,7 +165,7 @@ body {
 }
 
 #post p {
-    margin: 0;
+    margin: 1.5rem 0 0 0;
     padding: 0.4rem;
     color: #333;
     font-size: 0.9rem;
