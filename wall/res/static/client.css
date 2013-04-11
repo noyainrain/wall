@@ -12,20 +12,17 @@
 
 @import url(/static/normalize.css);
 
-/* google webfonts */
+/* fontsquirrel.com fonts */
 @font-face {
-    font-family: "JuliusSansOne";
-    src: url('/static/fonts/JuliusSansOne-Regular.ttf');
-    format("truetype");
+    font-family: 'CabinSketchRegular';
+    src: url('/static/fonts/CabinSketch-Regular-webfont.eot');
+    src: url('/static/fonts/CabinSketch-Regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('/static/fonts/CabinSketch-Regular-webfont.woff') format('woff'),
+         url('/static/fonts/CabinSketch-Regular-webfont.ttf') format('truetype'),
+         url('/static/fonts/CabinSketch-Regular-webfont.svg#CabinSketchRegular') format('svg');
+    font-weight: normal;
+    font-style: normal;
 }
-
-
-@font-face {
-    font-family: "Sacramento";
-    src: url('/static/fonts/Sacramento-Regular.ttf');
-    format("truetype");
-}
-
 
 /* ==== General ==== */
 
@@ -102,7 +99,7 @@ ul.select p {
 body {
     color: #eee;
     background: #333;
-    font-family: "JuliusSansOne", Helvetica, Arial, Verdana, sans-serif;
+    font-family: Arial, Verdana, sans-serif;
 }
 
 #browser_not_supported {
@@ -115,7 +112,7 @@ body {
     padding: 0.95rem 0 0 0;
 }
 #header h1 {
-    font-family: 'JuliusSansOne', sans-serif;
+    font-family: 'CabinSketchRegular', normal;
     line-height: 5.0rem;
     font-size: 4rem;
     text-align: center;
