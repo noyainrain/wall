@@ -45,6 +45,10 @@ h1, h2, h3 {
 h1 {
     font-size: 1.66rem;
 }
+h1 a {
+    color: inherit;
+    text-decoration: none;
+}
 h2 {
     font-size: 1.33rem;
 }
