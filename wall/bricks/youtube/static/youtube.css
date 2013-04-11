@@ -9,6 +9,6 @@
  */
 
 #youtube-player-container {
-    margin: 0 auto;
+    overflow: hidden;
 }
 

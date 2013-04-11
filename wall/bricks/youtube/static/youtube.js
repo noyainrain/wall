@@ -19,7 +19,7 @@ $.extend(ns.Brick.prototype, wall.Brick.prototype, {
         $("#youtube-player-container").tubeplayer({
             initialVideo: post.videoid, // the video that is loaded into the player
             width: "100%", // the width of the player
-            height: $(window).height() - 5, // the height of the player
+            height: $(window).height() - 4, // the height of the player
             autoPlay: true, // whether the player should autoplay the video, 0 or 1
             allowFullScreen: "true", // true by default, allow user to go full screen
             showControls: 0, // whether the player should have the controls visible, 0 or 1
@@ -39,7 +39,7 @@ $.extend(ns.Brick.prototype, wall.Brick.prototype, {
     },
    
     initPost: function(elem, post) {
-        $("<div id='youtube-player-container' scrolling='no' margin='0 auto'>").appendTo(elem);
+        $('<div id="youtube-player-container">').appendTo(elem);
         if(!$.fn.tubeplayer){
             $.getScript("/static/youtube/jQuery.tubeplayer.js", $.proxy(function(data, textStatus, jqxhr) {
                 console.log("youtube: loading TubePlayer API: " + textStatus);
@@ -53,7 +53,7 @@ $.extend(ns.Brick.prototype, wall.Brick.prototype, {
     cleanupPost: function() {
         console.log(this.id + ": cleanup.");
         $("#youtube-player-container").tubeplayer("destroy");
-        //$("#youtube-player-container").remove();
+        $("#youtube-player-container").remove();
     },
 
     clientInitPost: function(elem, post) {
@@ -92,7 +92,6 @@ $.extend(ns.Brick.prototype, wall.Brick.prototype, {
                             $("<img>").attr("src", result.thumbnail).appendTo(li);
                         }
                         $("<p>").text(result.title).appendTo(li);
-                        $("<p>").text(result.videoid).appendTo(li);
                     }
                 }, this));
     },
