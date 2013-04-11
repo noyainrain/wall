@@ -1,8 +1,16 @@
 Wall
 ====
 
-Digital wall (display) that can be controlled remotely, for example via mobile
-or tablet.
+An interactive display built on web technology.
+
+We use it as jukebox device in our kitchen. People can push content 
+(youtube-videos, urls, etc) to the display with their mobile devices
+or control the MPD (http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki)
+on the device.
+
+It consist of a python server (built upon tornado) that talks to the display, 
+a browser in fullscreen/kiosk mode, and the clients (browser on your mobile), 
+via websockets.
 
 Setup
 -----
@@ -23,6 +31,14 @@ Bricks (aka Plugins)
 --------------------
 
 If you want to create a brick, have a look at wall/url for reference.
+
+At the moment there exists bricks for:
+
+ * YouTube
+ * URLs
+ * MPD
+ * Volume-control
+
 
 Browser support
 ---------------
