@@ -12,8 +12,19 @@
 
 @import url(/static/normalize.css);
 
-/* logo font */
-@import url(http://fonts.googleapis.com/css?family=Sacramento|Julius+Sans+One);
+/* google webfonts */
+@font-face {
+    font-family: "JuliusSansOne";
+    src: url('/static/fonts/JuliusSansOne-Regular.ttf');
+    format("truetype");
+}
+
+
+@font-face {
+    font-family: "Sacramento";
+    src: url('/static/fonts/Sacramento-Regular.ttf');
+    format("truetype");
+}
 
 
 /* ==== General ==== */
@@ -91,7 +102,7 @@ ul.select p {
 body {
     color: #eee;
     background: #333;
-    font-family: Helvetica, Arial, Verdana, sans-serif;
+    font-family: "JuliusSansOne", Helvetica, Arial, Verdana, sans-serif;
 }
 
 #browser_not_supported {
@@ -104,7 +115,7 @@ body {
     padding: 0.95rem 0 0 0;
 }
 #header h1 {
-    font-family: 'Sacramento', cursive;
+    font-family: 'JuliusSansOne', sans-serif;
     line-height: 5.0rem;
     font-size: 4rem;
     text-align: center;
