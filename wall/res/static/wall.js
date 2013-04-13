@@ -128,7 +128,6 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
     
     showPostNewScreen: function(brick) {
         $("#post-new").data("brick", brick);
-        $("#post-new h2").text("Post " + brick.postTitle);
         $("#post-new .content").empty();
         brick.clientInitPostNewScreen($("#post-new .content"));
         this.showScreen($("#post-new"));
