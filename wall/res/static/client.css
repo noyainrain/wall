@@ -152,7 +152,6 @@ body {
     font-size: 1.5rem;
 }
 
-/* TODO: replace me with a nice logo */
 #header {
     background: #222;
     padding: 0.95rem 0 0 0;
@@ -198,12 +197,12 @@ body {
     background-size: 2.4rem 2.4rem;
 
     border-radius: 0.2rem;
-    box-shadow: 0.2rem 0.2rem 0.2rem #000;  
+    box-shadow: 0.2rem 0.2rem 0.2rem #000;
     color: #eee;
 
     font-size: 0.7rem;
     font-family: "OpenSansLight" , sans-serif;
-    text-shadow: 0.1rem 0.1rem 0.1rem #000; 
+    text-shadow: 0.1rem 0.1rem 0.1rem #000;
  
 }
 
