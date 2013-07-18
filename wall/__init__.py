@@ -159,18 +159,36 @@ class DisplayPage(RequestHandler):
         self.render('display.html', app=self.application)
 
 class Brick(object):
-    id          = None
-    js_module   = None
-    js_script   = None # default: <id>.js
-    static_path = None # default: <module_dir>/static
-    post_type   = None
-    stylesheet  = None # default: <module_dir>/static/<id>.css if existant
+    """
+    Static attributes:
+
+     * id: unique brick identifier. Must be set by subclass.
+     * maintainer: brick maintainer. Must be set by subclass.
+     * js_module: corresponding JavaScript module (i.e. namespace). Defaults to
+       the name of the Python module.
+     * static_path: path to static resources. Defaults to '<module_dir>/static'.
+     * js_script: corresponding JavaScript script. Defaults to '<id>.js'.
+     * stylesheet: corresponding stylesheet. Defaults to '<id>.css' if existant.
+     * post_type: post type. Must be set by subclass.
+
+    Attributes:
+
+     * app: Wall application.
+    """
+    id = None
+    maintainer = None
+    js_module = None
+    static_path = None
+    js_script = None
+    stylesheet = None
+    post_type = None
     
     def __init__(self, app):
         self.app = app
-        self.js_script = self.js_script or self.id + '.js'
+        self.js_module = self.js_module or type(self).__module__
         self.static_path = self.static_path or os.path.join(
             os.path.dirname(sys.modules[self.__module__].__file__), 'static')
+        self.js_script = self.js_script or self.id + '.js'
         # brick brings its own stylesheet
         if os.path.exists(os.path.join(self.static_path, self.id + '.css')):
             self.stylesheet = self.id + '.css'
