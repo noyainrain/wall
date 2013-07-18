@@ -1,0 +1,50 @@
+/*
+ * Wall
+ */
+
+#photo-preview
+{
+    position: relative;
+}
+
+#photo-preview video,
+#photo-preview canvas
+{
+    background: black;
+    width: 100%;
+    height: auto;
+}
+
+#photo-preview canvas,
+#photo-image-menu
+{
+    display: none;
+}
+
+/* ==== Overlay Menu ==== */
+/* TODO: move to client.css */
+
+ul.overlay-menu
+{
+    background: rgba(0, 0, 0, 0.5);
+    list-style: none;
+    position: absolute;
+    z-index: 10;
+    width: 100%;
+    left: 0;
+    bottom: 0;
+    margin: 0;
+}
+
+ul.overlay-menu li
+{
+    cursor: pointer;
+    border-right: 1px solid #eee;
+    display: inline-block;
+    margin: 0;
+    padding: 0.25rem;
+}
+ul.overlay-menu li:last-child
+{
+    border-right: none;
+}
