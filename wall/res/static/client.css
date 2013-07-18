@@ -8,6 +8,11 @@
  *  - background:            #333
  *  - background, secondary: #222
  *  - delimiter:             #555
+ *
+ * Spacing:
+ *  - line height:     1.50rem
+ *  - standard margin: 1.50rem
+ *  - small padding:   0.25rem
  */
 
 @import url(/static/normalize.css);
