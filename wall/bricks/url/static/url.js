@@ -28,23 +28,18 @@ $.extend(ns.Brick.prototype, wall.Brick.prototype, {
     },
     
     clientInitPostNewScreen: function(elem) {
-        $(
-            '<input id="url-url" type="url">                ' +
-            '<p class="buttons">                            ' +
-            '    <button id="url-post">Post</button>        ' +
-            '</p>                                           ' +
-            '<section>                                      ' +
-            '    <h3 style="display: inline;">Search</h3>   ' +
-            '    <small>Youtube</small>                     ' +
-            '    <input id="url-query" type="search">       ' +
-            '    <p class="buttons">                        ' +
-            '        <button id="url-search">Search</button>' +
-            '    </p>                                       ' +
-            '    <ul class="select" id="url-results"></ul>  ' +
-            '</section>                                     '
-        ).appendTo(elem);
-        $("#url-post").click($.proxy(this._postClicked, this));
-        $("#url-search").click($.proxy(this._searchClicked, this));
+        this.ui.call(
+            "url.get_search_handlers",
+            {},
+            $.proxy(function(handlers) {
+                elem.append($(ns._html));
+                handlers = handlers.map(function(h) { return h.title; });
+                $("#url-handlers").text(handlers.join(", "));
+                
+                $("#url-post").click($.proxy(this._postClicked, this));
+                $("#url-search").click($.proxy(this._searchClicked, this));
+            }, this)
+        );
     },
     
     _postClicked: function(event) {
@@ -81,5 +76,20 @@ $.extend(ns.Brick.prototype, wall.Brick.prototype, {
         this.ui.postNew(this.postType, {"url": result.url});
     }
 });
+
+ns._html =
+    '<input id="url-url" type="url">                ' +
+    '<p class="buttons">                            ' +
+    '    <button id="url-post">Post</button>        ' +
+    '</p>                                           ' +
+    '<section>                                      ' +
+    '    <h3 style="display: inline;">Search</h3>   ' +
+    '    <small id="url-handlers"></small>          ' +
+    '    <input id="url-query" type="search">       ' +
+    '    <p class="buttons">                        ' +
+    '        <button id="url-search">Search</button>' +
+    '    </p>                                       ' +
+    '    <ul class="select" id="url-results"></ul>  ' +
+    '</section>                                     '
 
 }(wall.url));
