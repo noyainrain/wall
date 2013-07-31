@@ -19,7 +19,7 @@ static_path   = os.path.join(res_path, 'static')
 template_path = os.path.join(res_path, 'templates')
 
 class WallApp(Application):
-    def __init__(self, config_path=None):
+    def __init__(self, config={}, config_path=None):
         super(WallApp, self).__init__(template_path=template_path,
             autoescape=None)
         
@@ -37,11 +37,17 @@ class WallApp(Application):
         try:
             parser = SafeConfigParser()
             parser.read(config_paths)
-            self.config = dict(parser.items('wall'))
         except ConfigParserError as e:
-            self.logger.error('failed to parse config file')
+            self.logger.error('failed to parse configuration file')
             self._init = False
             return
+
+        self.config = {}
+        for section in parser.sections():
+            prefix = section + '.' if section != 'wall' else ''
+            for key, value in parser.items(section):
+                self.config[prefix + key] = value
+        self.config.update(config)
         
         # set Tornado debug mode
         self.settings['debug'] = (self.config['debug'] == 'True')
@@ -87,6 +93,9 @@ class WallApp(Application):
         self.listen(8080)
         self.logger.info('server started')
         IOLoop.instance().start()
+    
+    def add_message_handler(self, type, handler):
+        self.msg_handlers[type] = handler
     
     def sendall(self, msg):
         for client in self.clients:
@@ -168,6 +177,8 @@ class Brick(object):
     
     def __init__(self, app):
         self.app = app
+        self.config = app.config
+        self.logger = getLogger('wall.' + self.id)
         self.js_script = self.js_script or self.id + '.js'
         self.static_path = self.static_path or os.path.join(
             os.path.dirname(sys.modules[self.__module__].__file__), 'static')
@@ -192,11 +203,12 @@ _setup_logger()
 
 # ==== Tests ====
 
-from unittest import TestCase
+from wall.util import TestCase
 from tempfile import NamedTemporaryFile
 
 class WallTest(TestCase):
     def setUp(self):
+        super(WallTest, self).setUp()
         self.app = WallApp()
     
     def test_init(self):
@@ -208,14 +220,14 @@ class WallTest(TestCase):
         f = NamedTemporaryFile(delete=False)
         f.write('[wall]\ndebug = True\n')
         f.close()
-        app = WallApp(f.name)
+        app = WallApp(config_path=f.name)
         self.assertTrue(app._init)
         
         # invalid config file
         f = NamedTemporaryFile(delete=False)
         f.write('foo')
         f.close()
-        app = WallApp(f.name)
+        app = WallApp(config_path=f.name)
         self.assertFalse(app._init)
     
     def test_post_new(self):

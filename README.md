@@ -53,7 +53,7 @@ Testing
 
 To run the test cases, simply type:
 
-    python -m unittest wall
+    python -m unittest -v wall wall.bricks.url
 
 Software Used
 -------------
