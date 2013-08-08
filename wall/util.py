@@ -53,6 +53,25 @@ class WebAPI(object):
                 callback(json.load(response.buffer, object_hook=WebAPI.Object))
         AsyncHTTPClient().fetch(url, cb, method=method, body=data)
 
+class EventTarget(object):
+    def __init__(self):
+        self._event_listeners = {}
+
+    def add_event_listener(self, type, listener):
+        if type not in self._event_listeners:
+            self._event_listeners[type] = set()
+        self._event_listeners[type].add(listener)
+
+    def remove_event_listener(self, type, listener):
+        try:
+            self._event_listeners[type].remove(listener)
+        except KeyError:
+            raise KeyError('listener')
+
+    def dispatch_event(self, type, *args, **kwargs):
+        for listener in self._event_listeners.get(type, set()):
+            listener(*args, **kwargs)
+
 class Pool(object):
     """
     Utility for keeping track of a pool of asynchronous tasks. A callback is
@@ -85,3 +104,22 @@ class TestCase(AsyncTestCase):
         
     def get_new_ioloop(self):
         return IOLoop.instance()
+
+# ==== Tests ====
+
+class EventTargetTest(TestCase):
+    class Ship(EventTarget):
+        def dock(self, bay):
+            self.dispatch_event('docked', bay)
+
+    def test_dispatch_event(self):
+        ship = EventTargetTest.Ship()
+        self.dispatched = False
+
+        def cb(bay):
+            self.dispatched = True
+            self.assertEqual(bay, 'bay7')
+        ship.add_event_listener('docked', cb)
+
+        ship.dock('bay7')
+        self.assertTrue(self.dispatched)

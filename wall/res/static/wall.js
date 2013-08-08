@@ -33,6 +33,15 @@ ns.Ui.prototype = {
         this.socket.send(JSON.stringify(msg));
     },
     
+    call: function(method, args, callback) {
+        args = args || {};
+        this.msgHandlers[method] = $.proxy(function(msg) {
+            delete this.msgHandlers[method];
+            callback(msg.data);
+        }, this);
+        this.send({"type": method, "data": args});
+    },
+
     _connect: function() {
         console.log("connecting...");
         this.socket = new WebSocket("ws://" + location.host + "/api/socket/");
@@ -51,7 +60,6 @@ ns.Ui.prototype = {
     },
     
     _received: function(event) {
-        console.log("received: " + event.data);
         var msg = JSON.parse(event.data);
         this.msgHandlers[msg.type] && this.msgHandlers[msg.type](msg);
     }
@@ -152,15 +160,6 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
                     this.closePostNewScreen();
                 }
             }, this));
-    },
-    
-    call: function(method, args, callback) {
-        args = args || {};
-        this.msgHandlers[method] = $.proxy(function(msg) {
-            delete this.msgHandlers[method];
-            callback(msg.data);
-        }, this);
-        this.send({"type": method, "data": args});
     },
     
     _postMenuItemClicked: function(event) {

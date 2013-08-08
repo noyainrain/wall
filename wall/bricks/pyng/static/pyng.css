@@ -1,0 +1,57 @@
+/*
+ * Wall
+ */
+
+#pyng-playground
+{
+    color: #fff;
+    background: #000;
+    height: 100%;
+}
+
+#pyng-divider
+{
+    background: #fff;
+    width: 2%;
+    height: 100%;
+    position: absolute;
+    left: 49%;
+    top: 0;
+}
+
+#pyng-info
+{
+    display: none;
+    font-size: 5vh;
+    text-align: center;
+    background: #000;
+    width: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.pyng-player
+{
+    background: #fff;
+    width: 1.5%;
+    height: 12%;
+}
+
+.pyng-player-label {
+    font-size: 5vh;
+    text-align: center;
+}
+
+.pyng-ball
+{
+    background: red;
+    width: 2%;
+    height: 2%;
+}
+
+.pyng-object
+{
+    position: absolute;
+    transform: translate(-50%, -50%);
+}
