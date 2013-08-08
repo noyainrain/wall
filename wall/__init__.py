@@ -13,15 +13,16 @@ from random import choice
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RequestHandler, StaticFileHandler
 from tornado.websocket import WebSocketHandler
+from wall.util import EventTarget
 
 res_path      = os.path.join(os.path.dirname(__file__), 'res')
 static_path   = os.path.join(res_path, 'static')
 template_path = os.path.join(res_path, 'templates')
 
-class WallApp(Application):
+class WallApp(Application, EventTarget):
     def __init__(self, config={}, config_path=None):
-        super(WallApp, self).__init__(template_path=template_path,
-            autoescape=None)
+        Application.__init__(self, template_path=template_path, autoescape=None)
+        EventTarget.__init__(self)
         
         self.logger        = getLogger('wall')
         self.bricks        = []
@@ -128,15 +129,16 @@ class Socket(WebSocketHandler):
     def open(self):
         print('client connected')
         self.app.clients.append(self)
+        self.app.dispatch_event('connected', self)
         if self.app.current_post:
             self.send(Message('posted', vars(self.app.current_post)))
     
     def on_close(self):
         print('client disconnected')
         self.app.clients.remove(self)
+        self.app.dispatch_event('disconnected', self)
     
     def on_message(self, msgstr):
-        print('received: ' + msgstr)
         msg = Message.parse(msgstr, self)
         handle = self.app.msg_handlers[msg.type]
         #try:
@@ -191,6 +193,9 @@ class Brick(object):
 
 def randstr(length=8, charset=ascii_lowercase):
     return ''.join(choice(charset) for i in xrange(length))
+
+def error_json(error):
+    return dict({'__type__': type(error).__name__, 'args': error.args})
 
 def _setup_logger():
     logger = getLogger('wall')
