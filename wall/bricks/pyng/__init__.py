@@ -12,6 +12,7 @@ from wall import Brick, Message, randstr, error_json
 
 class PyngBrick(Brick):
     id = 'pyng'
+    maintainer = 'Sven James <sven.jms AT gmail.com>'
     js_module = 'wall.bricks.pyng'
     post_type = 'PyngPost'
     

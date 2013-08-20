@@ -11,7 +11,8 @@ from wall import Brick as _Brick, randstr, Message
 import subprocess, re
 
 class Brick(_Brick):
-    id        = 'volume'
+    id = 'volume'
+    maintainer = 'Thomas Karmann <thomas AT krmnn.de>'
     js_module = 'wall.volume'
     post_type = 'VolumePost'
 

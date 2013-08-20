@@ -7,7 +7,8 @@ from __future__ import (division, absolute_import, print_function,
 from wall import Brick as _Brick, randstr
 
 class Brick(_Brick):
-    id        = 'omfgdogs'
+    id = 'omfgdogs'
+    maintainer = 'Philip Taffner <philip.taffner AT bluegfx.de>'
     js_module = 'wall.omfgdogs'
     post_type = 'OmfgDogsPost'
 

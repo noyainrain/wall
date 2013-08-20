@@ -14,6 +14,7 @@ from functools import partial
 
 class UrlBrick(Brick):
     id = 'url'
+    maintainer = 'Sven James <sven.jms AT gmail.com>'
     js_module = 'wall.bricks.url'
     
     def __init__(self, app):

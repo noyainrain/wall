@@ -10,7 +10,8 @@ from urllib import urlencode
 from tornado.httpclient import AsyncHTTPClient
 
 class Brick(_Brick):
-    id        = 'youtube'
+    id = 'youtube'
+    maintainer = 'Thomas Karmann <thomas AT krmnn.de>'
     js_module = 'wall.youtube'
     post_type = 'YoutubePost'
 

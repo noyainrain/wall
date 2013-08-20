@@ -207,6 +207,7 @@ class Brick(object):
     An extension (plugin) for Wall.
     """
     id = None
+    maintainer = None
     js_module = None
     static_path = None # default: '<module_dir>/static'
     scripts = None # default: ['<id>.js']

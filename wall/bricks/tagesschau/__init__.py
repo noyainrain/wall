@@ -9,7 +9,8 @@ from wall import Brick as _Brick, randstr
 import feedparser
 
 class Brick(_Brick):
-    id        = 'tagesschau'
+    id = 'tagesschau'
+    maintainer = 'Thomas Karmann <thomas AT krmnn.de>'
     js_module = 'wall.tagesschau'
     post_type = 'TagesschauPost'
 
