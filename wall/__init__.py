@@ -24,13 +24,13 @@ class WallApp(Application, EventTarget):
         Application.__init__(self, template_path=template_path, autoescape=None)
         EventTarget.__init__(self)
         
-        self.logger        = getLogger('wall')
-        self.bricks        = []
+        self.logger = getLogger('wall')
+        self.bricks = {}
         self.post_handlers = {}
-        self.clients       = []
-        self.posts         = {}
-        self.current_post  = None
-        self._init         = True
+        self.clients = []
+        self.posts = {}
+        self.current_post = None
+        self._init = True
         
         config_paths = [os.path.join(res_path, 'default.cfg')]
         if config_path:
@@ -61,8 +61,7 @@ class WallApp(Application, EventTarget):
         for name in bricks:
             module = __import__(name, globals(), locals(), [b'foo'])
             brick = module.Brick(self)
-            self.bricks.append(brick)
-            self.post_handlers[brick.post_type] = brick
+            self.bricks[brick.id] = brick
         
         # setup URL handlers
         urls = [
@@ -70,7 +69,7 @@ class WallApp(Application, EventTarget):
             ('/display/$',    DisplayPage),
             ('/api/socket/$', Socket),
         ]
-        for brick in self.bricks:
+        for brick in self.bricks.values():
             urls.append(('/static/{0}/(.+)$'.format(brick.id),
                 StaticFileHandler, {'path': brick.static_path}))
         urls.append(('/static/(.+)$', StaticFileHandler, {'path': static_path}))
@@ -78,15 +77,21 @@ class WallApp(Application, EventTarget):
     
     @property
     def js_modules(self):
-        return [b.js_module for b in self.bricks]
+        return [b.js_module for b in self.bricks.values()]
     
     @property
-    def js_scripts(self):
-        return [b.id + '/' + b.js_script for b in self.bricks]
+    def scripts(self):
+        scripts = []
+        for brick in self.bricks.values():
+            scripts.extend(brick.id + '/' + s for s in brick.scripts)
+        return scripts
 
     @property
     def stylesheets(self):
-        return [b.id + '/' + b.stylesheet for b in self.bricks if b.stylesheet]
+        stylesheets = []
+        for brick in self.bricks.values():
+            stylesheets.extend(brick.id + '/' + s for s in brick.stylesheets)
+        return stylesheets
 
     def run(self):
         if not self._init:
@@ -104,20 +109,31 @@ class WallApp(Application, EventTarget):
     
     def post_new_msg(self, msg):
         post_type = msg.data.pop('type')
-        self.post_new(post_type, **msg.data)
-        msg.frm.send(Message('post_new'))
+        post = self.post_new(post_type, **msg.data)
+        msg.frm.send(Message('post_new', vars(post)))
         # wake display
         Popen('DISPLAY=:0.0 xset dpms force on', shell=True)
-    
-    def post_new(self, type, **args):
+
+    def post(self, id):
         try:
-            brick = self.post_handlers[type]
+            post = self.posts[id]
         except KeyError:
-            raise ValueError('type')
-        post = brick.post_new(type, **args)
-        self.posts[post.id] = post
+            raise KeyError('id')
+        if self.current_post:
+            self.post_handlers[self.current_post.__type__].cleanup_post()
         self.current_post = post
+        self.post_handlers[post.__type__].init_post(post)
         self.sendall(Message('posted', vars(post)))
+        return post
+
+    def post_new(self, type, **args):
+        handler = self.post_handlers[type]
+        post = handler.create_post(**args)
+        self.posts[post.id] = post
+        return self.post(post.id)
+
+    def add_post_handler(self, handler):
+        self.post_handlers[handler.type] = handler
 
 class Socket(WebSocketHandler):
     def initialize(self):
@@ -169,27 +185,47 @@ class DisplayPage(RequestHandler):
     def get(self):
         self.render('display.html', app=self.application)
 
+class PostHandler(object):
+    type = None
+
+    def create_post(self, **args):
+        raise NotImplementedError()
+
+    def init_post(self, post):
+        pass
+
+    def cleanup_post(self):
+        pass
+
+class Post(object):
+    def __init__(self, id):
+        self.id = id
+        self.__type__ = type(self).__name__
+
 class Brick(object):
-    id          = None
-    js_module   = None
-    js_script   = None # default: <id>.js
-    static_path = None # default: <module_dir>/static
-    post_type   = None
-    stylesheet  = None # default: <module_dir>/static/<id>.css if existant
+    """
+    An extension (plugin) for Wall.
+    """
+    id = None
+    js_module = None
+    static_path = None # default: '<module_dir>/static'
+    scripts = None # default: ['<id>.js']
+    stylesheets = None # default: ['<id>.css'] if existant, else []
     
     def __init__(self, app):
         self.app = app
         self.config = app.config
         self.logger = getLogger('wall.' + self.id)
-        self.js_script = self.js_script or self.id + '.js'
+
+        # set defaults
         self.static_path = self.static_path or os.path.join(
             os.path.dirname(sys.modules[self.__module__].__file__), 'static')
-        # brick brings its own stylesheet
-        if os.path.exists(os.path.join(self.static_path, self.id + '.css')):
-            self.stylesheet = self.id + '.css'
-    
-    def post_new(self, type, **args):
-        pass
+        self.scripts = self.scripts or [self.id + '.js']
+        if not self.stylesheets:
+            if os.path.isfile(os.path.join(self.static_path, self.id + '.css')):
+                self.stylesheets = [self.id + '.css']
+            else:
+                self.stylesheets = []
 
 def randstr(length=8, charset=ascii_lowercase):
     return ''.join(choice(charset) for i in xrange(length))
@@ -210,6 +246,26 @@ _setup_logger()
 
 from wall.util import TestCase
 from tempfile import NamedTemporaryFile
+
+class TestPost(Post):
+    pass
+
+class TestPostHandler(PostHandler):
+    type = 'TestPost'
+
+    def __init__(self):
+        super(TestPostHandler, self).__init__()
+        self.init_post_called = False
+        self.cleanup_post_called = False
+
+    def create_post(self, **args):
+        return TestPost(randstr())
+
+    def init_post(self, post):
+        self.init_post_called = True
+
+    def cleanup_post(self):
+        self.cleanup_post_called = True
 
 class WallTest(TestCase):
     def setUp(self):
@@ -234,8 +290,20 @@ class WallTest(TestCase):
         f.close()
         app = WallApp(config_path=f.name)
         self.assertFalse(app._init)
-    
+
     def test_post_new(self):
-        self.app.post_new('UrlPost', url='http://example.org/')
+        # test post_new and also post
+
+        handler = TestPostHandler()
+        self.app.add_post_handler(handler)
+
+        post = self.app.post_new('TestPost')
         self.assertTrue(self.app.posts)
-        self.assertRaises(ValueError, self.app.post_new, 'foo')
+        self.assertEqual(self.app.current_post, post)
+        self.assertTrue(handler.init_post_called)
+
+        self.app.post(post.id)
+        self.assertTrue(handler.cleanup_post_called)
+
+        self.assertRaises(KeyError, self.app.post_new, 'foo')
+        self.assertRaises(KeyError, self.app.post, 'foo')
