@@ -6,21 +6,21 @@ from __future__ import (division, absolute_import, print_function,
 
 import os
 import json
-from wall import Brick as _Brick, randstr, Message
+from wall import Brick, PostHandler, Post, Message, randstr
 from wall.util import WebAPI, Pool
 from urllib import urlencode
 from tornado.httpclient import AsyncHTTPClient
 from functools import partial
 
-class Brick(_Brick):
-    id        = 'url'
-    js_module = 'wall.url'
-    post_type = 'UrlPost'
+class UrlBrick(Brick):
+    id = 'url'
+    js_module = 'wall.bricks.url'
     
     def __init__(self, app):
         super(Brick, self).__init__(app)
         self.search_handlers = []
         
+        self.app.add_post_handler(UrlPostHandler())
         self.app.add_message_handler('url.get_search_handlers',
             self._get_search_handlers_msg)
         self.app.add_message_handler('url.search', self._search_msg)
@@ -57,14 +57,6 @@ class Brick(_Brick):
                 partial(cb, box=box),
                 method='POST'
             )
-
-    def post_new(self, type, **args):
-        url = args['url'].strip()
-        if not url:
-            raise ValueError('url')
-        if not url.startswith(('http://', 'https://')):
-            url = 'http://' + url
-        return UrlPost(randstr(), url)
     
     def search(self, query, callback):
         results = []
@@ -90,11 +82,21 @@ class Brick(_Brick):
             msg.frm.send(Message(msg.type, [vars(r) for r in results]))
         self.search(msg.data['query'], cb)
 
-class UrlPost(object):
+class UrlPostHandler(PostHandler):
+    type = 'UrlPost'
+
+    def create_post(self, **args):
+        url = args['url'].strip()
+        if not url:
+            raise ValueError('url')
+        if not url.startswith(('http://', 'https://')):
+            url = 'http://' + url
+        return UrlPost(randstr(), url)
+
+class UrlPost(Post):
     def __init__(self, id, url):
-        self.id = id
+        super(UrlPost, self).__init__(id)
         self.url = url
-        self.__type__ = type(self).__name__
 
 class SearchHandler(object):
     def __init__(self, id, title, color):
@@ -114,6 +116,8 @@ class SearchResult(object):
         self.url = url
         self.handler = handler
         self.thumbnail = thumbnail
+
+Brick = UrlBrick
 
 # ----
 # TODO: move to own module once the new plugin architecture is ready
@@ -211,7 +215,7 @@ class BrickTest(TestCase):
     def setUp(self):
         super(BrickTest, self).setUp()
         self.app = WallApp()
-        self.brick = self.app.bricks[0]
+        self.brick = self.app.bricks['url']
     
     def test_search(self):
         def cb(results):
