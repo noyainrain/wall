@@ -3,36 +3,30 @@
  */
 
 var wall = {};
+wall.bricks = {};
 (function(ns) {
 
 /* ==== Ui ==== */
 
 ns.Ui = function(bricks) {
-    this.bricks       = [];
+    this.bricks = {};
     this.postHandlers = {};
-    this.msgHandlers  = {};
-    this.currentPost  = null;
-    this.currentBrick = null;
-    this.socket       = null;
-    
-    // initialize bricks (inspired by server's wall.WallApp.__init__)
-    for (var i = 0; i < bricks.length; i++) {
-        var name = bricks[i];
-        var module = name.split(".").reduce(
-            function(o, n) { return o[n]; }, window);
-        var brick = new module["Brick"](this);
-        this.bricks.push(brick);
-        this.postHandlers[brick.postType] = brick;
-    }
-    
+    this.msgHandlers = {};
+    this.currentPost = null;
+    this.currentPostHandler = null;
+    this.socket = null;
     this._connect();
 };
 
 ns.Ui.prototype = {
+    addPostHandler: function(handler) {
+        this.postHandlers[handler.type] = handler;
+    },
+
     send: function(msg) {
         this.socket.send(JSON.stringify(msg));
     },
-    
+
     call: function(method, args, callback) {
         args = args || {};
         this.msgHandlers[method] = $.proxy(function(msg) {
@@ -40,6 +34,17 @@ ns.Ui.prototype = {
             callback(msg.data);
         }, this);
         this.send({"type": method, "data": args});
+    },
+
+    loadBricks: function(bricks, type) {
+        // initialize bricks (inspired by server's wall.WallApp.__init__)
+        for (var i = 0; i < bricks.length; i++) {
+            var name = bricks[i];
+            var module = name.split(".").reduce(
+                function(o, n) { return o[n]; }, window);
+            var brick = new module[type](this);
+            this.bricks[brick.id] = brick;
+        }
     },
 
     _connect: function() {
@@ -69,48 +74,38 @@ ns.Ui.prototype = {
 
 ns.DisplayUi = function(bricks) {
     ns.Ui.call(this, bricks);
+    this.loadBricks(bricks, "DisplayBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
 };
 
 $.extend(ns.DisplayUi.prototype, ns.Ui.prototype, {
     _postedMsg: function(msg) {
-        if (this.currentBrick) {
-            this.currentBrick.cleanupPost($("#content"));
+        if (this.currentPost) {
+            this.currentPostHandler.cleanupPost();
             $("#content").empty();
         }
         this.currentPost = msg.data;
-        this.currentBrick = this.postHandlers[this.currentPost.__type__];
-        this.currentBrick.initPost($("#content"), this.currentPost);
+        this.currentPostHandler = this.postHandlers[this.currentPost.__type__];
+        this.currentPostHandler.initPost($("#content"), this.currentPost);
     }
 });
 
 /* ==== ClientUi ==== */
 
 ns.ClientUi = function(bricks) {
-    
     if(!this.isBrowserSupported()){
         $('#main').html('<div id="browser_not_supported">Your browser is outdated. Please use a decent browser like <a href="https://play.google.com/store/apps/details?id=org.mozilla.firefox">Firefox</a> or <a href="https://play.google.com/store/apps/details?id=com.android.chrome">Chrome</a>.</div>').show();
         return;
     }
 
-    ns.Ui.call(this, bricks);
-
+    ns.Ui.call(this);
+    this.doPostHandlers = [];
+    this.screenStack = [];
+    
+    this.loadBricks(bricks, "ClientBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
     
-    // initialize post menu
-    for(var i = 0, length = this.bricks.length; i < length; i++) {
-        var brick = this.bricks[i];
-        $('<button>')
-            .text(brick.postTitle)
-            .click(brick, $.proxy(this._postMenuItemClicked, this))
-            .css('background-image', "url(/static/" + brick.id + "/" + brick.id + ".svg)")
-            .appendTo($("#post-menu"));
-    }
-        
-    $("#post-new").click($.proxy(this._postNewClicked, this));
-    
-    this.currentScreen = null;
-    this.showScreen($("#main"));
+    this.showScreen($("#main").detach());
 };
 
 $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
@@ -127,58 +122,49 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
     },
     
     showScreen: function(screen) {
-        if (this.currentScreen) {
-            this.currentScreen.hide();
+        if (this.screenStack.length) {
+            this.screenStack[this.screenStack.length - 1].hide();
         }
-        this.currentScreen = screen;
-        this.currentScreen.show();
+        this.screenStack.push(screen);
+        $("body").append(screen);
+    },
+
+    popScreen: function() {
+        this.screenStack.pop().remove();
+        this.screenStack[this.screenStack.length - 1].show();
     },
     
-    showPostNewScreen: function(brick) {
-        $("#post-new").data("brick", brick);
-        $("#post-new h2").text("Post " + brick.postTitle);
-        $("#post-new .content").empty();
-        brick.clientInitPostNewScreen($("#post-new .content"));
-        this.showScreen($("#post-new"));
+    post: function(id, callback) {
+        this.call("post", {"id": id}, callback);
     },
     
-    closePostNewScreen: function() {
-        var brick = $("#post-new").data("brick");
-        if(brick){
-            brick.clientCleanupPostNewScreen();
-        }
-        this.showScreen($("#main"));
+    postNew: function(type, args, callback) {
+        this.call("post_new", $.extend({"type": type}, args), callback);
     },
     
-    postNew: function(type, args, erred) {
-        args = args || {};
-        this.call("post_new", $.extend({"type": type}, args),
-            $.proxy(function(error) {
-                if (error) {
-                    erred(error);
-                } else {
-                    this.closePostNewScreen();
-                }
-            }, this));
+    addDoPostHandler: function(handler) {
+        this.doPostHandlers.push(handler);
+        $("<button>")
+            .text(handler.title)
+            .css("background-image", "url(" + handler.icon + ")")
+            .data("handler", handler)
+            .click($.proxy(this._postMenuItemClicked, this))
+            .appendTo($("#post-menu"));
     },
-    
+
     _postMenuItemClicked: function(event) {
-        var brick = event.data;
-        if (brick.postSingle) {
-            this.postNew(brick.postType);
-        } else {
-            this.showPostNewScreen(brick);
-        }
+        var handler = $(event.currentTarget).data("handler");
+        handler.post();
     },
     
     _postedMsg: function(msg) {
-        if (this.currentBrick) {
-            this.currentBrick.clientCleanupPost($("#post"));
+        if (this.currentPost) {
+            this.currentPostHandler.cleanupPost();
             $("#post").empty().hide();
         }
         this.currentPost = msg.data;
-        this.currentBrick = this.postHandlers[this.currentPost.__type__];
-        this.currentBrick.clientInitPost($("#post").show(), this.currentPost);
+        this.currentPostHandler = this.postHandlers[this.currentPost.__type__];
+        this.currentPostHandler.initPost($("#post").show(), this.currentPost);
     }
 });
 
@@ -189,22 +175,30 @@ ns.Brick = function(ui) {
 };
 
 ns.Brick.prototype = {
-    id: null,
-    postType: null,
-    postTitle: null,
-    postSingle: false,
+    id: null
+};
+
+/* ==== PostHandler ==== */
+
+ns.PostHandler = function() {};
+
+ns.PostHandler.prototype = {
+    type: null,
     
     initPost: function(elem, post) {},
     
-    cleanupPost: function() {},
+    cleanupPost: function() {}
+};
+
+/* ==== DoPostHandler ==== */
+
+ns.DoPostHandler = function() {};
+
+ns.DoPostHandler.prototype = {
+    title: null,
+    icon: null,
     
-    clientInitPost: function(elem, post) {},
-    
-    clientCleanupPost: function() {},
-    
-    clientInitPostNewScreen: function(elem) {},
-    
-    clientCleanupPostNewScreen: function() {}
+    post: function() {}
 };
 
 }(wall));
