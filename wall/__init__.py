@@ -4,7 +4,10 @@
 from __future__ import (division, absolute_import, print_function,
     unicode_literals)
 
-import sys, os, json
+import sys
+import os
+import json
+from datetime import datetime
 from logging import StreamHandler, Formatter, getLogger, DEBUG
 from ConfigParser import SafeConfigParser, Error as ConfigParserError
 from subprocess import Popen
@@ -13,7 +16,8 @@ from random import choice
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RequestHandler, StaticFileHandler
 from tornado.websocket import WebSocketHandler
-from wall.util import EventTarget
+from redis import StrictRedis
+from wall.util import EventTarget, RedisContainer
 
 res_path      = os.path.join(os.path.dirname(__file__), 'res')
 static_path   = os.path.join(res_path, 'static')
@@ -28,7 +32,6 @@ class WallApp(Application, EventTarget):
         self.bricks = {}
         self.post_handlers = {}
         self.clients = []
-        self.posts = {}
         self.current_post = None
         self._init = True
         
@@ -50,11 +53,15 @@ class WallApp(Application, EventTarget):
                 self.config[prefix + key] = value
         self.config.update(config)
         
-        # set Tornado debug mode
-        self.settings['debug'] = (self.config['debug'] == 'True')
+        self.db = StrictRedis(db=int(self.config['db']))
+        self.posts = RedisContainer(self.db, 'posts', self._post)
         
         # setup message handlers
-        self.msg_handlers = {'post_new': self.post_new_msg}
+        self.msg_handlers = {
+            'post': self.post_msg,
+            'post_new': self.post_new_msg,
+            'get_history': self.get_history_msg
+        }
         
         # initialize bricks
         bricks = self.config['bricks'].split()
@@ -62,7 +69,10 @@ class WallApp(Application, EventTarget):
             module = __import__(name, globals(), locals(), [b'foo'])
             brick = module.Brick(self)
             self.bricks[brick.id] = brick
-        
+
+        # set Tornado debug mode
+        self.settings['debug'] = (self.config['debug'] == 'True')
+
         # setup URL handlers
         urls = [
             ('/$',            ClientPage),
@@ -74,7 +84,7 @@ class WallApp(Application, EventTarget):
                 StaticFileHandler, {'path': brick.static_path}))
         urls.append(('/static/(.+)$', StaticFileHandler, {'path': static_path}))
         self.add_handlers('.*$', urls)
-    
+
     @property
     def js_modules(self):
         return [b.js_module for b in self.bricks.values()]
@@ -107,6 +117,11 @@ class WallApp(Application, EventTarget):
         for client in self.clients:
             client.send(msg)
     
+    def post_msg(self, msg):
+        # TODO: error handling
+        post = self.post(msg.data['id'])
+        msg.frm.send(Message('post', post.json()))
+
     def post_new_msg(self, msg):
         post_type = msg.data.pop('type')
         post = self.post_new(post_type, **msg.data)
@@ -114,26 +129,43 @@ class WallApp(Application, EventTarget):
         # wake display
         Popen('DISPLAY=:0.0 xset dpms force on', shell=True)
 
+    def get_history_msg(self, msg):
+        msg.frm.send(Message('get_history',
+            [p.json() for p in self.get_history()]))
+
     def post(self, id):
         try:
             post = self.posts[id]
         except KeyError:
             raise KeyError('id')
+
         if self.current_post:
             self.post_handlers[self.current_post.__type__].cleanup_post()
+
+        post.posted = datetime.utcnow().isoformat()
+        self.db.hset(post.id, 'posted', post.posted)
+
         self.current_post = post
         self.post_handlers[post.__type__].init_post(post)
-        self.sendall(Message('posted', vars(post)))
+
+        self.sendall(Message('posted', post.json()))
         return post
 
     def post_new(self, type, **args):
         handler = self.post_handlers[type]
         post = handler.create_post(**args)
-        self.posts[post.id] = post
+        self.db.sadd('posts', post.id)
         return self.post(post.id)
+
+    def get_history(self):
+        return sorted(self.posts.values(), key=lambda p: p.posted, reverse=True)
 
     def add_post_handler(self, handler):
         self.post_handlers[handler.type] = handler
+
+    def _post(self, **kwargs):
+        cls = self.post_handlers[kwargs['__type__']].cls
+        return cls(**kwargs)
 
 class Socket(WebSocketHandler):
     def initialize(self):
@@ -187,6 +219,11 @@ class DisplayPage(RequestHandler):
 
 class PostHandler(object):
     type = None
+    cls = None
+
+    def __init__(self, app):
+        self.type = self.type or self.cls.__name__
+        self.app = app
 
     def create_post(self, **args):
         raise NotImplementedError()
@@ -198,9 +235,14 @@ class PostHandler(object):
         pass
 
 class Post(object):
-    def __init__(self, id):
+    def __init__(self, id, title, posted, **kwargs):
         self.id = id
+        self.title = title
+        self.posted = posted
         self.__type__ = type(self).__name__
+
+    def json(self):
+        return vars(self)
 
 class Brick(object):
     """
@@ -252,15 +294,17 @@ class TestPost(Post):
     pass
 
 class TestPostHandler(PostHandler):
-    type = 'TestPost'
+    cls = TestPost
 
-    def __init__(self):
-        super(TestPostHandler, self).__init__()
+    def __init__(self, app):
+        super(TestPostHandler, self).__init__(app)
         self.init_post_called = False
         self.cleanup_post_called = False
 
     def create_post(self, **args):
-        return TestPost(randstr())
+        post = TestPost(randstr(), 'Test', None)
+        self.app.db.hmset(post.id, post.json())
+        return post
 
     def init_post(self, post):
         self.init_post_called = True
@@ -271,7 +315,7 @@ class TestPostHandler(PostHandler):
 class WallTest(TestCase):
     def setUp(self):
         super(WallTest, self).setUp()
-        self.app = WallApp()
+        self.app = WallApp(config={'db': 15})
     
     def test_init(self):
         # without config file
@@ -295,7 +339,7 @@ class WallTest(TestCase):
     def test_post_new(self):
         # test post_new and also post
 
-        handler = TestPostHandler()
+        handler = TestPostHandler(self.app)
         self.app.add_post_handler(handler)
 
         post = self.app.post_new('TestPost')
