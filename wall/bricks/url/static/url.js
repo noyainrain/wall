@@ -41,7 +41,7 @@ $.extend(ns.DisplayUrlPostHandler.prototype, wall.PostHandler.prototype, {
 ns.ClientBrick = function(ui) {
     wall.Brick.call(this, ui);
     this.ui.addPostHandler(new ns.ClientUrlPostHandler());
-    this.ui.addDoPostHandler(new ns.DoPostUrlHandler(this));
+    this.ui.addDoPostHandler(new ns.DoPostUrlHandler(this.ui));
 };
 
 $.extend(ns.ClientBrick.prototype, wall.Brick.prototype, {
@@ -64,9 +64,8 @@ $.extend(ns.ClientUrlPostHandler.prototype, wall.PostHandler.prototype, {
 
 /* ==== DoPostUrlHandler ==== */
 
-ns.DoPostUrlHandler = function(brick) {
-    this.brick = brick;
-    this.ui = brick.ui;
+ns.DoPostUrlHandler = function(ui) {
+    wall.DoPostHandler.call(this, ui);
 };
 
 $.extend(ns.DoPostUrlHandler.prototype, wall.DoPostHandler.prototype, {
