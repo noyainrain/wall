@@ -8,10 +8,12 @@ import sys
 import json
 import logging
 from urllib import urlencode
+from logging import getLogger
+from collections import Mapping
 from tornado.httpclient import AsyncHTTPClient
 from tornado.testing import AsyncTestCase
 from tornado.ioloop import IOLoop
-from logging import getLogger
+from redis import StrictRedis
 
 class WebAPI(object):
     class Object(object):
@@ -72,6 +74,33 @@ class EventTarget(object):
         for listener in self._event_listeners.get(type, set()):
             listener(*args, **kwargs)
 
+class RedisContainer(Mapping):
+    def __init__(self, db, set_key, cls):
+        self.db = db
+        self.set_key = set_key
+        self.cls = cls
+
+    def keys(self):
+        return self.db.smembers(self.set_key)
+
+    def __getitem__(self, key):
+        if key not in self:
+            raise KeyError()
+        return self.cls(**self.db.hgetall(key))
+
+    def __iter__(self):
+        return iter(self.keys())
+
+    def __len__(self):
+        return self.db.scard(self.set_key)
+
+    def __contains__(self, item):
+        return self.db.sismember(self.set_key, item)
+
+    def __str__(self):
+        return str(dict(self))
+    __repr__ = __str__
+
 class Pool(object):
     """
     Utility for keeping track of a pool of asynchronous tasks. A callback is
@@ -101,6 +130,11 @@ class TestCase(AsyncTestCase):
     @classmethod
     def setUpClass(cls):
         getLogger('wall').setLevel(logging.CRITICAL)
+
+    def setUp(self):
+        super(TestCase, self).setUp()
+        self.db = StrictRedis(db=15)
+        self.db.flushdb()
         
     def get_new_ioloop(self):
         return IOLoop.instance()
@@ -123,3 +157,38 @@ class EventTargetTest(TestCase):
 
         ship.dock('bay7')
         self.assertTrue(self.dispatched)
+
+class RedisContainerTest(TestCase):
+    class Ship(object):
+        def __init__(self, id, type):
+            self.id = id
+            self.type = type
+
+    def setUp(self):
+        super(RedisContainerTest, self).setUp()
+
+        self.list = [
+            RedisContainerTest.Ship('0', 'Starfury'),
+            RedisContainerTest.Ship('1', 'Starfury')
+        ]
+
+        self.db = StrictRedis(db=15)
+        self.db.flushdb()
+        for ship in self.list:
+            self.db.hmset(ship.id, vars(ship))
+            self.db.sadd('ships', ship.id)
+
+        self.ships = RedisContainer(self.db, 'ships', RedisContainerTest.Ship)
+
+    def test_keys(self):
+        self.assertEqual(self.ships.keys(), set(s.id for s in self.list))
+
+    def test_getitem(self):
+        self.assertEqual(vars(self.ships['0']), vars(self.list[0]))
+
+    def test_len(self):
+        self.assertEqual(len(self.ships), len(self.list))
+
+    def test_contains(self):
+        self.assertTrue('0' in self.ships)
+        self.assertFalse('foo' in self.ships)
