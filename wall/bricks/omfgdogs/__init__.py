@@ -6,6 +6,8 @@ from __future__ import (division, absolute_import, print_function,
 
 from wall import Brick as _Brick, randstr
 
+# TODO: deprecated. Use starred posts instead, once available.
+
 class Brick(_Brick):
     id = 'omfgdogs'
     maintainer = 'Philip Taffner <philip.taffner AT bluegfx.de>'

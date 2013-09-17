@@ -10,6 +10,8 @@ from __future__ import (division, absolute_import, print_function,
 from wall import Brick as _Brick, randstr, Message
 import subprocess, re
 
+# TODO: deprecated. Integrate into client menu instead, once available.
+
 class Brick(_Brick):
     id = 'volume'
     maintainer = 'Thomas Karmann <thomas AT krmnn.de>'
