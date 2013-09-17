@@ -8,6 +8,8 @@ from wall import Brick as _Brick, randstr
 
 import feedparser
 
+# TODO: port to new brick architecture. Use VideoPost, once available.
+
 class Brick(_Brick):
     id = 'tagesschau'
     maintainer = 'Thomas Karmann <thomas AT krmnn.de>'

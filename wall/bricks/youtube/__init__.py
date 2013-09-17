@@ -9,6 +9,9 @@ from wall import Brick as _Brick, randstr, Message
 from urllib import urlencode
 from tornado.httpclient import AsyncHTTPClient
 
+# TODO: port to new brick architecture. Merge with Youtube part of URL brick.
+# Create YoutubePost from content, once available.
+
 class Brick(_Brick):
     id = 'youtube'
     maintainer = 'Thomas Karmann <thomas AT krmnn.de>'

@@ -10,6 +10,8 @@ from math import sin, cos
 from tornado.ioloop import PeriodicCallback
 from wall import Brick, Message, randstr, error_json
 
+# TODO: port to new brick architecture
+
 class PyngBrick(Brick):
     id = 'pyng'
     maintainer = 'Sven James <sven.jms AT gmail.com>'
