@@ -30,15 +30,11 @@ Run Wall with:
 Bricks (aka Plugins)
 --------------------
 
-If you want to create a brick, have a look at wall/url for reference.
+If you want to create a brick, have a look at wall/bricks/url for reference.
 
-At the moment there exists bricks for:
+Currently available bricks:
 
- * YouTube
- * URLs
- * MPD
- * Volume-control
-
+ * URL
 
 Browser support
 ---------------
