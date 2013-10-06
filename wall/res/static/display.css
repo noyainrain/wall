@@ -13,13 +13,15 @@ html,
 body,
 #content
 {
-    height: 100%;
-    overflow: hidden;
-}
-
-body
-{
-    color: #eee;
+    color: white;
     background: #333;
     font-family: Helvetica, Arial, Verdana, sans-serif;
+    line-height: 1.5;
+    overflow: hidden;
+    height: 100vh;
+}
+
+.text-post {
+    font-family: mono;
+    margin: 0 auto;
 }
