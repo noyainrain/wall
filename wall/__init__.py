@@ -62,6 +62,8 @@ class WallApp(Application, EventTarget):
             'post_new': self.post_new_msg,
             'get_history': self.get_history_msg
         }
+
+        self.add_post_handler(TextPostHandler(self))
         
         # initialize bricks
         bricks = self.config['bricks'].split()
@@ -269,6 +271,21 @@ class Brick(object):
                 self.stylesheets = [self.id + '.css']
             else:
                 self.stylesheets = []
+
+class TextPost(Post):
+    def __init__(self, id, title, posted, content, **kwargs):
+        super(TextPost, self).__init__(id, title, posted)
+        self.content = content
+
+class TextPostHandler(PostHandler):
+    cls = TextPost
+
+    def create_post(self, **args):
+        content = args['content']
+        title = content[:10]
+        post = TextPost(randstr(), title, None, content)
+        self.app.db.hmset(post.id, post.json())
+        return post
 
 def randstr(length=8, charset=ascii_lowercase):
     return ''.join(choice(charset) for i in xrange(length))
