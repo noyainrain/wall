@@ -258,4 +258,28 @@ $.extend(ns.DoPostHistoryHandler.prototype, ns.DoPostHandler.prototype, {
     }
 });
 
+/* ==== */
+
+$.fn.fitToParent = function() {
+    return this.each(function(index, elem) {
+        elem = $(elem);
+        var parent = elem.parent();
+
+        var ratio = elem.width() / elem.height();
+        var parentRatio = parent.width() / parent.height();
+
+        if (ratio <= parentRatio) {
+            elem.css({
+                "width": parent.height() * ratio,
+                "height": parent.height()
+            });
+        } else {
+            elem.css({
+                "width": parent.width(),
+                "height": parent.width() / ratio
+            });
+        }
+    });
+}
+
 }(wall));
