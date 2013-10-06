@@ -76,6 +76,7 @@ ns.DisplayUi = function(bricks) {
     ns.Ui.call(this, bricks);
     this.loadBricks(bricks, "DisplayBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
+    this.addPostHandler(new wall.display.TextPostHandler());
 };
 
 $.extend(ns.DisplayUi.prototype, ns.Ui.prototype, {
@@ -241,5 +242,29 @@ $.extend(ns.DoPostHistoryHandler.prototype, ns.DoPostHandler.prototype, {
         }, this));
     }
 });
+
+/* ==== */
+
+$.fn.fitToParent = function() {
+    return this.each(function(index, elem) {
+        elem = $(elem);
+        var parent = elem.parent();
+
+        var ratio = elem.width() / elem.height();
+        var parentRatio = parent.width() / parent.height();
+
+        if (ratio <= parentRatio) {
+            elem.css({
+                "width": parent.height() * ratio,
+                "height": parent.height()
+            });
+        } else {
+            elem.css({
+                "width": parent.width(),
+                "height": parent.width() / ratio
+            });
+        }
+    });
+}
 
 }(wall));
