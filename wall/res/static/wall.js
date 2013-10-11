@@ -54,16 +54,16 @@ ns.Ui.prototype = {
         this.socket.addEventListener("close",   $.proxy(this._closed,   this));
         this.socket.addEventListener("message", $.proxy(this._received, this));
     },
-    
+
     _opened: function(event) {
         console.log("connected");
     },
-    
+
     _closed: function(event) {
         console.log("disconnected");
         setTimeout($.proxy(this._connect, this), 1000);
     },
-    
+
     _received: function(event) {
         var msg = JSON.parse(event.data);
         this.msgHandlers[msg.type] && this.msgHandlers[msg.type](msg);
@@ -101,10 +101,10 @@ ns.ClientUi = function(bricks) {
     ns.Ui.call(this);
     this.doPostHandlers = [];
     this.screenStack = [];
-    
+
     this.loadBricks(bricks, "ClientBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
-    
+
     this.showScreen($("#main").detach());
 };
 
@@ -116,11 +116,11 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
     notify: function(msg) {
         $("#notification").text(msg).show();
     },
-    
+
     closeNotification: function() {
         $("#notification").hide();
     },
-    
+
     showScreen: function(screen) {
         if (this.screenStack.length) {
             this.screenStack[this.screenStack.length - 1].hide();
@@ -133,15 +133,15 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
         this.screenStack.pop().remove();
         this.screenStack[this.screenStack.length - 1].show();
     },
-    
+
     post: function(id, callback) {
         this.call("post", {"id": id}, callback);
     },
-    
+
     postNew: function(type, args, callback) {
         this.call("post_new", $.extend({"type": type}, args), callback);
     },
-    
+
     addDoPostHandler: function(handler) {
         this.doPostHandlers.push(handler);
         $("<button>")
@@ -156,7 +156,7 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
         var handler = $(event.currentTarget).data("handler");
         handler.post();
     },
-    
+
     _postedMsg: function(msg) {
         if (this.currentPost) {
             this.currentPostHandler.cleanupPost();
@@ -184,21 +184,38 @@ ns.PostHandler = function() {};
 
 ns.PostHandler.prototype = {
     type: null,
-    
+
     initPost: function(elem, post) {},
-    
+
     cleanupPost: function() {}
 };
 
 /* ==== DoPostHandler ==== */
 
-ns.DoPostHandler = function() {};
+ns.DoPostHandler = function(ui) {
+    this.ui = ui;
+};
 
 ns.DoPostHandler.prototype = {
     title: null,
     icon: null,
-    
+
     post: function() {}
 };
+
+/* ==== DoPostSingleHandler ==== */
+
+ns.DoPostSingleHandler = function(ui, postType, title, icon) {
+    ns.DoPostHandler.call(this, ui);
+    this.postType = postType;
+    this.title = title;
+    this.icon = icon;
+};
+
+$.extend(ns.DoPostSingleHandler.prototype, ns.DoPostHandler.prototype, {
+    post: function() {
+        this.ui.postNew(this.postType, {}, function(post) {});
+    }
+});
 
 }(wall));

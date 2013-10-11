@@ -26,7 +26,7 @@ ns.DisplayUrlPostHandler = function() {
 
 $.extend(ns.DisplayUrlPostHandler.prototype, wall.PostHandler.prototype, {
     type: "UrlPost",
-    
+
     initPost: function(elem, post) {
         this._window = open(post.url, "browser");
     },
@@ -41,7 +41,7 @@ $.extend(ns.DisplayUrlPostHandler.prototype, wall.PostHandler.prototype, {
 ns.ClientBrick = function(ui) {
     wall.Brick.call(this, ui);
     this.ui.addPostHandler(new ns.ClientUrlPostHandler());
-    this.ui.addDoPostHandler(new ns.DoPostUrlHandler(this));
+    this.ui.addDoPostHandler(new ns.DoPostUrlHandler(this.ui));
 };
 
 $.extend(ns.ClientBrick.prototype, wall.Brick.prototype, {
@@ -56,7 +56,7 @@ ns.ClientUrlPostHandler = function() {
 
 $.extend(ns.ClientUrlPostHandler.prototype, wall.PostHandler.prototype, {
     type: "UrlPost",
-    
+
     initPost: function(elem, post) {
         $("<a>").attr("href", post.url).text(post.url).appendTo(elem);
     }
@@ -64,9 +64,8 @@ $.extend(ns.ClientUrlPostHandler.prototype, wall.PostHandler.prototype, {
 
 /* ==== DoPostUrlHandler ==== */
 
-ns.DoPostUrlHandler = function(brick) {
-    this.brick = brick;
-    this.ui = brick.ui;
+ns.DoPostUrlHandler = function(ui) {
+    wall.DoPostHandler.call(this, ui);
 };
 
 $.extend(ns.DoPostUrlHandler.prototype, wall.DoPostHandler.prototype, {
@@ -123,7 +122,7 @@ $.extend(ns.DoPostUrlHandler.prototype, wall.DoPostHandler.prototype, {
             }, this)
         );
     },
-    
+
     _resultClicked: function(event) {
         var result = $(event.currentTarget).data("result");
         this.ui.postNew("UrlPost", {"url": result.url}, $.proxy(function(post) {
