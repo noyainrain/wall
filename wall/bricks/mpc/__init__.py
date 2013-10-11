@@ -8,8 +8,11 @@ from wall import Brick as _Brick, randstr
 
 import mpdclient2
 
+# TODO: port to new brick architecture
+
 class Brick(_Brick):
-    id        = 'mpc'
+    id = 'mpc'
+    maintainer = 'Thomas Karmann <thomas AT krmnn.de>'
     js_module = 'wall.mpc'
     post_type = 'MpcPost'
 

@@ -12,7 +12,7 @@
         
         <script src="/static/jquery.js"></script>
         <script src="/static/wall.js"></script>
-        {% for script in app.js_scripts %}
+        {% for script in app.scripts %}
             <script src="/static/{{ script }}"></script>
         {% end %}
 
@@ -32,16 +32,11 @@
             </h1>
         </div>
 
+        <div id="notification"></div>
+
         <div id="main" class="screen">
             <div id="post"></div>
             <div id="post-menu"></div>
         </div>
-        
-        <div id="post-new" class="screen">
-            <h2></h2>
-            <div class="content"></div>
-        </div>
-
-        <div id="notification"></div>
     </body>
 </html>
