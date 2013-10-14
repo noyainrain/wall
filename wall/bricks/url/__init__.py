@@ -6,37 +6,38 @@ from __future__ import (division, absolute_import, print_function,
 
 import os
 import json
-from wall import Brick as _Brick, randstr, Message
+from wall import Brick, PostHandler, Post, Message, randstr
 from wall.util import WebAPI, Pool
 from urllib import urlencode
 from tornado.httpclient import AsyncHTTPClient
 from functools import partial
 
-class Brick(_Brick):
-    id        = 'url'
-    js_module = 'wall.url'
-    post_type = 'UrlPost'
-    
+class UrlBrick(Brick):
+    id = 'url'
+    maintainer = 'Sven James <sven.jms AT gmail.com>'
+    js_module = 'wall.bricks.url'
+
     def __init__(self, app):
         super(Brick, self).__init__(app)
         self.search_handlers = []
-        
+
+        self.app.add_post_handler(UrlPostHandler(self.app))
         self.app.add_message_handler('url.get_search_handlers',
             self._get_search_handlers_msg)
         self.app.add_message_handler('url.search', self._search_msg)
-        
+
         # ----
-        
+
         self.add_search_handler(
             YoutubeSearchHandler(randstr(), 'Youtube', '#ff0000'))
-        
+
         # ----
-        
+
         titles = self.config.get('url.title', '').split()
         auth_codes = self.config.get('url.auth_code', '').split()
         self.boxes = [Box(t, auth_code=a) for t, a in zip(titles, auth_codes)]
         self.logger.info('%d dropbox(es) configured', len(self.boxes))
-        
+
         for box in self.boxes:
             def cb(result, box):
                 if hasattr(result, 'error') and result.error == 'invalid_grant':
@@ -45,7 +46,7 @@ class Brick(_Brick):
                     return
                 box.token = result.access_token
                 self.add_search_handler(DropboxSearchHandler(randstr(), box))
-            
+
             WebAPI('https://api.dropbox.com/1').call(
                 '/oauth2/token',
                 {
@@ -58,53 +59,55 @@ class Brick(_Brick):
                 method='POST'
             )
 
-    def post_new(self, type, **args):
-        url = args['url'].strip()
-        if not url:
-            raise ValueError('url')
-        if not url.startswith(('http://', 'https://')):
-            url = 'http://' + url
-        return UrlPost(randstr(), url)
-    
     def search(self, query, callback):
         results = []
         def cb():
             callback(results)
         pool = Pool(self.search_handlers, cb)
-        
+
         for handler in self.search_handlers:
             def cb(handler_results, handler):
                 results.extend(handler_results)
                 pool.finish(handler)
             handler.search(query, partial(cb, handler=handler))
-    
+
     def add_search_handler(self, handler):
         self.search_handlers.append(handler)
-    
+
     def _get_search_handlers_msg(self, msg):
         handlers = [h.json() for h in self.search_handlers]
         msg.frm.send(Message(msg.type, handlers))
-    
+
     def _search_msg(self, msg):
         def cb(results):
             msg.frm.send(Message(msg.type, [vars(r) for r in results]))
         self.search(msg.data['query'], cb)
 
-class UrlPost(object):
-    def __init__(self, id, url):
-        self.id = id
+class UrlPostHandler(PostHandler):
+    type = 'UrlPost'
+
+    def create_post(self, **args):
+        url = args['url'].strip()
+        if not url:
+            raise ValueError('url')
+        if not url.startswith(('http://', 'https://')):
+            url = 'http://' + url
+        return UrlPost(self.app, randstr(), url)
+
+class UrlPost(Post):
+    def __init__(self, app, id, url):
+        super(UrlPost, self).__init__(app, id)
         self.url = url
-        self.__type__ = type(self).__name__
 
 class SearchHandler(object):
     def __init__(self, id, title, color):
         self.id = id
         self.title = title
         self.color = color
-    
+
     def search(self, query, callback):
         raise NotImplementedError()
-    
+
     def json(self):
         return {'id': self.id, 'title': self.title, 'color': self.color}
 
@@ -115,6 +118,8 @@ class SearchResult(object):
         self.handler = handler
         self.thumbnail = thumbnail
 
+Brick = UrlBrick
+
 # ----
 # TODO: move to own module once the new plugin architecture is ready
 
@@ -122,30 +127,30 @@ class YoutubeSearchHandler(SearchHandler):
     def search(self, query, callback):
         def cb(response):
             # TODO: check response for errors
-            
+
             data = json.load(response.buffer)
             entries = data['feed']['entry']
-            
+
             results = []
             for entry in entries:
                 meta = entry['media$group']
-                
+
                 # get default video URL and enable autoplay
                 video = filter(lambda v: 'isDefault' in v,
                     meta['media$content'])[0]
                 video = video['url'] + '&autoplay=1'
                 # alternative: video = meta['media$player']['url']
-                
+
                 thumbnail = filter(lambda t: t['yt$name'] == 'default',
                     meta['media$thumbnail'])[0]
                 thumbnail = thumbnail['url']
-                
+
                 result = SearchResult(meta['media$title']['$t'], video, self.id,
                     thumbnail)
                 results.append(result)
-            
+
             callback(results)
-        
+
         # Youtube API documentation:
         # https://developers.google.com/youtube/2.0/developers_guide_protocol
         client = AsyncHTTPClient()
@@ -172,19 +177,19 @@ class DropboxSearchHandler(SearchHandler):
         self.box = box
         self._api = WebAPI('https://api.dropbox.com/1',
             {'access_token': box.token})
-    
+
     def search(self, query, callback):
         def cb(items):
             results = []
             def cb():
                 callback(results)
             pool = Pool(items, cb)
-            
+
             for item in items:
                 if item.is_dir:
                     pool.finish(item)
                     continue
-                
+
                 def cb(link, item):
                     result = SearchResult(os.path.basename(item.path), link.url,
                         self.id)
@@ -211,8 +216,8 @@ class BrickTest(TestCase):
     def setUp(self):
         super(BrickTest, self).setUp()
         self.app = WallApp()
-        self.brick = self.app.bricks[0]
-    
+        self.brick = self.app.bricks['url']
+
     def test_search(self):
         def cb(results):
             handlers = set(h.id for h in self.brick.search_handlers)
@@ -225,15 +230,15 @@ class BrickTest(TestCase):
 class DropboxSearchHandlerTest(TestCase):
     """
     Test for DropboxSearchHandler. For this test to work, there must be
-    
+
      * a file "called url-test-token.txt" in the current directory, which
        contains a valid Dropbox access token
      * and at least one file in the Dropbox matching the query "Wall" (i.e.
        "Wall.txt").
     """
-    
+
     token_path = 'url-test-token.txt'
-    
+
     def setUp(self):
         super(DropboxSearchHandlerTest, self).setUp()
         try:
@@ -243,7 +248,7 @@ class DropboxSearchHandlerTest(TestCase):
             return
         self.box = Box('Ivanova', token=self.token)
         self.handler = DropboxSearchHandler(randstr(), self.box)
-        
+
     def test_search(self):
         def cb(results):
             self.assertTrue(results)
