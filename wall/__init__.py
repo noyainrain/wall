@@ -63,6 +63,8 @@ class WallApp(Application, EventTarget):
             'get_history': self.get_history_msg
         }
 
+        self.add_post_handler(ImagePostHandler(self))
+
         # initialize bricks
         bricks = self.config['bricks'].split()
         for name in bricks:
@@ -285,6 +287,20 @@ class Brick(object):
                 self.stylesheets = [self.id + '.css']
             else:
                 self.stylesheets = []
+
+class ImagePost(Post):
+    def __init__(self, app, id, title, posted, url, **kwargs):
+        super(ImagePost, self).__init__(app, id, title, posted, **kwargs)
+        self.url = url
+
+class ImagePostHandler(PostHandler):
+    cls = ImagePost
+
+    def create_post(self, **args):
+        url = args['url']
+        post = ImagePost(self.app, randstr(), url, None, url)
+        self.app.db.hmset(post.id, post.json())
+        return post
 
 def randstr(length=8, charset=ascii_lowercase):
     return ''.join(choice(charset) for i in xrange(length))

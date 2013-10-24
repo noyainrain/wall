@@ -76,6 +76,7 @@ ns.DisplayUi = function(bricks) {
     ns.Ui.call(this, bricks);
     this.loadBricks(bricks, "DisplayBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
+    this.addPostHandler(new wall.display.ImagePostHandler());
 };
 
 $.extend(ns.DisplayUi.prototype, ns.Ui.prototype, {

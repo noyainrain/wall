@@ -6,37 +6,49 @@ wall.bricks = wall.bricks || {};
 wall.bricks.photo = {};
 (function(ns) {
 
-ns.Brick = function(ui) {
+/* ==== DisplayPhotoBrick ==== */
+
+ns.DisplayPhotoBrick = function(ui) {
     wall.Brick.call(this, ui);
+};
+
+$.extend(ns.DisplayPhotoBrick.prototype, wall.Brick.prototype, {
+    id: "photo"
+});
+
+/* ==== ClientPhotoBrick ==== */
+
+ns.ClientPhotoBrick = function(ui) {
+    wall.Brick.call(this, ui);
+    this.ui.addDoPostHandler(new ns.DoPostPhotoHandler(this.ui));
 }
 
-$.extend(ns.Brick.prototype, wall.Brick.prototype, {
-    id: "photo",
-    postType: "ImagePost",
-    postTitle: "Photo",
-    
-    initPost: function(elem, post) {
-        // TODO: render
-        elem.text("ImagePost (display)");
-    },
-    
-    clientInitPost: function(elem, post) {
-        // TODO: render
-        elem.text("ImagePost (remote)");
-    },
-    
-    clientInitPostNewScreen: function(elem) {
+$.extend(ns.ClientPhotoBrick.prototype, wall.Brick.prototype, {
+    id: "photo"
+});
+
+/* ==== DoPostPhotoHandler ==== */
+
+ns.DoPostPhotoHandler = function(ui) {
+    wall.DoPostHandler.call(this, ui);
+};
+
+$.extend(ns.DoPostPhotoHandler.prototype, wall.DoPostHandler.prototype, {
+    title: "Photo",
+    icon: "/static/photo/photo.svg",
+
+    post: function() {
         // experimental technology requires prefix normalization
         navigator.getUserMedia = navigator.getUserMedia ||
             navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
         URL = window.URL || window.webkitURL ||
             {"createObjectURL": function(blob) { return blob; }};
-        
-        elem.append($(ns._html));
+
+        this.ui.showScreen($(ns._html));
         $("#photo-preview video").click($.proxy(this._videoClicked, this));
         $("#photo-post").click($.proxy(this._postClicked, this));
         $("#photo-retry").click($.proxy(this._retryClicked, this));
-        
+
         navigator.getUserMedia(
             {"video": true},
             function(stream) {
@@ -50,7 +62,11 @@ $.extend(ns.Brick.prototype, wall.Brick.prototype, {
             }
         );
     },
-    
+
+    _postClicked: function(event) {
+        // TODO
+    },
+
     _videoClicked: function(event) {
         // TODO: make size adjustment only once
         var video = document.querySelector("#photo-preview video");
@@ -61,7 +77,7 @@ $.extend(ns.Brick.prototype, wall.Brick.prototype, {
         $("#photo-preview video, #photo-video-menu").hide();
         $("#photo-preview canvas, #photo-image-menu").show();
     },
-    
+
     _retryClicked: function(event) {
         $("#photo-preview canvas, #photo-image-menu").hide();
         $("#photo-preview video, #photo-video-menu").show();
@@ -69,7 +85,7 @@ $.extend(ns.Brick.prototype, wall.Brick.prototype, {
 });
 
 ns._html =
-    '<div id="photo-preview">                                            ' +
+    '<div id="photo-preview" class="screen">                             ' +
     '    <video></video>                                                 ' +
     '    <canvas></canvas>                                               ' +
     '    <ul id="photo-video-menu" class="overlay-menu">                 ' +
@@ -79,5 +95,8 @@ ns._html =
     '        <li id="photo-post">Post</li><li id="photo-retry">Retry</li>' +
     '    </ul>                                                           ' +
     '</div>                                                              ';
+
+ns.DisplayBrick = ns.DisplayPhotoBrick;
+ns.ClientBrick = ns.ClientPhotoBrick;
 
 }(wall.bricks.photo));
