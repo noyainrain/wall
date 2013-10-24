@@ -17,8 +17,10 @@ Setup
 
 Wall requires:
 
- * Python  >= 2.6
- * Tornado >= 2.3
+ * Python   >= 2.6
+ * Tornado  >= 2.3
+ * Redis    >= 2.4
+ * redis-py >= 2.4
 
 Run Wall with:
 
@@ -30,15 +32,11 @@ Run Wall with:
 Bricks (aka Plugins)
 --------------------
 
-If you want to create a brick, have a look at wall/url for reference.
+If you want to create a brick, have a look at wall/bricks/url for reference.
 
-At the moment there exists bricks for:
+Currently available bricks:
 
- * YouTube
- * URLs
- * MPD
- * Volume-control
-
+ * URL
 
 Browser support
 ---------------
@@ -53,7 +51,7 @@ Testing
 
 To run the test cases, simply type:
 
-    python -m unittest wall
+    python -m unittest -v wall wall.util wall.bricks.url
 
 Software Used
 -------------
