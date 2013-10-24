@@ -26,7 +26,7 @@ ns.DisplayUrlPostHandler = function() {
 
 $.extend(ns.DisplayUrlPostHandler.prototype, wall.PostHandler.prototype, {
     type: "UrlPost",
-    
+
     initPost: function(elem, post) {
         this._window = open(post.url, "browser");
     },
@@ -56,7 +56,7 @@ ns.ClientUrlPostHandler = function() {
 
 $.extend(ns.ClientUrlPostHandler.prototype, wall.PostHandler.prototype, {
     type: "UrlPost",
-    
+
     initPost: function(elem, post) {
         $("<a>").attr("href", post.url).text(post.url).appendTo(elem);
     }
@@ -122,7 +122,7 @@ $.extend(ns.DoPostUrlHandler.prototype, wall.DoPostHandler.prototype, {
             }, this)
         );
     },
-    
+
     _resultClicked: function(event) {
         var result = $(event.currentTarget).data("result");
         this.ui.postNew("UrlPost", {"url": result.url}, $.proxy(function(post) {

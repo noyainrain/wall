@@ -27,14 +27,14 @@ class WallApp(Application, EventTarget):
     def __init__(self, config={}, config_path=None):
         Application.__init__(self, template_path=template_path, autoescape=None)
         EventTarget.__init__(self)
-        
+
         self.logger = getLogger('wall')
         self.bricks = {}
         self.post_handlers = {}
         self.clients = []
         self.current_post = None
         self._init = True
-        
+
         config_paths = [os.path.join(res_path, 'default.cfg')]
         if config_path:
             config_paths.append(config_path)
@@ -52,17 +52,17 @@ class WallApp(Application, EventTarget):
             for key, value in parser.items(section):
                 self.config[prefix + key] = value
         self.config.update(config)
-        
+
         self.db = StrictRedis(db=int(self.config['db']))
         self.posts = RedisContainer(self.db, 'posts', self._post)
-        
+
         # setup message handlers
         self.msg_handlers = {
             'post': self.post_msg,
             'post_new': self.post_new_msg,
             'get_history': self.get_history_msg
         }
-        
+
         # initialize bricks
         bricks = self.config['bricks'].split()
         for name in bricks:
@@ -88,7 +88,7 @@ class WallApp(Application, EventTarget):
     @property
     def js_modules(self):
         return [b.js_module for b in self.bricks.values()]
-    
+
     @property
     def scripts(self):
         scripts = []
@@ -109,10 +109,10 @@ class WallApp(Application, EventTarget):
         self.listen(8080)
         self.logger.info('server started')
         IOLoop.instance().start()
-    
+
     def add_message_handler(self, type, handler):
         self.msg_handlers[type] = handler
-    
+
     def sendall(self, msg):
         for client in self.clients:
             client.send(msg)
@@ -125,7 +125,7 @@ class WallApp(Application, EventTarget):
     def post_new_msg(self, msg):
         post_type = msg.data.pop('type')
         post = self.post_new(post_type, **msg.data)
-        msg.frm.send(Message('post_new', vars(post)))
+        msg.frm.send(Message('post_new', post.json()))
         # wake display
         Popen('DISPLAY=:0.0 xset dpms force on', shell=True)
 
@@ -165,27 +165,27 @@ class WallApp(Application, EventTarget):
 
     def _post(self, **kwargs):
         cls = self.post_handlers[kwargs['__type__']].cls
-        return cls(**kwargs)
+        return cls(self, **kwargs)
 
 class Socket(WebSocketHandler):
     def initialize(self):
         self.app = self.application
-    
+
     def send(self, msg):
         self.write_message(str(msg))
-    
+
     def open(self):
         print('client connected')
         self.app.clients.append(self)
         self.app.dispatch_event('connected', self)
         if self.app.current_post:
-            self.send(Message('posted', vars(self.app.current_post)))
-    
+            self.send(Message('posted', self.app.current_post.json()))
+
     def on_close(self):
         print('client disconnected')
         self.app.clients.remove(self)
         self.app.dispatch_event('disconnected', self)
-    
+
     def on_message(self, msgstr):
         msg = Message.parse(msgstr, self)
         handle = self.app.msg_handlers[msg.type]
@@ -200,12 +200,12 @@ class Message(object):
     def parse(cls, msgstr, frm=None):
         msg = json.loads(msgstr)
         return Message(msg['type'], msg['data'], frm)
-    
+
     def __init__(self, type, data=None, frm=None):
         self.type = type
         self.data = data
         self.frm  = frm
-    
+
     def __str__(self):
         return json.dumps({'type': self.type, 'data': self.data})
 
@@ -235,14 +235,15 @@ class PostHandler(object):
         pass
 
 class Post(object):
-    def __init__(self, id, title, posted, **kwargs):
+    def __init__(self, app, id, title, posted, **kwargs):
+        self.app = app
         self.id = id
         self.title = title
         self.posted = posted
         self.__type__ = type(self).__name__
 
     def json(self):
-        return vars(self)
+        return dict((k, v) for k, v in vars(self).items() if k != 'app')
 
 class Brick(object):
     """
@@ -254,7 +255,7 @@ class Brick(object):
     static_path = None # default: '<module_dir>/static'
     scripts = None # default: ['<id>.js']
     stylesheets = None # default: ['<id>.css'] if existant, else []
-    
+
     def __init__(self, app):
         self.app = app
         self.config = app.config
@@ -302,7 +303,7 @@ class TestPostHandler(PostHandler):
         self.cleanup_post_called = False
 
     def create_post(self, **args):
-        post = TestPost(randstr(), 'Test', None)
+        post = TestPost(self.app, randstr(), 'Test', None)
         self.app.db.hmset(post.id, post.json())
         return post
 
@@ -316,19 +317,19 @@ class WallTest(TestCase):
     def setUp(self):
         super(WallTest, self).setUp()
         self.app = WallApp(config={'db': 15})
-    
+
     def test_init(self):
         # without config file
         app = WallApp()
         self.assertTrue(app._init)
-        
+
         # valid config file
         f = NamedTemporaryFile(delete=False)
         f.write('[wall]\ndebug = True\n')
         f.close()
         app = WallApp(config_path=f.name)
         self.assertTrue(app._init)
-        
+
         # invalid config file
         f = NamedTemporaryFile(delete=False)
         f.write('foo')
