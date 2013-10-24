@@ -279,6 +279,7 @@ class Brick(object):
         self.logger = getLogger('wall.' + self.id)
 
         # set defaults
+        self.js_module = self.js_module or type(self).__module__
         self.static_path = self.static_path or os.path.join(
             os.path.dirname(sys.modules[self.__module__].__file__), 'static')
         self.scripts = self.scripts or [self.id + '.js']
