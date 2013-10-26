@@ -23,3 +23,13 @@ body
     background: #333;
     font-family: Helvetica, Arial, Verdana, sans-serif;
 }
+
+#image-post
+{
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    -webkit-transform: translate(-50%, -50%);
+}
