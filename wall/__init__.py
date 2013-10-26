@@ -53,6 +53,9 @@ class WallApp(Application, EventTarget):
                 self.config[prefix + key] = value
         self.config.update(config)
 
+        self.remote_config = dict((k.strip('remote_'), v)
+            for k, v in self.config.items() if k.startswith('remote_'))
+
         self.db = StrictRedis(db=int(self.config['db']))
         self.posts = RedisContainer(self.db, 'posts', self._post)
 

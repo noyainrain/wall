@@ -18,7 +18,8 @@
 
         <script>
             $(function() {
-                new wall.ClientUi({{ json_encode(app.js_modules) }});
+                new wall.ClientUi({{ json_encode(app.remote_config) }},
+                    {{ json_encode(app.js_modules) }});
             });
         </script>
     </head>
