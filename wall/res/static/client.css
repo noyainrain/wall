@@ -73,6 +73,17 @@ button {
     padding: 0 1rem;
 }
 
+.fullscreen
+{
+    overflow: hidden;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0;
+}
+
 /* ==== Selectable List ==== */
 
 ul.select li {
@@ -104,10 +115,13 @@ ul.select p {
 
 /* ==== Page ==== */
 
-body {
+html,
+body
+{
     color: #eee;
     background: #333;
     font-family: Arial, Verdana, sans-serif;
+    height: 100%;
 }
 
 #browser_not_supported {
