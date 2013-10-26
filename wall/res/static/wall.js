@@ -93,19 +93,24 @@ $.extend(ns.DisplayUi.prototype, ns.Ui.prototype, {
 
 /* ==== ClientUi ==== */
 
-ns.ClientUi = function(bricks) {
+ns.ClientUi = function(config, bricks) {
     if(!this.isBrowserSupported()){
         $('#main').html('<div id="browser_not_supported">Your browser is outdated. Please use a decent browser like <a href="https://play.google.com/store/apps/details?id=org.mozilla.firefox">Firefox</a> or <a href="https://play.google.com/store/apps/details?id=com.android.chrome">Chrome</a>.</div>').show();
         return;
     }
 
     ns.Ui.call(this);
+    this.config = config;
     this.doPostHandlers = [];
     this.screenStack = [];
 
     this.loadBricks(bricks, "ClientBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
-    this.addDoPostHandler(new ns.DoPostHistoryHandler(this));
+
+    var doPostHandlers = this.config["do_post_handlers"].split("\s+");
+    if (doPostHandlers.indexOf("history") >= 0) {
+        this.addDoPostHandler(new ns.DoPostHistoryHandler(this));
+    }
 
     this.showScreen($("#main").detach());
 };
