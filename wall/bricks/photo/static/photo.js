@@ -105,8 +105,15 @@ $.extend(ns.DoPostPhotoHandler.prototype, wall.DoPostHandler.prototype, {
     },
 
     _postClicked: function(event) {
-        // TODO
-        this._cleanup();
+        this.ui.notify("Posting...");
+        this.ui.postNew(
+            "ImagePost",
+            {"url": $("#photo-screen canvas").get(0).toDataURL()},
+            $.proxy(function (post) {
+                this.ui.closeNotification();
+                this._cleanup();
+            }, this)
+        );
     },
 
     _imageBackClicked: function(event) {
