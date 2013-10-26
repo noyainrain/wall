@@ -2,20 +2,29 @@
  * Wall
  */
 
-#photo-preview
-{
-    position: relative;
-}
-
-#photo-preview video,
-#photo-preview canvas
+#photo-screen
 {
     background: black;
-    width: 100%;
-    height: auto;
 }
 
-#photo-preview canvas,
+#photo-screen video
+{
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+#photo-screen canvas
+{
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    -webkit-transform: translate(-50%, -50%);
+}
+
+#photo-screen canvas,
 #photo-image-menu
 {
     display: none;
@@ -26,12 +35,13 @@
 
 ul.overlay-menu
 {
+    text-align: center;
     background: rgba(0, 0, 0, 0.5);
     list-style: none;
     position: absolute;
     z-index: 10;
-    width: 100%;
     left: 0;
+    right: 0;
     bottom: 0;
     margin: 0;
 }
@@ -39,12 +49,7 @@ ul.overlay-menu
 ul.overlay-menu li
 {
     cursor: pointer;
-    border-right: 1px solid #eee;
     display: inline-block;
     margin: 0;
-    padding: 0.25rem;
-}
-ul.overlay-menu li:last-child
-{
-    border-right: none;
+    padding: 0.25rem 0.75rem;
 }
