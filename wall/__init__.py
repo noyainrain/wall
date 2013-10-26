@@ -299,7 +299,7 @@ class ImagePostHandler(PostHandler):
 
     def create_post(self, **args):
         url = args['url']
-        post = ImagePost(self.app, randstr(), url, None, url)
+        post = ImagePost(self.app, randstr(), "Photo", None, url)
         self.app.db.hmset(post.id, post.json())
         return post
 
