@@ -104,6 +104,8 @@ ns.ClientUi = function(config, bricks) {
     this.doPostHandlers = [];
     this.screenStack = [];
 
+    window.onerror = $.proxy(this._erred, this);
+
     this.loadBricks(bricks, "ClientBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
 
@@ -172,6 +174,10 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
         this.currentPost = msg.data;
         this.currentPostHandler = this.postHandlers[this.currentPost.__type__];
         this.currentPostHandler.initPost($("#post").show(), this.currentPost);
+    },
+
+    _erred: function(msg, url, line) {
+        this.notify("fatal error: " + msg);
     }
 });
 
