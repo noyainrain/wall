@@ -167,13 +167,20 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
     },
 
     _postedMsg: function(msg) {
-        if (this.currentPost) {
+        // TODO: implement BasePostHandler
+
+        if (this.currentPostHandler) {
             this.currentPostHandler.cleanupPost();
             $("#post").empty().hide();
         }
+
         this.currentPost = msg.data;
-        this.currentPostHandler = this.postHandlers[this.currentPost.__type__];
-        this.currentPostHandler.initPost($("#post").show(), this.currentPost);
+        this.currentPostHandler =
+            this.postHandlers[this.currentPost.__type__] || null;
+        if (this.currentPostHandler) {
+            this.currentPostHandler.initPost($("#post").show(),
+                this.currentPost);
+        }
     },
 
     _erred: function(msg, url, line) {
