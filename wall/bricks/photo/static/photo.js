@@ -57,14 +57,21 @@ $.extend(ns.DoPostPhotoHandler.prototype, wall.DoPostHandler.prototype, {
         navigator.getUserMedia(
             {"video": true},
             $.proxy(function(stream) {
+                // cancel if the user has meanwhile left the screen
+                if ($("#photo-screen").length == 0) {
+                    stream.stop();
+                    return;
+                }
+
                 this._stream = stream;
                 var video = $("#photo-screen video");
                 video.attr("src", URL.createObjectURL(this._stream));
                 video.get(0).play();
             }, this),
-            function(code) {
-                // TODO: handle errors
-                console.log(code);
+            function(error) {
+                // The error handling part of the specification isn't stable
+                // yet (as of November 2013). For now, assume that the error was
+                // caused by the user denying camera access - and do nothing.
             }
         );
     },
@@ -78,6 +85,11 @@ $.extend(ns.DoPostPhotoHandler.prototype, wall.DoPostHandler.prototype, {
     },
 
     _takePhoto: function() {
+        // TODO: enable clicking li and video once the video is initialized
+        if (!this._stream) {
+            return;
+        }
+
         var video = $("#photo-screen video");
         var canvas = $("#photo-screen canvas");
 
