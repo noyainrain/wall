@@ -301,8 +301,9 @@ class ImagePostHandler(PostHandler):
     cls = ImagePost
 
     def create_post(self, **args):
+        # TODO: check args
         url = args['url']
-        post = ImagePost(self.app, randstr(), "Photo", None, url)
+        post = ImagePost(self.app, randstr(), 'Image', None, url)
         self.app.db.hmset(post.id, post.json())
         return post
 

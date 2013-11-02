@@ -22,11 +22,9 @@ ns.ClientPhotoBrick = function(ui) {
     wall.Brick.call(this, ui);
     this.ui.addDoPostHandler(new ns.DoPostPhotoHandler(this.ui));
 
-    // experimental technology requires prefix normalization
     navigator.getUserMedia = navigator.getUserMedia ||
         navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
-    URL = window.URL || window.webkitURL ||
-        {createObjectURL: function(blob) { return blob; }};
+    URL = window.URL || window.webkitURL;
 }
 
 $.extend(ns.ClientPhotoBrick.prototype, wall.Brick.prototype, {
@@ -61,8 +59,7 @@ $.extend(ns.DoPostPhotoHandler.prototype, wall.DoPostHandler.prototype, {
             $.proxy(function(stream) {
                 this._stream = stream;
                 var video = $("#photo-screen video");
-                // TODO: why prop (this is an attr)? (fails on Opera)
-                video.prop("src", URL.createObjectURL(stream));
+                video.attr("src", URL.createObjectURL(this._stream));
                 video.get(0).play();
             }, this),
             function(code) {

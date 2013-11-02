@@ -14,15 +14,15 @@ ns.ImagePostHandler = function() {
 $.extend(ns.ImagePostHandler.prototype, wall.PostHandler.prototype, {
     type: "ImagePost",
 
-    _html: '<img id="image-post" src="" />',
+    _html: '<img class="image-post" src="" />',
 
     initPost: function(elem, post) {
         elem.append($(this._html));
-        var img = $("#image-post");
-        img.attr("src", post.url)
+        var img = $(".image-post");
         img.load(function() {
             img.fitToParent();
         });
+        img.attr("src", post.url);
     }
 });
 
