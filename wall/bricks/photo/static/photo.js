@@ -43,6 +43,10 @@ $.extend(ns.DoPostPhotoHandler.prototype, wall.DoPostHandler.prototype, {
     icon: "/static/photo/photo.svg",
 
     post: function() {
+        if (!navigator.getUserMedia || !window.URL) {
+            this.ui.showNotSupportedScreen("camera access");
+            return;
+        }
         this._init();
     },
 

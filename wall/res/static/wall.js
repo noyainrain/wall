@@ -143,6 +143,11 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
         this.screenStack[this.screenStack.length - 1].show();
     },
 
+    showNotSupportedScreen: function(what) {
+        this.showScreen($(ns._not_supported_html));
+        $("#not-supported-what").text(what);
+    },
+
     post: function(id, callback) {
         this.call("post", {"id": id}, callback);
     },
@@ -299,5 +304,11 @@ $.fn.fitToParent = function() {
         }
     });
 }
+
+ns._not_supported_html =
+    '<div id="#not-supported-screen" class="screen">\n' +
+    '    <h2>Not Supported</h2>\n' +
+    '    <p>Unfortunately, your browser does not support <span id="not-supported-what"></span>. Please use a current browser.</p>\n' +
+    '</div>\n';
 
 }(wall));
