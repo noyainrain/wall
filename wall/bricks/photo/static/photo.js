@@ -104,7 +104,6 @@ $.extend(ns.DoPostPhotoHandler.prototype, wall.DoPostHandler.prototype, {
         $("#photo-screen video, #photo-video-menu").hide();
         $("#photo-screen canvas, #photo-image-menu").show();
 
-        // TODO is this needed if we use width(), height() in fitToParent
         canvas.css({width: "auto", height: "auto"});
         canvas.fitToParent();
     },
