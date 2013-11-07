@@ -53,9 +53,6 @@ class WallApp(Application, EventTarget):
                 self.config[prefix + key] = value
         self.config.update(config)
 
-        self.remote_config = dict((k.strip('remote_'), v)
-            for k, v in self.config.items() if k.startswith('remote_'))
-
         self.db = StrictRedis(db=int(self.config['db']))
         self.posts = RedisContainer(self.db, 'posts', self._post)
 
@@ -74,6 +71,8 @@ class WallApp(Application, EventTarget):
             module = __import__(name, globals(), locals(), [b'foo'])
             brick = module.Brick(self)
             self.bricks[brick.id] = brick
+
+        self.do_post_handlers = self.config['do_post_handlers'].split()
 
         # set Tornado debug mode
         self.settings['debug'] = (self.config['debug'] == 'True')

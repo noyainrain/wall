@@ -93,14 +93,13 @@ $.extend(ns.DisplayUi.prototype, ns.Ui.prototype, {
 
 /* ==== ClientUi ==== */
 
-ns.ClientUi = function(config, bricks) {
+ns.ClientUi = function(bricks, doPostHandlers) {
     if(!this.isBrowserSupported()){
         $('#main').html('<div id="browser_not_supported">Your browser is outdated. Please use a decent browser like <a href="https://play.google.com/store/apps/details?id=org.mozilla.firefox">Firefox</a> or <a href="https://play.google.com/store/apps/details?id=com.android.chrome">Chrome</a>.</div>').show();
         return;
     }
 
     ns.Ui.call(this);
-    this.config = config;
     this.doPostHandlers = [];
     this.screenStack = [];
 
@@ -109,7 +108,13 @@ ns.ClientUi = function(config, bricks) {
     this.loadBricks(bricks, "ClientBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
 
-    var doPostHandlers = this.config["do_post_handlers"].split("\s+");
+    // setup enabled do post handlers
+    for (var i = 0; i < doPostHandlers.length; i++) {
+        var handler = doPostHandlers[i];
+        if (["history"].indexOf(handler) < 0) {
+            console.warn('config: invalid do post handler "' + handler + '"');
+        }
+    }
     if (doPostHandlers.indexOf("history") >= 0) {
         this.addDoPostHandler(new ns.DoPostHistoryHandler(this));
     }
