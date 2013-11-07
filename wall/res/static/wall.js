@@ -104,6 +104,7 @@ ns.ClientUi = function(bricks) {
 
     this.loadBricks(bricks, "ClientBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
+    this.addDoPostHandler(new ns.DoPostHistoryHandler(this));
 
     this.showScreen($("#main").detach());
 };
@@ -215,6 +216,44 @@ ns.DoPostSingleHandler = function(ui, postType, title, icon) {
 $.extend(ns.DoPostSingleHandler.prototype, ns.DoPostHandler.prototype, {
     post: function() {
         this.ui.postNew(this.postType, {}, function(post) {});
+    }
+});
+
+/* ==== DoPostHistoryHandler ==== */
+
+ns.DoPostHistoryHandler = function(ui) {
+    ns.DoPostHandler.call(this, ui);
+};
+
+$.extend(ns.DoPostHistoryHandler.prototype, ns.DoPostHandler.prototype, {
+    title: "History",
+    icon: "/static/images/history.svg",
+
+    post: function() {
+        this.ui.showScreen($(
+            '<div id="post-history-screen" class="screen"> ' +
+            '    <h2>History</h2>                          ' +
+            '    <ul class="select"></ul>                  ' +
+            '</div>                                        '
+        ));
+
+        this.ui.call("get_history", {}, $.proxy(function(posts) {
+            posts.forEach(function(post) {
+                var li = $("<li>")
+                    .data("post", post)
+                    .click($.proxy(this._postClicked, this))
+                    .appendTo($("#post-history-screen ul"));
+                $("<p>").text(post.title).appendTo(li);
+            }, this);
+        }, this));
+    },
+
+    _postClicked: function(event) {
+        var post = $(event.currentTarget).data("post");
+        this.ui.post(post.id, $.proxy(function(post) {
+            // TODO: error handling
+            this.ui.popScreen();
+        }, this));
     }
 });
 

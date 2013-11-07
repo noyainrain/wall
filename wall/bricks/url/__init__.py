@@ -83,8 +83,13 @@ class UrlBrick(Brick):
             msg.frm.send(Message(msg.type, [vars(r) for r in results]))
         self.search(msg.data['query'], cb)
 
+class UrlPost(Post):
+    def __init__(self, app, id, title, posted, url, **kwargs):
+        super(UrlPost, self).__init__(app, id, title, posted, **kwargs)
+        self.url = url
+
 class UrlPostHandler(PostHandler):
-    type = 'UrlPost'
+    cls = UrlPost
 
     def create_post(self, **args):
         url = args['url'].strip()
@@ -92,12 +97,9 @@ class UrlPostHandler(PostHandler):
             raise ValueError('url')
         if not url.startswith(('http://', 'https://')):
             url = 'http://' + url
-        return UrlPost(self.app, randstr(), url)
-
-class UrlPost(Post):
-    def __init__(self, app, id, url):
-        super(UrlPost, self).__init__(app, id)
-        self.url = url
+        post = UrlPost(self.app, randstr(), url, None, url)
+        self.app.db.hmset(post.id, post.json())
+        return post
 
 class SearchHandler(object):
     def __init__(self, id, title, color):

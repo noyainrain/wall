@@ -106,7 +106,7 @@ class PyngPost(Post):
 
     def json(self):
         return dict((k, v) for k, v in super(PyngPost, self).json().items()
-            if k in ['id', '__type__'])
+            if k in ['id', 'title', 'posted', '__type__'])
 
     def _start(self):
         #self.logger.info('match started')
@@ -186,22 +186,27 @@ class PyngPost(Post):
             pass
 
 class PyngPostHandler(PostHandler):
-    type = 'PyngPost'
+    cls = PyngPost
 
     def __init__(self, app):
         super(PyngPostHandler, self).__init__(app)
         self.post = None
 
     def create_post(self, **args):
-        if not self.post:
-            self.post = PyngPost(self.app, randstr())
-        return self.post
+        try:
+            return self.app.posts['pyng']
+        except KeyError:
+            post = PyngPost(self.app, 'pyng', 'Pyng', None)
+            self.app.db.hmset(post.id, post.json())
+            return post
 
     def init_post(self, post):
+        self.post = post
         self.post.init()
 
     def cleanup_post(self):
         self.post.cleanup()
+        self.post = None
 
 class Subscriber(object):
     def __init__(self, id, user):
