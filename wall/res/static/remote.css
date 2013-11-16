@@ -179,14 +179,14 @@ body
 
 /* ==== Main ==== */
 
-#post-menu {
+.post-menu {
     text-align: center;
     margin-top: 2rem;
     font-size: 0; /* remove whitespaces between inline block elements */
     margin-left: 1rem; /* compansate right margin of last button in each row */
 }
 
-#post-menu button {
+.post-menu button {
     height: 5rem;
     width: 5rem;
     padding: 3.75rem 0.2rem 0.2rem 0.2rem;
@@ -202,7 +202,7 @@ body
 }
 
 /* current post */
-#post {
+.post {
     display: none;
     margin-bottom: 1rem;
     color: #222;
@@ -210,16 +210,12 @@ body
     box-shadow: 0.2rem 0.2rem 0.2rem #222;
 }
 
-#post p {
+.post p {
     margin: 1.5rem 0 0 0;
     padding: 0.4rem;
     color: #333;
     font-size: 0.9rem;
     font-weight: bold;
-}
-
-#post-new-panel {
-    display: none;
 }
 
 #notification {

@@ -16,6 +16,7 @@ ns.ClientUi = function(bricks, doPostHandlers) {
     wall.Ui.call(this);
     this.doPostHandlers = [];
     this.screenStack = [];
+    this.postScreen = null;
 
     window.onerror = $.proxy(this._erred, this);
 
@@ -33,7 +34,8 @@ ns.ClientUi = function(bricks, doPostHandlers) {
         this.addDoPostHandler(new ns.DoPostHistoryHandler(this));
     }
 
-    this.showScreen($("#main").detach());
+    this.postScreen = new ns.PostScreen(this);
+    this.showScreen(this.postScreen);
 };
 
 $.extend(ns.ClientUi.prototype, wall.Ui.prototype, {
@@ -51,15 +53,17 @@ $.extend(ns.ClientUi.prototype, wall.Ui.prototype, {
 
     showScreen: function(screen) {
         if (this.screenStack.length) {
-            this.screenStack[this.screenStack.length - 1].hide();
+            this.screenStack[this.screenStack.length - 1].elem.hide();
         }
         this.screenStack.push(screen);
-        $("body").append(screen);
+        $("body").append(screen.elem);
     },
 
     popScreen: function() {
-        this.screenStack.pop().remove();
-        this.screenStack[this.screenStack.length - 1].show();
+        var screen = this.screenStack.pop();
+        screen.cleanup();
+        screen.elem.remove();
+        this.screenStack[this.screenStack.length - 1].elem.show();
     },
 
     showNotSupportedScreen: function(what) {
@@ -77,38 +81,87 @@ $.extend(ns.ClientUi.prototype, wall.Ui.prototype, {
 
     addDoPostHandler: function(handler) {
         this.doPostHandlers.push(handler);
+    },
+
+    _postedMsg: function(msg) {
+        this.currentPost = msg.data;
+        this.postScreen.setPost(this.currentPost);
+    },
+
+    _erred: function(msg, url, line) {
+        this.notify("fatal error: " + msg);
+    }
+});
+
+/* ==== Screen ==== */
+
+ns.Screen = function(ui) {
+    this.ui = ui;
+    this.elem = $(
+        '<div class="screen">' +
+        '    <div class="screen-content"></div>' +
+        '</div>'
+    );
+    this.content = $(".screen-content", this.elem);
+}
+
+ns.Screen.prototype = {
+    cleanup: function() {}
+}
+
+/* ==== PostScreen ==== */
+
+ns.PostScreen = function(ui, post) {
+    post = post || null;
+    ns.Screen.call(this, ui);
+
+    $(
+        '<div class="post"></div>' +
+        '<div class="post-menu"></div>'
+    ).appendTo(this.content);
+
+    // build post menu
+    for (var i = 0; i < this.ui.doPostHandlers.length; i++) {
+        var handler = this.ui.doPostHandlers[i];
         $("<button>")
             .text(handler.title)
             .css("background-image", "url(" + handler.icon + ")")
             .data("handler", handler)
             .click($.proxy(this._postMenuItemClicked, this))
-            .appendTo($("#post-menu"));
+            .appendTo($(".post-menu", this.content));
+    }
+
+    this.setPost(post);
+}
+
+$.extend(ns.PostScreen.prototype, ns.Screen.prototype, {
+    setPost: function(post) {
+        // TODO: implement BasePostHandler
+
+        if (this.post) {
+            var handler = this.ui.postHandlers[this.post.__type__] || null;
+            if (handler) {
+                handler.cleanupPost();
+            }
+            $(".post", this.content).empty().hide();
+        }
+
+        this.post = post;
+        if (this.post) {
+            var handler = this.ui.postHandlers[this.post.__type__] || null;
+            if (handler) {
+                handler.initPost($(".post", this.content).show(), this.post);
+            }
+        }
+    },
+
+    cleanup: function() {
+        this.setPost(null);
     },
 
     _postMenuItemClicked: function(event) {
         var handler = $(event.currentTarget).data("handler");
         handler.post();
-    },
-
-    _postedMsg: function(msg) {
-        // TODO: implement BasePostHandler
-
-        if (this.currentPostHandler) {
-            this.currentPostHandler.cleanupPost();
-            $("#post").empty().hide();
-        }
-
-        this.currentPost = msg.data;
-        this.currentPostHandler =
-            this.postHandlers[this.currentPost.__type__] || null;
-        if (this.currentPostHandler) {
-            this.currentPostHandler.initPost($("#post").show(),
-                this.currentPost);
-        }
-    },
-
-    _erred: function(msg, url, line) {
-        this.notify("fatal error: " + msg);
     }
 });
 
