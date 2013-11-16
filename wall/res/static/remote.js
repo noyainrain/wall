@@ -165,6 +165,37 @@ $.extend(ns.PostScreen.prototype, ns.Screen.prototype, {
     }
 });
 
+/* ==== HistoryScreen ==== */
+
+ns.HistoryScreen = function(ui) {
+    ns.Screen.call(this, ui);
+
+    $(
+        '<h2>History</h2>' +
+        '<ul class="select"></ul>'
+    ).appendTo(this.content);
+
+    this.ui.call("get_history", {}, $.proxy(function(posts) {
+        posts.forEach(function(post) {
+            var li = $("<li>")
+                .data("post", post)
+                .click($.proxy(this._postClicked, this))
+                .appendTo($("ul", this.content));
+            $("<p>").text(post.title).appendTo(li);
+        }, this);
+    }, this));
+}
+
+$.extend(ns.HistoryScreen.prototype, ns.Screen.prototype, {
+    _postClicked: function(event) {
+        var post = $(event.currentTarget).data("post");
+        this.ui.post(post.id, $.proxy(function(post) {
+            // TODO: error handling
+            this.ui.popScreen();
+        }, this));
+    }
+});
+
 /* ==== DoPostHandler ==== */
 
 ns.DoPostHandler = function(ui) {
@@ -204,30 +235,7 @@ $.extend(ns.DoPostHistoryHandler.prototype, ns.DoPostHandler.prototype, {
     icon: "/static/images/history.svg",
 
     post: function() {
-        this.ui.showScreen($(
-            '<div id="post-history-screen" class="screen"> ' +
-            '    <h2>History</h2>                          ' +
-            '    <ul class="select"></ul>                  ' +
-            '</div>                                        '
-        ));
-
-        this.ui.call("get_history", {}, $.proxy(function(posts) {
-            posts.forEach(function(post) {
-                var li = $("<li>")
-                    .data("post", post)
-                    .click($.proxy(this._postClicked, this))
-                    .appendTo($("#post-history-screen ul"));
-                $("<p>").text(post.title).appendTo(li);
-            }, this);
-        }, this));
-    },
-
-    _postClicked: function(event) {
-        var post = $(event.currentTarget).data("post");
-        this.ui.post(post.id, $.proxy(function(post) {
-            // TODO: error handling
-            this.ui.popScreen();
-        }, this));
+        this.ui.showScreen(new ns.HistoryScreen(this.ui));
     }
 });
 
