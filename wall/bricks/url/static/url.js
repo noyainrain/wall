@@ -65,10 +65,10 @@ $.extend(ns.ClientUrlPostHandler.prototype, wall.PostHandler.prototype, {
 /* ==== DoPostUrlHandler ==== */
 
 ns.DoPostUrlHandler = function(ui) {
-    wall.DoPostHandler.call(this, ui);
+    wall.remote.DoPostHandler.call(this, ui);
 };
 
-$.extend(ns.DoPostUrlHandler.prototype, wall.DoPostHandler.prototype, {
+$.extend(ns.DoPostUrlHandler.prototype, wall.remote.DoPostHandler.prototype, {
     title: "URL",
     icon: "/static/url/url.svg",
 

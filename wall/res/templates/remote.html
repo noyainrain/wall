@@ -12,13 +12,15 @@
 
         <script src="/static/jquery.js"></script>
         <script src="/static/wall.js"></script>
+        <script src="/static/display.js"></script>
+        <script src="/static/remote.js"></script>
         {% for script in app.scripts %}
             <script src="/static/{{ script }}"></script>
         {% end %}
 
         <script>
             $(function() {
-                new wall.ClientUi({{ json_encode(app.js_modules) }},
+                new wall.remote.ClientUi({{ json_encode(app.js_modules) }},
                     {{ json_encode(app.do_post_handlers) }});
             });
         </script>

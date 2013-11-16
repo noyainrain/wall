@@ -12,13 +12,14 @@
         <script src="/static/jquery.js"></script>
         <script src="/static/wall.js"></script>
         <script src="/static/display.js"></script>
+        <script src="/static/remote.js"></script>
         {% for script in app.scripts %}
             <script src="/static/{{ script }}"></script>
         {% end %}
 
         <script>
             $(function() {
-                new wall.DisplayUi({{ json_encode(app.js_modules) }});
+                new wall.display.DisplayUi({{ json_encode(app.js_modules) }});
             });
         </script>
     </head>
