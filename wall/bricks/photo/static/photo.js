@@ -34,11 +34,11 @@ $.extend(ns.ClientPhotoBrick.prototype, wall.Brick.prototype, {
 /* ==== DoPostPhotoHandler ==== */
 
 ns.DoPostPhotoHandler = function(ui) {
-    wall.DoPostHandler.call(this, ui);
+    wall.remote.DoPostHandler.call(this, ui);
     this._stream = null;
 };
 
-$.extend(ns.DoPostPhotoHandler.prototype, wall.DoPostHandler.prototype, {
+$.extend(ns.DoPostPhotoHandler.prototype, wall.remote.DoPostHandler.prototype, {
     title: "Photo",
     icon: "/static/photo/photo.svg",
 

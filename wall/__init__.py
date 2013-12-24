@@ -215,7 +215,7 @@ class Message(object):
 
 class ClientPage(RequestHandler):
     def get(self):
-        self.render('client.html', app=self.application)
+        self.render('remote.html', app=self.application)
 
 class DisplayPage(RequestHandler):
     def get(self):

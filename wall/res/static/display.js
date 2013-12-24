@@ -5,6 +5,27 @@
 wall.display = {};
 (function(ns) {
 
+/* ==== DisplayUi ==== */
+
+ns.DisplayUi = function(bricks) {
+    wall.Ui.call(this, bricks);
+    this.loadBricks(bricks, "DisplayBrick");
+    this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
+    this.addPostHandler(new wall.display.ImagePostHandler());
+};
+
+$.extend(ns.DisplayUi.prototype, wall.Ui.prototype, {
+    _postedMsg: function(msg) {
+        if (this.currentPost) {
+            this.currentPostHandler.cleanupPost();
+            $("#content").empty();
+        }
+        this.currentPost = msg.data;
+        this.currentPostHandler = this.postHandlers[this.currentPost.__type__];
+        this.currentPostHandler.initPost($("#content"), this.currentPost);
+    }
+});
+
 /* ==== ImagePostHandler ==== */
 
 ns.ImagePostHandler = function() {
