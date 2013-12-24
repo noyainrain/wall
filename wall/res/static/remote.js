@@ -5,7 +5,7 @@
 wall.remote = {};
 (function(ns) {
 
-/* ==== ClientUi ==== */
+/* ==== RemoteUi ==== */
 
 ns.RemoteUi = function(bricks, doPostHandlers) {
     if(!this.isBrowserSupported()){
