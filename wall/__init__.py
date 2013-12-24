@@ -63,12 +63,16 @@ class WallApp(Application, EventTarget):
             'get_history': self.get_history_msg
         }
 
+        self.add_post_handler(ImagePostHandler(self))
+
         # initialize bricks
         bricks = self.config['bricks'].split()
         for name in bricks:
             module = __import__(name, globals(), locals(), [b'foo'])
             brick = module.Brick(self)
             self.bricks[brick.id] = brick
+
+        self.do_post_handlers = self.config['do_post_handlers'].split()
 
         # set Tornado debug mode
         self.settings['debug'] = (self.config['debug'] == 'True')
@@ -248,13 +252,28 @@ class Post(object):
 class Brick(object):
     """
     An extension (plugin) for Wall.
+
+    Static attributes:
+
+     * id: unique brick identifier. Must be set by subclass.
+     * maintainer: brick maintainer. Must be set by subclass.
+     * js_module: corresponding JavaScript module (i.e. namespace). Defaults to
+       the name of the Python module.
+     * static_path: path to static resources. Defaults to '<module_dir>/static'.
+     * scripts: corresponding JavaScript scripts. Defaults to ['<id>.js'].
+     * stylesheets: corresponding stylesheets. Defaults to ['<id>.css'] if
+       existant, else [].
+
+    Attributes:
+
+     * app: Wall application.
     """
     id = None
     maintainer = None
     js_module = None
-    static_path = None # default: '<module_dir>/static'
-    scripts = None # default: ['<id>.js']
-    stylesheets = None # default: ['<id>.css'] if existant, else []
+    static_path = None
+    scripts = None
+    stylesheets = None
 
     def __init__(self, app):
         self.app = app
@@ -262,6 +281,7 @@ class Brick(object):
         self.logger = getLogger('wall.' + self.id)
 
         # set defaults
+        self.js_module = self.js_module or type(self).__module__
         self.static_path = self.static_path or os.path.join(
             os.path.dirname(sys.modules[self.__module__].__file__), 'static')
         self.scripts = self.scripts or [self.id + '.js']
@@ -270,6 +290,21 @@ class Brick(object):
                 self.stylesheets = [self.id + '.css']
             else:
                 self.stylesheets = []
+
+class ImagePost(Post):
+    def __init__(self, app, id, title, posted, url, **kwargs):
+        super(ImagePost, self).__init__(app, id, title, posted, **kwargs)
+        self.url = url
+
+class ImagePostHandler(PostHandler):
+    cls = ImagePost
+
+    def create_post(self, **args):
+        # TODO: check args
+        url = args['url']
+        post = ImagePost(self.app, randstr(), 'Image', None, url)
+        self.app.db.hmset(post.id, post.json())
+        return post
 
 def randstr(length=8, charset=ascii_lowercase):
     return ''.join(choice(charset) for i in xrange(length))

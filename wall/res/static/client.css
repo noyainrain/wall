@@ -8,6 +8,11 @@
  *  - background:            #333
  *  - background, secondary: #222
  *  - delimiter:             #555
+ *
+ * Spacing:
+ *  - line height:     1.50rem
+ *  - standard margin: 1.50rem
+ *  - small padding:   0.25rem
  */
 
 @import url(/static/normalize.css);
@@ -68,6 +73,17 @@ button {
     padding: 0 1rem;
 }
 
+.fullscreen
+{
+    overflow: hidden;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0;
+}
+
 /* ==== Selectable List ==== */
 
 ul.select li {
@@ -97,12 +113,38 @@ ul.select p {
     overflow: hidden;
 }
 
+/* ==== Overlay Menu ==== */
+
+ul.overlay-menu
+{
+    text-align: center;
+    background: rgba(0, 0, 0, 0.5);
+    list-style: none;
+    position: absolute;
+    z-index: 10;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+}
+
+ul.overlay-menu li
+{
+    cursor: pointer;
+    display: inline-block;
+    margin: 0;
+    padding: 0.25rem 0.5rem;
+}
+
 /* ==== Page ==== */
 
-body {
+html,
+body
+{
     color: #eee;
     background: #333;
     font-family: Arial, Verdana, sans-serif;
+    height: 100%;
 }
 
 #browser_not_supported {
@@ -128,6 +170,7 @@ body {
     background: rgba(0, 0, 0, 0.9);
     display: none;
     position: fixed;
+    z-index: 100;
     left: 0;
     top: 0;
     padding: 0.3em;

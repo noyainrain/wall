@@ -76,6 +76,7 @@ ns.DisplayUi = function(bricks) {
     ns.Ui.call(this, bricks);
     this.loadBricks(bricks, "DisplayBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
+    this.addPostHandler(new wall.display.ImagePostHandler());
 };
 
 $.extend(ns.DisplayUi.prototype, ns.Ui.prototype, {
@@ -92,7 +93,7 @@ $.extend(ns.DisplayUi.prototype, ns.Ui.prototype, {
 
 /* ==== ClientUi ==== */
 
-ns.ClientUi = function(bricks) {
+ns.ClientUi = function(bricks, doPostHandlers) {
     if(!this.isBrowserSupported()){
         $('#main').html('<div id="browser_not_supported">Your browser is outdated. Please use a decent browser like <a href="https://play.google.com/store/apps/details?id=org.mozilla.firefox">Firefox</a> or <a href="https://play.google.com/store/apps/details?id=com.android.chrome">Chrome</a>.</div>').show();
         return;
@@ -102,9 +103,21 @@ ns.ClientUi = function(bricks) {
     this.doPostHandlers = [];
     this.screenStack = [];
 
+    window.onerror = $.proxy(this._erred, this);
+
     this.loadBricks(bricks, "ClientBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
-    this.addDoPostHandler(new ns.DoPostHistoryHandler(this));
+
+    // setup enabled do post handlers
+    for (var i = 0; i < doPostHandlers.length; i++) {
+        var handler = doPostHandlers[i];
+        if (["history"].indexOf(handler) < 0) {
+            console.warn('config: invalid do post handler "' + handler + '"');
+        }
+    }
+    if (doPostHandlers.indexOf("history") >= 0) {
+        this.addDoPostHandler(new ns.DoPostHistoryHandler(this));
+    }
 
     this.showScreen($("#main").detach());
 };
@@ -135,6 +148,11 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
         this.screenStack[this.screenStack.length - 1].show();
     },
 
+    showNotSupportedScreen: function(what) {
+        this.showScreen($(ns._not_supported_html));
+        $("#not-supported-what").text(what);
+    },
+
     post: function(id, callback) {
         this.call("post", {"id": id}, callback);
     },
@@ -159,13 +177,24 @@ $.extend(ns.ClientUi.prototype, ns.Ui.prototype, {
     },
 
     _postedMsg: function(msg) {
-        if (this.currentPost) {
+        // TODO: implement BasePostHandler
+
+        if (this.currentPostHandler) {
             this.currentPostHandler.cleanupPost();
             $("#post").empty().hide();
         }
+
         this.currentPost = msg.data;
-        this.currentPostHandler = this.postHandlers[this.currentPost.__type__];
-        this.currentPostHandler.initPost($("#post").show(), this.currentPost);
+        this.currentPostHandler =
+            this.postHandlers[this.currentPost.__type__] || null;
+        if (this.currentPostHandler) {
+            this.currentPostHandler.initPost($("#post").show(),
+                this.currentPost);
+        }
+    },
+
+    _erred: function(msg, url, line) {
+        this.notify("fatal error: " + msg);
     }
 });
 
@@ -256,5 +285,35 @@ $.extend(ns.DoPostHistoryHandler.prototype, ns.DoPostHandler.prototype, {
         }, this));
     }
 });
+
+/* ==== */
+
+$.fn.fitToParent = function() {
+    return this.each(function(index, elem) {
+        elem = $(elem);
+        var parent = elem.parent();
+
+        var ratio = elem.width() / elem.height();
+        var parentRatio = parent.width() / parent.height();
+
+        if (ratio <= parentRatio) {
+            elem.css({
+                "width": parent.height() * ratio,
+                "height": parent.height()
+            });
+        } else {
+            elem.css({
+                "width": parent.width(),
+                "height": parent.width() / ratio
+            });
+        }
+    });
+}
+
+ns._not_supported_html =
+    '<div id="#not-supported-screen" class="screen">\n' +
+    '    <h2>Not Supported</h2>\n' +
+    '    <p>Unfortunately, your browser does not support <span id="not-supported-what"></span>. Please use a current browser.</p>\n' +
+    '</div>\n';
 
 }(wall));
