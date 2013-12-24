@@ -288,6 +288,21 @@ $.extend(ns.DoPostSingleHandler.prototype, ns.DoPostHandler.prototype, {
     }
 });
 
+/* ==== ScreenDoPostHandler ==== */
+
+ns.ScreenDoPostHandler = function(screenClass, title, icon, ui) {
+    ns.DoPostHandler.call(this, ui);
+    this.screenClass = screenClass;
+    this.title = title;
+    this.icon = icon;
+};
+
+$.extend(ns.ScreenDoPostHandler.prototype, ns.DoPostHandler.prototype, {
+    post: function() {
+        this.ui.showScreen(new this.screenClass(this.ui));
+    }
+});
+
 /* ==== DoPostHistoryHandler ==== */
 
 ns.DoPostHistoryHandler = function(ui) {
