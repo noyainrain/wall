@@ -97,17 +97,77 @@ $.extend(ns.ClientUi.prototype, wall.Ui.prototype, {
 
 ns.Screen = function(ui) {
     this.ui = ui;
+    this.title = null;
+    this.actions = [];
+
     this.elem = $(
-        '<div class="screen">' +
+        '<div class="screen">                  ' +
+        '    <header>                          ' +
+        '        <h1></h1>                     ' +
+        '        <ul class="menu"></ul>        ' +
+        '    </header>                         ' +
         '    <div class="screen-content"></div>' +
         '</div>'
     );
     this.content = $(".screen-content", this.elem);
+
+    this.addAction(new ns.GoBackAction(this.ui));
 }
 
 ns.Screen.prototype = {
+    setTitle: function(title) {
+        this.title = title;
+        $("header h1", this.elem).text(this.title || "");
+    },
+
+    addAction: function(action) {
+        this.actions.push(action);
+        var li = $("<li>")
+            .addClass(action.id + "-item")
+            .prependTo($("header .menu", this.elem));
+        $("<button>")
+            .css("background-image", 'url("' + action.icon + '")')
+            .click($.proxy(action.run, action))
+            .appendTo(li);
+    },
+
+    removeAction: function(id) {
+        // TODO: handle invalid id
+        var action = this.actions.filter(function(a) { return a.id === id })[0];
+        this.actions.splice(this.actions.indexOf(action), 1);
+        $("." + action.id + "-item", this.elem).remove();
+    },
+
     cleanup: function() {}
 }
+
+/* ==== Action ==== */
+
+ns.Action = function(ui) {
+    this.ui = ui;
+    this.id = null;
+    this.title = null;
+    this.icon = null;
+}
+
+ns.Action.prototype = {
+    run: function() {}
+}
+
+/* ==== GoBackAction ==== */
+
+ns.GoBackAction = function(ui) {
+    ns.Action.call(this, ui);
+    this.id = "go-back";
+    this.title = "Go Back";
+    this.icon = "/static/images/go-back.svg";
+}
+
+$.extend(ns.GoBackAction.prototype, ns.Action.prototype, {
+    run: function() {
+        this.ui.popScreen();
+    }
+});
 
 /* ==== PostScreen ==== */
 
@@ -115,8 +175,10 @@ ns.PostScreen = function(ui, post) {
     post = post || null;
     ns.Screen.call(this, ui);
 
+    this.removeAction("go-back");
+
     $(
-        '<div class="post"></div>' +
+        '<div class="post"></div>     ' +
         '<div class="post-menu"></div>'
     ).appendTo(this.content);
 
@@ -148,6 +210,7 @@ $.extend(ns.PostScreen.prototype, ns.Screen.prototype, {
 
         this.post = post;
         if (this.post) {
+            this.setTitle(post.title);
             var handler = this.ui.postHandlers[this.post.__type__] || null;
             if (handler) {
                 handler.initPost($(".post", this.content).show(), this.post);
@@ -170,8 +233,9 @@ $.extend(ns.PostScreen.prototype, ns.Screen.prototype, {
 ns.HistoryScreen = function(ui) {
     ns.Screen.call(this, ui);
 
+    this.setTitle("History");
+
     $(
-        '<h2>History</h2>' +
         '<ul class="select"></ul>'
     ).appendTo(this.content);
 
