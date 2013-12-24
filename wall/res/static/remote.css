@@ -17,7 +17,8 @@
  *  - small padding:    0.25rem
  */
 
-@import url(/static/normalize.css);
+@import url("normalize.css");
+@import url("fonts.css");
 
 /* ==== General ==== */
 
@@ -175,9 +176,9 @@ ul.overlay-menu li
 html,
 body
 {
+    font-family: "Open Sans", sans-serif;
     color: #eee;
     background: #333;
-    font-family: Arial, Verdana, sans-serif;
     height: 100%;
 }
 
