@@ -41,7 +41,8 @@ $.extend(ns.DisplayUrlPostHandler.prototype, wall.PostHandler.prototype, {
 ns.ClientBrick = function(ui) {
     wall.Brick.call(this, ui);
     this.ui.addPostHandler(new ns.ClientUrlPostHandler());
-    this.ui.addDoPostHandler(new ns.DoPostUrlHandler(this.ui));
+    this.ui.addDoPostHandler(new wall.remote.ScreenDoPostHandler(
+        ns.PostUrlScreen, "URL", "/static/url/url.svg", this.ui));
 };
 
 $.extend(ns.ClientBrick.prototype, wall.Brick.prototype, {
@@ -62,30 +63,41 @@ $.extend(ns.ClientUrlPostHandler.prototype, wall.PostHandler.prototype, {
     }
 });
 
-/* ==== DoPostUrlHandler ==== */
+/* ==== PostUrlScreen ==== */
 
-ns.DoPostUrlHandler = function(ui) {
-    wall.remote.DoPostHandler.call(this, ui);
-};
+ns.PostUrlScreen = function(ui) {
+    wall.remote.Screen.call(this, ui);
+    this.setTitle("Post URL");
 
-$.extend(ns.DoPostUrlHandler.prototype, wall.remote.DoPostHandler.prototype, {
-    title: "URL",
-    icon: "/static/url/url.svg",
+    $(
+        '<input id="url-url" type="url">                ' +
+        '<p class="buttons">                            ' +
+        '    <button id="url-post">Post</button>        ' +
+        '</p>                                           ' +
+        '<section>                                      ' +
+        '    <h3 style="display: inline;">Search</h3>   ' +
+        '    <small id="url-handlers"></small>          ' +
+        '    <input id="url-query" type="search">       ' +
+        '    <p class="buttons">                        ' +
+        '        <button id="url-search">Search</button>' +
+        '    </p>                                       ' +
+        '    <ul class="select" id="url-results"></ul>  ' +
+        '</section>                                     '
+    ).appendTo(this.content);
 
-    post: function() {
-        this.ui.call(
-            "url.get_search_handlers",
-            {},
-            $.proxy(function(handlers) {
-                this.ui.showScreen($(ns._html));
-                handlers = handlers.map(function(h) { return h.title; });
-                $("#url-handlers").text(handlers.join(", "));
-                $("#url-post").click($.proxy(this._postClicked, this));
-                $("#url-search").click($.proxy(this._searchClicked, this));
-            }, this)
-        );
-    },
+    this.ui.call(
+        "url.get_search_handlers",
+        {},
+        $.proxy(function(handlers) {
+            handlers = handlers.map(function(h) { return h.title; });
+            $("#url-handlers").text(handlers.join(", "));
+            $("#url-post").click($.proxy(this._postClicked, this));
+            $("#url-search").click($.proxy(this._searchClicked, this));
+        }, this)
+    );
+}
 
+$.extend(ns.PostUrlScreen.prototype, wall.remote.Screen.prototype, {
     _postClicked: function(event) {
         this.ui.postNew(
             "UrlPost",
@@ -130,23 +142,5 @@ $.extend(ns.DoPostUrlHandler.prototype, wall.remote.DoPostHandler.prototype, {
         }, this));
     }
 });
-
-ns._html =
-    '<div class="screen">                               ' +
-    '    <h2>Post URL</h2>                              ' +
-    '    <input id="url-url" type="url">                ' +
-    '    <p class="buttons">                            ' +
-    '        <button id="url-post">Post</button>        ' +
-    '    </p>                                           ' +
-    '    <section>                                      ' +
-    '        <h3 style="display: inline;">Search</h3>   ' +
-    '        <small id="url-handlers"></small>          ' +
-    '        <input id="url-query" type="search">       ' +
-    '        <p class="buttons">                        ' +
-    '            <button id="url-search">Search</button>' +
-    '        </p>                                       ' +
-    '        <ul class="select" id="url-results"></ul>  ' +
-    '    </section>                                     ' +
-    '</div>                                             ';
 
 }(wall.bricks.url));
