@@ -15,19 +15,8 @@
  *  - small padding:   0.25rem
  */
 
-@import url(/static/normalize.css);
-
-/* fontsquirrel.com fonts */
-@font-face {
-    font-family: 'CabinSketchRegular';
-    src: url('/static/fonts/CabinSketch-Regular-webfont.eot');
-    src: url('/static/fonts/CabinSketch-Regular-webfont.eot?#iefix') format('embedded-opentype'),
-         url('/static/fonts/CabinSketch-Regular-webfont.woff') format('woff'),
-         url('/static/fonts/CabinSketch-Regular-webfont.ttf') format('truetype'),
-         url('/static/fonts/CabinSketch-Regular-webfont.svg#CabinSketchRegular') format('svg');
-    font-weight: normal;
-    font-style: normal;
-}
+@import url("normalize.css");
+@import url("fonts.css");
 
 /* ==== General ==== */
 
@@ -193,7 +182,7 @@ body
 {
     color: #eee;
     background: #333;
-    font-family: Arial, Verdana, sans-serif;
+    font-family: "Open Sans", sans-serif;
     position: relative;
     max-width: 70ch;
     min-height: 100vh;
@@ -208,7 +197,6 @@ body
 
 #header h1
 {
-    font-family: 'CabinSketchRegular', normal;
     line-height: 5.0rem;
     font-size: 4rem;
     text-align: center;

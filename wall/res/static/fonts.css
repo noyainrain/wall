@@ -1,0 +1,23 @@
+/*
+ * Wall
+ */
+
+@font-face
+{
+    font-family: "Open Sans";
+    src: url("fonts/open-sans.woff");
+}
+
+@font-face
+{
+    font-family: "Open Sans";
+    src: url("fonts/open-sans-italic.woff");
+    font-style: italic;
+}
+
+@font-face
+{
+    font-family: "Open Sans";
+    src: url("fonts/open-sans-bold.woff");
+    font-weight: bold;
+}
