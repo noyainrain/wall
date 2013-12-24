@@ -5,9 +5,9 @@
 wall.remote = {};
 (function(ns) {
 
-/* ==== ClientUi ==== */
+/* ==== RemoteUi ==== */
 
-ns.ClientUi = function(bricks, doPostHandlers) {
+ns.RemoteUi = function(bricks, doPostHandlers) {
     if(!this.isBrowserSupported()){
         $('#main').html('<div id="browser_not_supported">Your browser is outdated. Please use a decent browser like <a href="https://play.google.com/store/apps/details?id=org.mozilla.firefox">Firefox</a> or <a href="https://play.google.com/store/apps/details?id=com.android.chrome">Chrome</a>.</div>').show();
         return;
@@ -38,7 +38,7 @@ ns.ClientUi = function(bricks, doPostHandlers) {
     this.showScreen(this.postScreen);
 };
 
-$.extend(ns.ClientUi.prototype, wall.Ui.prototype, {
+$.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
     isBrowserSupported: function(){
         return 'WebSocket' in window;
     },
