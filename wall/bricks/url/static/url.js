@@ -21,6 +21,7 @@ $.extend(ns.DisplayBrick.prototype, wall.Brick.prototype, {
 
 ns.DisplayUrlPostHandler = function() {
     wall.PostHandler.call(this);
+    this.popup = false;
     this._window = null;
 };
 
@@ -28,11 +29,21 @@ $.extend(ns.DisplayUrlPostHandler.prototype, wall.PostHandler.prototype, {
     type: "UrlPost",
 
     initPost: function(elem, post) {
-        this._window = open(post.url, "browser");
+        if (this.popup) {
+            this._window = open(post.url, "browser");
+        } else {
+            $('<iframe>').attr({
+                src: post.url,
+                width: elem.width(),
+                height: elem.height()
+            }).appendTo(elem);
+        }
     },
 
     cleanupPost: function() {
-        this._window.close();
+        if (this.popup) {
+            this._window.close();
+        }
     }
 });
 
