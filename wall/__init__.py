@@ -15,6 +15,7 @@ from string import ascii_lowercase
 from random import choice
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RequestHandler, StaticFileHandler
+import tornado.autoreload
 from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
 from wall.util import EventTarget, RedisContainer
@@ -74,8 +75,9 @@ class WallApp(Application, EventTarget):
 
         self.do_post_handlers = self.config['do_post_handlers'].split()
 
-        # set Tornado debug mode
-        self.settings['debug'] = (self.config['debug'] == 'True')
+        if self.config['debug'] == 'True':
+            tornado.autoreload.watch(os.path.join(res_path, 'default.cfg'))
+            tornado.autoreload.start()
 
         # setup URL handlers
         urls = [
@@ -120,7 +122,7 @@ class WallApp(Application, EventTarget):
     def sendall(self, msg):
         for client in self.clients:
             client.send(msg)
-    
+
     def post_msg(self, msg):
         # TODO: error handling
         post = self.post(msg.data['id'])
