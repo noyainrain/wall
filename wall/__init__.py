@@ -61,7 +61,8 @@ class WallApp(Application, EventTarget):
         self.msg_handlers = {
             'post': self.post_msg,
             'post_new': self.post_new_msg,
-            'get_history': self.get_history_msg
+            'get_history': self.get_history_msg,
+            'block_device': self.block_device_msg
         }
 
         self.add_post_handler(ImagePostHandler(self))
@@ -125,12 +126,12 @@ class WallApp(Application, EventTarget):
 
     def post_msg(self, msg):
         # TODO: error handling
-        post = self.post(msg.data['id'])
+        post = self.post(msg.data['id'], who=msg.frm)
         msg.frm.send(Message('post', post.json()))
 
     def post_new_msg(self, msg):
         post_type = msg.data.pop('type')
-        post = self.post_new(post_type, **msg.data)
+        post = self.post_new(post_type, who=msg.frm, **msg.data)
         msg.frm.send(Message('post_new', post.json()))
         # wake display
         Popen('DISPLAY=:0.0 xset dpms force on', shell=True)
@@ -139,7 +140,11 @@ class WallApp(Application, EventTarget):
         msg.frm.send(Message('get_history',
             [p.json() for p in self.get_history()]))
 
-    def post(self, id):
+    def block_device_msg(self, msg):
+        self.block_device(**msg.data)
+        msg.frm.send(Message('block_device'))
+
+    def post(self, id, who=None):
         try:
             post = self.posts[id]
         except KeyError:
@@ -154,17 +159,25 @@ class WallApp(Application, EventTarget):
         self.current_post = post
         self.post_handlers[post.__type__].init_post(post)
 
+        self.logger.info("%s (%s) posted by %s", post.id,
+            getattr(post, 'url', ''), who.request.remote_ip if who else 'root')
+
         self.sendall(Message('posted', post.json()))
         return post
 
-    def post_new(self, type, **args):
+    def post_new(self, type, who=None, **args):
         handler = self.post_handlers[type]
         post = handler.create_post(**args)
         self.db.sadd('posts', post.id)
-        return self.post(post.id)
+        return self.post(post.id, who)
 
     def get_history(self):
         return sorted(self.posts.values(), key=lambda p: p.posted, reverse=True)
+
+    def block_device(self, device, secret):
+        if secret != self.config['secret']:
+            raise ValueError('secret')
+        self.db.sadd('blocked_devices', device)
 
     def add_post_handler(self, handler):
         self.post_handlers[handler.type] = handler
@@ -193,6 +206,11 @@ class Socket(WebSocketHandler):
         self.app.dispatch_event('disconnected', self)
 
     def on_message(self, msgstr):
+        if self.app.db.sismember('blocked_devices', self.request.remote_ip):
+            self.app.logger.info("blocked message from %s",
+                self.request.remote_ip)
+            return
+
         msg = Message.parse(msgstr, self)
         handle = self.app.msg_handlers[msg.type]
         #try:
