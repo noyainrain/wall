@@ -7,6 +7,7 @@ from __future__ import (division, absolute_import, print_function,
 import sys
 import os
 import json
+import re
 from datetime import datetime
 from logging import StreamHandler, Formatter, getLogger, DEBUG
 from ConfigParser import SafeConfigParser, Error as ConfigParserError
@@ -135,7 +136,7 @@ class WallApp(Application, EventTarget):
 
     def get_history_msg(self, msg):
         msg.frm.send(Message('get_history',
-            [p.json() for p in self.get_history()]))
+            [p.json('common') for p in self.get_history()]))
 
     def post(self, id):
         try:
@@ -246,8 +247,15 @@ class Post(object):
         self.posted = posted
         self.__type__ = type(self).__name__
 
-    def json(self):
-        return dict((k, v) for k, v in vars(self).items() if k != 'app')
+    def json(self, view=None):
+        if not view:
+            filter = lambda k: not re.match('_[^_].*$', k) and k != 'app'
+        elif view == 'common':
+            filter = lambda k: k in ['id', 'title', 'posted', '__type__']
+        else:
+            raise ValueError('view')
+
+        return dict((k, v) for k, v in vars(self).items() if filter(k))
 
 class Brick(object):
     """

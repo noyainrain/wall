@@ -104,9 +104,8 @@ class PyngPost(Post):
         player.y = pos * 100
         player._ups_counter += 1
 
-    def json(self):
-        return dict((k, v) for k, v in super(PyngPost, self).json().items()
-            if k in ['id', 'title', 'posted', '__type__'])
+    def json(self, view=None):
+        return super(PyngPost, self).json('common')
 
     def _start(self):
         #self.logger.info('match started')
