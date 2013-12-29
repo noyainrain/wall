@@ -32,7 +32,7 @@ $.extend(ns.DisplayUrlPostHandler.prototype, wall.PostHandler.prototype, {
         if (this.popup) {
             this._window = open(post.url, "browser");
         } else {
-            $('<iframe>').attr({
+            $('<iframe sandbox="allow-same-origin allow-scripts">').attr({
                 src: post.url,
                 width: elem.width(),
                 height: elem.height()
