@@ -313,7 +313,7 @@ def error_json(error):
     return dict({'__type__': type(error).__name__, 'args': error.args})
 
 def _setup_logger():
-    logger = getLogger('wall')
+    logger = getLogger()
     logger.setLevel(DEBUG)
     handler = StreamHandler()
     handler.setFormatter(
