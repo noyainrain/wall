@@ -160,7 +160,8 @@ class WallApp(Application, EventTarget):
         self.post_handlers[post.__type__].init_post(post)
 
         self.logger.info("%s (%s) posted by %s", post.id,
-            getattr(post, 'url', ''), who.request.remote_ip if who else 'root')
+            getattr(post, 'url', '')[:100],
+            who.request.remote_ip if who else 'root')
 
         self.sendall(Message('posted', post.json()))
         return post
@@ -194,14 +195,14 @@ class Socket(WebSocketHandler):
         self.write_message(str(msg))
 
     def open(self):
-        print('client connected')
+        self.app.logger.debug('client connected')
         self.app.clients.append(self)
         self.app.dispatch_event('connected', self)
         if self.app.current_post:
             self.send(Message('posted', self.app.current_post.json()))
 
     def on_close(self):
-        print('client disconnected')
+        self.app.logger.debug('client disconnected')
         self.app.clients.remove(self)
         self.app.dispatch_event('disconnected', self)
 
