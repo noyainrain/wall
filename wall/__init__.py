@@ -79,9 +79,9 @@ class WallApp(Application, EventTarget):
 
         # setup URL handlers
         urls = [
-            ('/$',            ClientPage),
-            ('/display/$',    DisplayPage),
-            ('/api/socket/$', Socket),
+            ('/$', ClientPage),
+            ('/display$', DisplayPage),
+            ('/api/socket$', Socket),
         ]
         for brick in self.bricks.values():
             urls.append(('/static/{0}/(.+)$'.format(brick.id),
