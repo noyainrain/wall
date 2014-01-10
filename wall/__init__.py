@@ -81,6 +81,7 @@ class WallApp(Application, EventTarget):
         urls = [
             ('/$', ClientPage),
             ('/display$', DisplayPage),
+            ('/display/post$', DisplayPostPage),
             ('/api/socket$', Socket),
         ]
         for brick in self.bricks.values():
@@ -220,6 +221,10 @@ class ClientPage(RequestHandler):
 class DisplayPage(RequestHandler):
     def get(self):
         self.render('display.html', app=self.application)
+
+class DisplayPostPage(RequestHandler):
+    def get(self):
+        self.render('display-post.html', app=self.application)
 
 class PostHandler(object):
     type = None
