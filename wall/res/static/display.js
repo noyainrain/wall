@@ -18,11 +18,19 @@ $.extend(ns.DisplayUi.prototype, wall.Ui.prototype, {
     _postedMsg: function(msg) {
         if (this.currentPost) {
             this.currentPostHandler.cleanupPost();
-            $("#content").empty();
+            $(".post-frame").remove();
         }
+
         this.currentPost = msg.data;
         this.currentPostHandler = this.postHandlers[this.currentPost.__type__];
-        this.currentPostHandler.initPost($("#content"), this.currentPost);
+
+        var iframe = $("<iframe>").addClass("post-frame").appendTo($("body"));
+        iframe.load(function(event) {
+            this.currentPostHandler.initPost(
+                $(".post", $(".post-frame").get(0).contentDocument),
+                this.currentPost);
+        }.bind(this));
+        iframe.attr("src", "/display/post");
     }
 });
 
