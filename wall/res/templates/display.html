@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8" />
 
-        <title>Wall</title>
+        <title>Wall Display</title>
         <link href="/static/display.css" rel="stylesheet" />
         {% for stylesheet in app.stylesheets %}
             <link href="/static/{{ stylesheet }}" rel="stylesheet" />
@@ -25,7 +25,6 @@
     </head>
 
     <body>
-        <div id="content"></div>
         <div id="info">{{ app.config['info_text'] }}</div>
     </body>
 </html>
