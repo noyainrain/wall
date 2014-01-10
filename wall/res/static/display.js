@@ -47,7 +47,7 @@ $.extend(ns.ImagePostHandler.prototype, wall.PostHandler.prototype, {
 
     initPost: function(elem, post) {
         elem.append($(this._html));
-        var img = $(".image-post");
+        var img = $(".image-post", elem);
         img.load(function() {
             img.fitToParent();
         });
