@@ -27,6 +27,8 @@ $.extend(ns.DisplayPyngPostHandler.prototype, wall.PostHandler.prototype, {
     type: "PyngPost",
 
     initPost: function(elem, post) {
+        this.elem = elem;
+
         this.players = {};
         this.ball = null;
 
@@ -36,22 +38,22 @@ $.extend(ns.DisplayPyngPostHandler.prototype, wall.PostHandler.prototype, {
             $.proxy(this._gameOverMsg, this);
         this.ui.msgHandlers["pyng.update"] = $.proxy(this._updateMsg, this);
 
-        elem.append($(ns._html));
+        this.elem.append($(ns._html));
 
         this.ui.call("pyng.subscribe", {}, $.proxy(function(players) {
             this.players = {};
             for (var i = 0; i < players.length; i++) {
                 var player = players[i];
-                this.players[player.id] = new ns.Player(player);
+                this.players[player.id] = new ns.Player(player, this);
             }
-            this.ball = new ns.Ball();
+            this.ball = new ns.Ball(this);
         }, this));
     },
 
     _joinedMsg: function(msg) {
-        player = new ns.Player(msg.data);
+        player = new ns.Player(msg.data, this);
         this.players[player.id] = player;
-        $("#pyng-info").hide();
+        $("#pyng-info", this.elem).hide();
     },
 
     _scoredMsg: function(msg) {
@@ -66,8 +68,8 @@ $.extend(ns.DisplayPyngPostHandler.prototype, wall.PostHandler.prototype, {
         }
         this.players = {};
         this.ball.destroy();
-        this.ball = new ns.Ball();
-        $("#pyng-info").text("Game Over!").show();
+        this.ball = new ns.Ball(this);
+        $("#pyng-info", this.elem).text("Game Over!").show();
     },
 
     _updateMsg: function(msg) {
@@ -154,17 +156,19 @@ $.extend(ns.ClientPyngPostHandler.prototype, wall.PostHandler.prototype, {
 
 /* ==== Player ==== */
 
-ns.Player = function(attrs) {
+ns.Player = function(attrs, pyng) {
+    this.pyng = pyng;
     $.extend(this, attrs);
 
     this.elem = $('<div class="pyng-player pyng-object"></div>')
-        .appendTo("#pyng-playground");
+        .appendTo($("#pyng-playground", this.pyng.elem));
     this.label = $('<div class="pyng-player-label pyng-object"></div>')
-        .appendTo("#pyng-playground");
+        .appendTo($("#pyng-playground", this.pyng.elem));
 
     this.update(this.x, this.y);
     this.setScore(this.score);
 };
+
 ns.Player.prototype = {
     destroy: function() {
         this.elem.remove();
@@ -186,13 +190,15 @@ ns.Player.prototype = {
 
 /* ==== Ball ==== */
 
-ns.Ball = function() {
+ns.Ball = function(pyng) {
+    this.pyng = pyng;
     this.x = 0;
     this.y = 0;
     this.elem = $('<div class="pyng-ball pyng-object"></div>')
-        .appendTo("#pyng-playground");
+        .appendTo($("#pyng-playground", this.pyng.elem));
     this.update(this.x, this.y);
 };
+
 ns.Ball.prototype = {
     destroy: function() {
         this.elem.remove();

@@ -79,9 +79,10 @@ class WallApp(Application, EventTarget):
 
         # setup URL handlers
         urls = [
-            ('/$',            ClientPage),
-            ('/display/$',    DisplayPage),
-            ('/api/socket/$', Socket),
+            ('/$', ClientPage),
+            ('/display$', DisplayPage),
+            ('/display/post$', DisplayPostPage),
+            ('/api/socket$', Socket),
         ]
         for brick in self.bricks.values():
             urls.append(('/static/{0}/(.+)$'.format(brick.id),
@@ -220,6 +221,10 @@ class ClientPage(RequestHandler):
 class DisplayPage(RequestHandler):
     def get(self):
         self.render('display.html', app=self.application)
+
+class DisplayPostPage(RequestHandler):
+    def get(self):
+        self.render('display-post.html', app=self.application)
 
 class PostHandler(object):
     type = None

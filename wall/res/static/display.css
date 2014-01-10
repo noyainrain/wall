@@ -10,8 +10,7 @@
 }
 
 html,
-body,
-#content
+body
 {
     height: 100%;
     overflow: hidden;
@@ -22,6 +21,13 @@ body
     color: #eee;
     background: #333;
     font-family: Helvetica, Arial, Verdana, sans-serif;
+}
+
+.post-frame
+{
+    border: none;
+    width: 100vw;
+    height: 100vh;
 }
 
 .image-post
