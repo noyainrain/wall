@@ -1,34 +1,36 @@
 /*
  * Wall
+ *
+ * Colors:
+ *  - text:                  #fff
+ *  - background:            #333
+ *  - background, secondary: #222
+ *
+ * Spacing:
+ *  - font size / line height: 4vh / 6vh
+ *  - standard padding:        4vh
+ *  - small padding:           1vh
  */
 
-@import url(/static/normalize.css);
+@import url("normalize.css");
+
+/* ==== General ==== */
 
 *
 {
+    line-height: 1.5;
     box-sizing: border-box;
     -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
+    overflow: hidden;
 }
 
 html,
 body
 {
-    height: 100%;
-    overflow: hidden;
-}
-
-body
-{
-    color: #eee;
+    font-family: sans-serif;
+    font-size: 4vh;
+    color: #fff;
     background: #333;
-    font-family: Helvetica, Arial, Verdana, sans-serif;
-}
-
-.post-frame
-{
-    border: none;
-    width: 100vw;
     height: 100vh;
 }
 
@@ -36,20 +38,39 @@ body
 {
     display: block;
     position: absolute;
-    left: 50%;
-    top: 50%;
+    left: 50vw;
+    top: 50vh;
     transform: translate(-50%, -50%);
     -webkit-transform: translate(-50%, -50%);
 }
 
-#info
+/* ==== Page ==== */
+
+.display
 {
-    font-size: 5vh;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.post-frame
+{
+    border: none;
+    flex: auto;
+    order: 0;
+}
+
+.info
+{
     text-align: center;
-    background: #000;
-    padding: 1vh;
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    background: #222;
+    padding: 1vh 4vh;
+    flex: none;
+    order: 1;
+}
+.info:empty
+{
+    display: none;
 }
