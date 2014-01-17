@@ -222,6 +222,7 @@ class ClientPage(RequestHandler):
 
 class DisplayPage(RequestHandler):
     def get(self):
+        # TODO: make app.config['info'] available via API
         self.render('display.html', app=self.application)
 
 class DisplayPostPage(RequestHandler):
