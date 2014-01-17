@@ -49,7 +49,7 @@ ns.Ui.prototype = {
 
     _connect: function() {
         console.log("connecting...");
-        this.socket = new WebSocket("ws://" + location.host + "/api/socket/");
+        this.socket = new WebSocket("ws://" + location.host + "/api/socket");
         this.socket.addEventListener("open",    $.proxy(this._opened,   this));
         this.socket.addEventListener("close",   $.proxy(this._closed,   this));
         this.socket.addEventListener("message", $.proxy(this._received, this));
