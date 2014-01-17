@@ -1,6 +1,6 @@
-/* 
+/*
  * Wall
- * 
+ *
  * Basic client stylesheet.
  *
  * Colors:
@@ -196,7 +196,7 @@ body
     background-size: 2.4rem 2.4rem;
 
     border: none;
-    box-shadow: 0.2rem 0.2rem 0.2rem #222;  
+    box-shadow: 0.2rem 0.2rem 0.2rem #222;
     color: #eee;
     font-size: 0.6rem;
 }
@@ -233,4 +233,3 @@ body
     padding: 0.3em;
     width: 100%;
 }
-
