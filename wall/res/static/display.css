@@ -34,11 +34,6 @@ body
     height: 100vh;
 }
 
-iframe
-{
-    border: none;
-}
-
 .image-post
 {
     display: block;

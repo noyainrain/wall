@@ -21,29 +21,16 @@ $.extend(ns.DisplayBrick.prototype, wall.Brick.prototype, {
 
 ns.DisplayUrlPostHandler = function() {
     wall.PostHandler.call(this);
-    this.popup = false;
-    this._window = null;
 };
 
 $.extend(ns.DisplayUrlPostHandler.prototype, wall.PostHandler.prototype, {
     type: "UrlPost",
 
     initPost: function(elem, post) {
-        if (this.popup) {
-            this._window = open(post.url, "browser");
-        } else {
-            $('<iframe sandbox="allow-same-origin allow-scripts">').attr({
-                src: post.url,
-                width: elem.width(),
-                height: elem.height()
-            }).appendTo(elem);
-        }
-    },
-
-    cleanupPost: function() {
-        if (this.popup) {
-            this._window.close();
-        }
+        elem.append($(
+            '<iframe class="url-post-frame" sandbox="allow-same-origin allow-scripts"></iframe>')
+        );
+        $('.url-post-frame', elem).attr({src: post.url});
     }
 });
 
