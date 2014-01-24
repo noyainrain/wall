@@ -1,35 +1,76 @@
-/* Basic display stylesheet */
+/*
+ * Wall
+ *
+ * Colors:
+ *  - text:                  #fff
+ *  - background:            #333
+ *  - background, secondary: #222
+ *
+ * Spacing:
+ *  - font size / line height: 4vh / 6vh
+ *  - standard padding:        4vh
+ *  - small padding:           1vh
+ */
 
-@import url(/static/normalize.css);
+@import url("normalize.css");
+
+/* ==== General ==== */
 
 *
 {
+    line-height: 1.5;
     box-sizing: border-box;
     -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
-}
-
-html,
-body,
-#content
-{
-    height: 100%;
     overflow: hidden;
 }
 
+html,
 body
 {
-    color: #eee;
+    font-family: sans-serif;
+    font-size: 4vh;
+    color: #fff;
     background: #333;
-    font-family: Helvetica, Arial, Verdana, sans-serif;
+    height: 100vh;
 }
 
 .image-post
 {
     display: block;
     position: absolute;
-    left: 50%;
-    top: 50%;
+    left: 50vw;
+    top: 50vh;
     transform: translate(-50%, -50%);
     -webkit-transform: translate(-50%, -50%);
+}
+
+/* ==== Page ==== */
+
+.display
+{
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.post-frame
+{
+    border: none;
+    flex: auto;
+    order: 0;
+}
+
+.info
+{
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    background: #222;
+    padding: 1vh 4vh;
+    flex: none;
+    order: 1;
+}
+.info:empty
+{
+    display: none;
 }

@@ -16,6 +16,7 @@ from string import ascii_lowercase
 from random import choice
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RequestHandler, StaticFileHandler
+import tornado.autoreload
 from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
 from wall.util import EventTarget, RedisContainer
@@ -75,14 +76,16 @@ class WallApp(Application, EventTarget):
 
         self.do_post_handlers = self.config['do_post_handlers'].split()
 
-        # set Tornado debug mode
-        self.settings['debug'] = (self.config['debug'] == 'True')
+        if self.config['debug'] == 'True':
+            tornado.autoreload.watch(os.path.join(res_path, 'default.cfg'))
+            tornado.autoreload.start()
 
         # setup URL handlers
         urls = [
-            ('/$',            ClientPage),
-            ('/display/$',    DisplayPage),
-            ('/api/socket/$', Socket),
+            ('/$', ClientPage),
+            ('/display$', DisplayPage),
+            ('/display/post$', DisplayPostPage),
+            ('/api/socket$', Socket),
         ]
         for brick in self.bricks.values():
             urls.append(('/static/{0}/(.+)$'.format(brick.id),
@@ -121,7 +124,7 @@ class WallApp(Application, EventTarget):
     def sendall(self, msg):
         for client in self.clients:
             client.send(msg)
-    
+
     def post_msg(self, msg):
         # TODO: error handling
         post = self.post(msg.data['id'])
@@ -220,7 +223,12 @@ class ClientPage(RequestHandler):
 
 class DisplayPage(RequestHandler):
     def get(self):
+        # TODO: make app.config['info'] available via API
         self.render('display.html', app=self.application)
+
+class DisplayPostPage(RequestHandler):
+    def get(self):
+        self.render('display-post.html', app=self.application)
 
 class PostHandler(object):
     type = None
