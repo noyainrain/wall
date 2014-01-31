@@ -7,7 +7,6 @@ from __future__ import (division, absolute_import, print_function,
 import sys
 import os
 import json
-import re
 from datetime import datetime
 from logging import StreamHandler, Formatter, getLogger, DEBUG
 from ConfigParser import SafeConfigParser, Error as ConfigParserError
@@ -148,13 +147,13 @@ class WallApp(Application, EventTarget):
             raise KeyError('id')
 
         if self.current_post:
-            self.post_handlers[self.current_post.__type__].cleanup_post()
+            self.post_handlers[type(self.current_post).__name__].cleanup_post()
 
         post.posted = datetime.utcnow().isoformat()
         self.db.hset(post.id, 'posted', post.posted)
 
         self.current_post = post
-        self.post_handlers[post.__type__].init_post(post)
+        self.post_handlers[type(post).__name__].init_post(post)
 
         self.sendall(Message('posted', post.json()))
         return post
@@ -253,17 +252,17 @@ class Post(object):
         self.id = id
         self.title = title
         self.posted = posted
-        self.__type__ = type(self).__name__
 
     def json(self, view=None):
         if not view:
-            filter = lambda k: not re.match('_[^_].*$', k) and k != 'app'
+            filter = lambda k: not k.startswith('_') and k != 'app'
         elif view == 'common':
-            filter = lambda k: k in ['id', 'title', 'posted', '__type__']
+            filter = lambda k: k in ['id', 'title', 'posted']
         else:
             raise ValueError('view')
 
-        return dict((k, v) for k, v in vars(self).items() if filter(k))
+        return dict(((k, v) for k, v in vars(self).items() if filter(k)),
+            __type__=type(self).__name__)
 
 class Brick(object):
     """
