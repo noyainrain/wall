@@ -15,6 +15,7 @@ from string import ascii_lowercase
 from random import choice
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RequestHandler, StaticFileHandler
+import tornado.autoreload
 from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
 from wall.util import EventTarget, RedisContainer
@@ -74,14 +75,16 @@ class WallApp(Application, EventTarget):
 
         self.do_post_handlers = self.config['do_post_handlers'].split()
 
-        # set Tornado debug mode
-        self.settings['debug'] = (self.config['debug'] == 'True')
+        if self.config['debug'] == 'True':
+            tornado.autoreload.watch(os.path.join(res_path, 'default.cfg'))
+            tornado.autoreload.start()
 
         # setup URL handlers
         urls = [
-            ('/$',            ClientPage),
-            ('/display/$',    DisplayPage),
-            ('/api/socket/$', Socket),
+            ('/$', ClientPage),
+            ('/display$', DisplayPage),
+            ('/display/post$', DisplayPostPage),
+            ('/api/socket$', Socket),
         ]
         for brick in self.bricks.values():
             urls.append(('/static/{0}/(.+)$'.format(brick.id),
@@ -120,7 +123,7 @@ class WallApp(Application, EventTarget):
     def sendall(self, msg):
         for client in self.clients:
             client.send(msg)
-    
+
     def post_msg(self, msg):
         # TODO: error handling
         post = self.post(msg.data['id'])
@@ -135,7 +138,7 @@ class WallApp(Application, EventTarget):
 
     def get_history_msg(self, msg):
         msg.frm.send(Message('get_history',
-            [p.json() for p in self.get_history()]))
+            [p.json('common') for p in self.get_history()]))
 
     def post(self, id):
         try:
@@ -144,13 +147,13 @@ class WallApp(Application, EventTarget):
             raise KeyError('id')
 
         if self.current_post:
-            self.post_handlers[self.current_post.__type__].cleanup_post()
+            self.post_handlers[type(self.current_post).__name__].cleanup_post()
 
         post.posted = datetime.utcnow().isoformat()
         self.db.hset(post.id, 'posted', post.posted)
 
         self.current_post = post
-        self.post_handlers[post.__type__].init_post(post)
+        self.post_handlers[type(post).__name__].init_post(post)
 
         self.sendall(Message('posted', post.json()))
         return post
@@ -219,7 +222,12 @@ class ClientPage(RequestHandler):
 
 class DisplayPage(RequestHandler):
     def get(self):
+        # TODO: make app.config['info'] available via API
         self.render('display.html', app=self.application)
+
+class DisplayPostPage(RequestHandler):
+    def get(self):
+        self.render('display-post.html', app=self.application)
 
 class PostHandler(object):
     type = None
@@ -244,10 +252,17 @@ class Post(object):
         self.id = id
         self.title = title
         self.posted = posted
-        self.__type__ = type(self).__name__
 
-    def json(self):
-        return dict((k, v) for k, v in vars(self).items() if k != 'app')
+    def json(self, view=None):
+        if not view:
+            filter = lambda k: not k.startswith('_') and k != 'app'
+        elif view == 'common':
+            filter = lambda k: k in ['id', 'title', 'posted']
+        else:
+            raise ValueError('view')
+
+        return dict(((k, v) for k, v in vars(self).items() if filter(k)),
+            __type__=type(self).__name__)
 
 class Brick(object):
     """
