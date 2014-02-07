@@ -32,11 +32,14 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     if (doPostHandlers.indexOf("history") >= 0) {
         this.addDoPostHandler(new ns.DoPostHistoryHandler(this));
     }
-
-    this.showScreen($("#main").detach());
 };
 
 $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
+    run: function() {
+        wall.Ui.prototype.run.call(this);
+        this.showScreen($("#main").detach());
+    },
+
     isBrowserSupported: function(){
         return 'WebSocket' in window;
     },

@@ -15,10 +15,13 @@ ns.Ui = function(bricks) {
     this.currentPost = null;
     this.currentPostHandler = null;
     this.socket = null;
-    this._connect();
 };
 
 ns.Ui.prototype = {
+    run: function() {
+        this._connect();
+    },
+
     addPostHandler: function(handler) {
         this.postHandlers[handler.type] = handler;
     },

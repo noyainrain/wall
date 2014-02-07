@@ -21,7 +21,8 @@
         <script>
             $(function() {
                 new wall.remote.RemoteUi({{ json_encode(app.js_modules) }},
-                    {{ json_encode(app.do_post_handlers) }});
+                    {{ json_encode(app.do_post_handlers) }})
+                        .run();
             });
         </script>
     </head>
