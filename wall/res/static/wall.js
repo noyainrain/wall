@@ -15,10 +15,14 @@ ns.Ui = function(bricks) {
     this.currentPost = null;
     this.currentPostHandler = null;
     this.socket = null;
-    this._connect();
+    this.connectionState = "closed";
 };
 
 ns.Ui.prototype = {
+    run: function() {
+        this._connect();
+    },
+
     addPostHandler: function(handler) {
         this.postHandlers[handler.type] = handler;
     },
@@ -53,15 +57,25 @@ ns.Ui.prototype = {
         this.socket.addEventListener("open",    $.proxy(this._opened,   this));
         this.socket.addEventListener("close",   $.proxy(this._closed,   this));
         this.socket.addEventListener("message", $.proxy(this._received, this));
+        this.connectionState = "connecting";
     },
 
     _opened: function(event) {
         console.log("connected");
+        this.connectionState = "open";
     },
 
     _closed: function(event) {
         console.log("disconnected");
-        setTimeout($.proxy(this._connect, this), 1000);
+        if (this.connectionState == "connecting") {
+            this.connectionState = "failed";
+        } else if (this.connectionState == "open") {
+            this.connectionState = "disconnected";
+        } else {
+            // unreachable
+            throw new Error();
+        }
+        setTimeout(this._connect.bind(this), 5000);
     },
 
     _received: function(event) {

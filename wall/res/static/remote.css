@@ -136,6 +136,18 @@ ul.overlay-menu li
     padding: 0.25rem 0.5rem;
 }
 
+/* ==== Connection Screen ==== */
+
+.connection-screen
+{
+    text-align: center;
+}
+
+.connection-screen-detail
+{
+    font-size: 0.9rem;
+}
+
 /* ==== Page ==== */
 
 html,

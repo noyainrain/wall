@@ -19,7 +19,8 @@
 
         <script>
             $(function() {
-                new wall.display.DisplayUi({{ json_encode(app.js_modules) }});
+                new wall.display.DisplayUi({{ json_encode(app.js_modules) }})
+                    .run();
             });
         </script>
     </head>
