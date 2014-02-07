@@ -20,8 +20,8 @@ from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
 from wall.util import EventTarget, RedisContainer
 
-res_path      = os.path.join(os.path.dirname(__file__), 'res')
-static_path   = os.path.join(res_path, 'static')
+res_path = os.path.join(os.path.dirname(__file__), 'res')
+static_path = os.path.join(res_path, 'static')
 template_path = os.path.join(res_path, 'templates')
 
 class WallApp(Application, EventTarget):
@@ -35,6 +35,8 @@ class WallApp(Application, EventTarget):
         self.clients = []
         self.current_post = None
         self._init = True
+
+        self._setup_logger()
 
         config_paths = [os.path.join(res_path, 'default.cfg')]
         if config_path:
@@ -173,6 +175,14 @@ class WallApp(Application, EventTarget):
     def _post(self, **kwargs):
         cls = self.post_handlers[kwargs['__type__']].cls
         return cls(self, **kwargs)
+
+    def _setup_logger(self):
+        logger = getLogger()
+        logger.setLevel(DEBUG)
+        handler = StreamHandler()
+        handler.setFormatter(
+            Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s'))
+        logger.addHandler(handler)
 
 class Socket(WebSocketHandler):
     def initialize(self):
@@ -326,15 +336,6 @@ def randstr(length=8, charset=ascii_lowercase):
 
 def error_json(error):
     return dict({'__type__': type(error).__name__, 'args': error.args})
-
-def _setup_logger():
-    logger = getLogger()
-    logger.setLevel(DEBUG)
-    handler = StreamHandler()
-    handler.setFormatter(
-        Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s'))
-    logger.addHandler(handler)
-_setup_logger()
 
 # ==== Tests ====
 
