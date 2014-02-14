@@ -26,9 +26,9 @@ $.extend(ns.DisplayUi.prototype, wall.Ui.prototype, {
 
         var iframe = $("<iframe>").addClass("post-frame").appendTo($("body"));
         iframe.load(function(event) {
-            this.currentPostHandler.initPost(
-                $(".post", $(".post-frame").get(0).contentDocument),
-                this.currentPost);
+            var elem = $("body", $(".post-frame").get(0).contentDocument);
+            elem.addClass(wall.hyphenate(this.currentPost.__type__));
+            this.currentPostHandler.initPost(elem, this.currentPost);
         }.bind(this));
         iframe.attr("src", "/display/post");
     }

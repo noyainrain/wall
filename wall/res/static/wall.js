@@ -130,4 +130,8 @@ $.fn.fitToParent = function() {
     });
 }
 
+ns.hyphenate = function(camelcased) {
+    return camelcased.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+}
+
 }(wall));

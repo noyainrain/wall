@@ -2,9 +2,29 @@
  * Wall
  */
 
+.url-post
+{
+    padding: 0 1rem;
+}
+
+.url-post-state
+{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.url-post-embedding
+{
+    font-size: 0.8rem;
+    display: none;
+}
+
 .url-post-frame
 {
     border: none;
+    position: absolute;
+    left: 0;
+    top: 0;
     width: 100vw;
     height: 100vh;
 }
