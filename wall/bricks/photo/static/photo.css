@@ -1,0 +1,31 @@
+/*
+ * Wall
+ */
+
+#photo-screen
+{
+    background: black;
+}
+
+#photo-screen video
+{
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+#photo-screen canvas
+{
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    -webkit-transform: translate(-50%, -50%);
+}
+
+#photo-screen canvas,
+#photo-image-menu
+{
+    display: none;
+}

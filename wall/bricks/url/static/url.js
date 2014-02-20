@@ -21,18 +21,35 @@ $.extend(ns.DisplayBrick.prototype, wall.Brick.prototype, {
 
 ns.DisplayUrlPostHandler = function() {
     wall.PostHandler.call(this);
-    this._window = null;
+    this._timeout = null;
 };
 
 $.extend(ns.DisplayUrlPostHandler.prototype, wall.PostHandler.prototype, {
     type: "UrlPost",
-    
+
     initPost: function(elem, post) {
-        this._window = open(post.url, "browser");
+        elem.append($(
+            '<p class="url-post-state">                                   ' +
+            '    Loading <span class="url-post-url"></span> ...           ' +
+            '</p>                                                         ' +
+            '<p class="url-post-embedding">                               ' +
+            '    Some websites don\'t allow them being embedded by other  ' +
+            '    applications like Wall. If this website fails to load, it' +
+            '    might be one of them. Sorry :/ !                         ' +
+            '</p>                                                         ' +
+            '<iframe class="url-post-frame" sandbox="allow-same-origin allow-scripts"></iframe>'
+        ));
+        $('.url-post-url', elem).text(post.url);
+        $('.url-post-frame', elem).attr('src', post.url);
+
+        this._timeout = setTimeout(function() {
+            $(".url-post-embedding", elem).show();
+            this._timeout = null;
+        }.bind(this), 10000);
     },
 
     cleanupPost: function() {
-        this._window.close();
+        clearTimeout(this._timeout);
     }
 });
 
@@ -56,7 +73,7 @@ ns.ClientUrlPostHandler = function() {
 
 $.extend(ns.ClientUrlPostHandler.prototype, wall.PostHandler.prototype, {
     type: "UrlPost",
-    
+
     initPost: function(elem, post) {
         $("<a>").attr("href", post.url).text(post.url).appendTo(elem);
     }
@@ -65,10 +82,10 @@ $.extend(ns.ClientUrlPostHandler.prototype, wall.PostHandler.prototype, {
 /* ==== DoPostUrlHandler ==== */
 
 ns.DoPostUrlHandler = function(ui) {
-    wall.DoPostHandler.call(this, ui);
+    wall.remote.DoPostHandler.call(this, ui);
 };
 
-$.extend(ns.DoPostUrlHandler.prototype, wall.DoPostHandler.prototype, {
+$.extend(ns.DoPostUrlHandler.prototype, wall.remote.DoPostHandler.prototype, {
     title: "URL",
     icon: "/static/url/url.svg",
 
@@ -122,7 +139,7 @@ $.extend(ns.DoPostUrlHandler.prototype, wall.DoPostHandler.prototype, {
             }, this)
         );
     },
-    
+
     _resultClicked: function(event) {
         var result = $(event.currentTarget).data("result");
         this.ui.postNew("UrlPost", {"url": result.url}, $.proxy(function(post) {

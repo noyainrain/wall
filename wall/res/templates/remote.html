@@ -5,20 +5,24 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
 
         <title>Wall Client</title>
-        <link href="/static/client.css" rel="stylesheet" />
+        <link href="/static/remote.css" rel="stylesheet" />
         {% for stylesheet in app.stylesheets %}
             <link href="/static/{{ stylesheet }}" rel="stylesheet" />
         {% end %}
-        
+
         <script src="/static/jquery.js"></script>
         <script src="/static/wall.js"></script>
+        <script src="/static/display.js"></script>
+        <script src="/static/remote.js"></script>
         {% for script in app.scripts %}
             <script src="/static/{{ script }}"></script>
         {% end %}
 
         <script>
             $(function() {
-                new wall.ClientUi({{ json_encode(app.js_modules) }});
+                new wall.remote.RemoteUi({{ json_encode(app.js_modules) }},
+                    {{ json_encode(app.do_post_handlers) }})
+                        .run();
             });
         </script>
     </head>

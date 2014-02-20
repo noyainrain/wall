@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+
+        <title>Wall Display</title>
+        <link href="/static/display.css" rel="stylesheet" />
+        {% for stylesheet in app.stylesheets %}
+            <link href="/static/{{ stylesheet }}" rel="stylesheet" />
+        {% end %}
+    </head>
+
+    <body class="post"></body>
+</html>
