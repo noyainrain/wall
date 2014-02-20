@@ -20,8 +20,8 @@ from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
 from wall.util import EventTarget, RedisContainer
 
-res_path      = os.path.join(os.path.dirname(__file__), 'res')
-static_path   = os.path.join(res_path, 'static')
+res_path = os.path.join(os.path.dirname(__file__), 'res')
+static_path = os.path.join(res_path, 'static')
 template_path = os.path.join(res_path, 'templates')
 
 class WallApp(Application, EventTarget):
@@ -35,6 +35,8 @@ class WallApp(Application, EventTarget):
         self.clients = []
         self.current_post = None
         self._init = True
+
+        self._setup_logger()
 
         config_paths = [os.path.join(res_path, 'default.cfg')]
         if config_path:
@@ -82,9 +84,10 @@ class WallApp(Application, EventTarget):
 
         # setup URL handlers
         urls = [
-            ('/$',            ClientPage),
-            ('/display/$',    DisplayPage),
-            ('/api/socket/$', Socket),
+            ('/$', ClientPage),
+            ('/display$', DisplayPage),
+            ('/display/post$', DisplayPostPage),
+            ('/api/socket$', Socket),
         ]
         for brick in self.bricks.values():
             urls.append(('/static/{0}/(.+)$'.format(brick.id),
@@ -138,7 +141,7 @@ class WallApp(Application, EventTarget):
 
     def get_history_msg(self, msg):
         msg.frm.send(Message('get_history',
-            [p.json() for p in self.get_history()]))
+            [p.json('common') for p in self.get_history()]))
 
     def block_device_msg(self, msg):
         self.block_device(**msg.data)
@@ -151,13 +154,13 @@ class WallApp(Application, EventTarget):
             raise KeyError('id')
 
         if self.current_post:
-            self.post_handlers[self.current_post.__type__].cleanup_post()
+            self.post_handlers[type(self.current_post).__name__].cleanup_post()
 
         post.posted = datetime.utcnow().isoformat()
         self.db.hset(post.id, 'posted', post.posted)
 
         self.current_post = post
-        self.post_handlers[post.__type__].init_post(post)
+        self.post_handlers[type(post).__name__].init_post(post)
 
         self.logger.info("%s (%s) posted by %s", post.id,
             getattr(post, 'url', '')[:100],
@@ -186,6 +189,14 @@ class WallApp(Application, EventTarget):
     def _post(self, **kwargs):
         cls = self.post_handlers[kwargs['__type__']].cls
         return cls(self, **kwargs)
+
+    def _setup_logger(self):
+        logger = getLogger()
+        logger.setLevel(DEBUG)
+        handler = StreamHandler()
+        handler.setFormatter(
+            Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s'))
+        logger.addHandler(handler)
 
 class Socket(WebSocketHandler):
     def initialize(self):
@@ -240,7 +251,12 @@ class ClientPage(RequestHandler):
 
 class DisplayPage(RequestHandler):
     def get(self):
+        # TODO: make app.config['info'] available via API
         self.render('display.html', app=self.application)
+
+class DisplayPostPage(RequestHandler):
+    def get(self):
+        self.render('display-post.html', app=self.application)
 
 class PostHandler(object):
     type = None
@@ -265,10 +281,17 @@ class Post(object):
         self.id = id
         self.title = title
         self.posted = posted
-        self.__type__ = type(self).__name__
 
-    def json(self):
-        return dict((k, v) for k, v in vars(self).items() if k != 'app')
+    def json(self, view=None):
+        if not view:
+            filter = lambda k: not k.startswith('_') and k != 'app'
+        elif view == 'common':
+            filter = lambda k: k in ['id', 'title', 'posted']
+        else:
+            raise ValueError('view')
+
+        return dict(((k, v) for k, v in vars(self).items() if filter(k)),
+            __type__=type(self).__name__)
 
 class Brick(object):
     """
@@ -332,15 +355,6 @@ def randstr(length=8, charset=ascii_lowercase):
 
 def error_json(error):
     return dict({'__type__': type(error).__name__, 'args': error.args})
-
-def _setup_logger():
-    logger = getLogger('wall')
-    logger.setLevel(DEBUG)
-    handler = StreamHandler()
-    handler.setFormatter(
-        Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s'))
-    logger.addHandler(handler)
-_setup_logger()
 
 # ==== Tests ====
 

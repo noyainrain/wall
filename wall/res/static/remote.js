@@ -17,6 +17,13 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     this.doPostHandlers = [];
     this.screenStack = [];
 
+    this._connectionScreen = $(
+        '<div class="screen connection-screen">      ' +
+        '    <p class="connection-screen-state"></p> ' +
+        '    <p class="connection-screen-detail"></p>' +
+        '</div>                                      '
+    );
+
     window.onerror = $.proxy(this._erred, this);
 
     this.loadBricks(bricks, "ClientBrick");
@@ -32,11 +39,15 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     if (doPostHandlers.indexOf("history") >= 0) {
         this.addDoPostHandler(new ns.DoPostHistoryHandler(this));
     }
-
-    this.showScreen($("#main").detach());
 };
 
 $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
+    run: function() {
+        this.showScreen($("#main").detach());
+        this.showScreen(this._connectionScreen);
+        wall.Ui.prototype.run.call(this);
+    },
+
     isBrowserSupported: function(){
         return 'WebSocket' in window;
     },
@@ -58,7 +69,7 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
     },
 
     popScreen: function() {
-        this.screenStack.pop().remove();
+        this.screenStack.pop().detach();
         this.screenStack[this.screenStack.length - 1].show();
     },
 
@@ -83,6 +94,46 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
             .data("handler", handler)
             .click($.proxy(this._postMenuItemClicked, this))
             .appendTo($("#post-menu"));
+    },
+
+    _connect: function() {
+        wall.Ui.prototype._connect.call(this);
+        this._setConnectionScreenState(this.connectionState);
+    },
+
+    _opened: function(event) {
+        wall.Ui.prototype._opened.call(this, event);
+        this.popScreen();
+    },
+
+    _closed: function(event) {
+        wall.Ui.prototype._closed.call(this, event);
+        if (this.connectionState == "disconnected") {
+            this.showScreen(this._connectionScreen);
+        }
+        this._setConnectionScreenState(this.connectionState);
+    },
+
+    _setConnectionScreenState: function(state) {
+        switch (state) {
+        case "connecting":
+            $(".connection-screen-state", this._connectionScreen)
+                .text("Connecting...");
+            $(".connection-screen-detail", this._connectionScreen).empty();
+            break;
+        case "failed":
+            $(".connection-screen-state", this._connectionScreen)
+                .text("Failed to connect!");
+            $(".connection-screen-detail", this._connectionScreen)
+                .text("Retrying shortly.");
+            break;
+        case "disconnected":
+            $(".connection-screen-state", this._connectionScreen)
+                .text("Connection lost!");
+            $(".connection-screen-detail", this._connectionScreen)
+                .text("Trying to reconnect shortly.");
+            break;
+        }
     },
 
     _postMenuItemClicked: function(event) {

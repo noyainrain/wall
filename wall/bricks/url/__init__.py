@@ -137,8 +137,9 @@ class YoutubeSearchHandler(SearchHandler):
             for entry in entries:
                 meta = entry['media$group']
 
-                # construct video URL with autoplay enabled
-                video = 'http://www.youtube.com/embed/{}?autoplay=1'.format(meta['yt$videoid']['$t'])
+                # construct video URL (with autoplay enabled)
+                video = 'https://www.youtube.com/embed/{0}?autoplay=1'.format(
+                    meta['yt$videoid']['$t'])
 
                 thumbnail = filter(lambda t: t['yt$name'] == 'default',
                     meta['media$thumbnail'])[0]

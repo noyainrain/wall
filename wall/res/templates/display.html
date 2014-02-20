@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8" />
 
-        <title>Wall</title>
+        <title>Wall Display</title>
         <link href="/static/display.css" rel="stylesheet" />
         {% for stylesheet in app.stylesheets %}
             <link href="/static/{{ stylesheet }}" rel="stylesheet" />
@@ -19,13 +19,13 @@
 
         <script>
             $(function() {
-                new wall.display.DisplayUi({{ json_encode(app.js_modules) }});
+                new wall.display.DisplayUi({{ json_encode(app.js_modules) }})
+                    .run();
             });
         </script>
     </head>
 
-    <body>
-        <div id="content"></div>
-        <div id="info">{{ app.config['info_text'] }}</div>
+    <body class="display">
+        <div class="info">{{ app.config['info'] }}</div>
     </body>
 </html>
