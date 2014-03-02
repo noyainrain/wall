@@ -8,7 +8,7 @@ import random
 import math
 from math import sin, cos
 from tornado.ioloop import PeriodicCallback
-from wall import Brick, PostHandler, Post, Message, randstr, error_json
+from wall import Brick, Post, Message, randstr, error_json
 
 class PyngBrick(Brick):
     id = 'pyng'
@@ -17,38 +17,52 @@ class PyngBrick(Brick):
 
     def __init__(self, app):
         super(PyngBrick, self).__init__(app)
-        self.post_handler = PyngPostHandler(app)
-        self.app.add_post_handler(self.post_handler)
+        self.app.add_post_type(PyngPost)
         self.app.add_message_handler('pyng.subscribe', self._subscribe_msg)
         self.app.add_message_handler('pyng.join', self._join_msg)
         self.app.add_message_handler('pyng.update', self._update_msg)
 
     def _subscribe_msg(self, msg):
-        if not self.post_handler.post:
+        # TODO: include id in Pyng messages, use it for routing and move the
+        # state test to PyngPost.subscribe
+        if not isinstance(self.app.current_post, PyngPost):
             return
-        players = self.post_handler.post.subscribe(msg.frm)
+        players = self.app.current_post.subscribe(msg.frm)
         msg.frm.send(Message(msg.type, [p.json() for p in players]))
 
     def _join_msg(self, msg):
-        if not self.post_handler.post:
+        # TODO: see _subscribe_msg
+        if not isinstance(self.app.current_post, PyngPost):
             return
         try:
-            self.post_handler.post.join(msg.frm)
+            self.app.current_post.join(msg.frm)
             result = Message(msg.type)
         except ValueError as e:
             result = Message(msg.type, error_json(e))
         msg.frm.send(result)
 
     def _update_msg(self, msg):
-        if not self.post_handler.post:
+        # TODO: see _subscribe_msg
+        if not isinstance(self.app.current_post, PyngPost):
             return
         try:
-            self.post_handler.post.update(msg.frm, msg.data)
+            self.app.current_post.update(msg.frm, msg.data)
         except ValueError:
             pass
 
 class PyngPost(Post):
-    def init(self):
+    @classmethod
+    def create(cls, app, **kwargs):
+        try:
+            return app.posts['pyng']
+        except KeyError:
+            post = PyngPost(app, 'pyng', 'Pyng', None)
+            app.db.hmset(post.id, post.json())
+            return post
+
+    def __init__(self, app, id, title, posted, **kwargs):
+        super(PyngPost, self).__init__(app, id, title, posted, **kwargs)
+
         self.tps = int(self.app.config.get('pyng.tps', '30'))
         self.win_score = int(self.app.config.get('pyng.win_score', '10'))
 
@@ -61,10 +75,11 @@ class PyngPost(Post):
         self._ticks = 0
         self._clock = PeriodicCallback(self._tick, int(1000 / self.tps))
 
+    def activate(self):
         # TODO: remove event listener when post is removed from wall
         self.app.add_event_listener('disconnected', self._disconnected)
 
-    def cleanup(self):
+    def deactivate(self):
         self._stop()
         self.subscribers = []
 
@@ -117,6 +132,7 @@ class PyngPost(Post):
     def _stop(self):
         #self.logger.info('match stopped')
         self._clock.stop()
+        self._ticks = 0
         self.mode = 'lobby'
         self.players = []
         self.ball = None
@@ -183,29 +199,6 @@ class PyngPost(Post):
             self.unsubscribe(user)
         except ValueError:
             pass
-
-class PyngPostHandler(PostHandler):
-    cls = PyngPost
-
-    def __init__(self, app):
-        super(PyngPostHandler, self).__init__(app)
-        self.post = None
-
-    def create_post(self, **args):
-        try:
-            return self.app.posts['pyng']
-        except KeyError:
-            post = PyngPost(self.app, 'pyng', 'Pyng', None)
-            self.app.db.hmset(post.id, post.json())
-            return post
-
-    def init_post(self, post):
-        self.post = post
-        self.post.init()
-
-    def cleanup_post(self):
-        self.post.cleanup()
-        self.post = None
 
 class Subscriber(object):
     def __init__(self, id, user):

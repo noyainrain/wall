@@ -6,7 +6,7 @@ from __future__ import (division, absolute_import, print_function,
 
 import os
 import json
-from wall import Brick, PostHandler, Post, Message, randstr
+from wall import Brick, Post, Message, randstr
 from wall.util import WebAPI, Pool
 from urllib import urlencode
 from tornado.httpclient import AsyncHTTPClient
@@ -21,7 +21,7 @@ class UrlBrick(Brick):
         super(Brick, self).__init__(app)
         self.search_handlers = []
 
-        self.app.add_post_handler(UrlPostHandler(self.app))
+        self.app.add_post_type(UrlPost)
         self.app.add_message_handler('url.get_search_handlers',
             self._get_search_handlers_msg)
         self.app.add_message_handler('url.search', self._search_msg)
@@ -84,22 +84,20 @@ class UrlBrick(Brick):
         self.search(msg.data['query'], cb)
 
 class UrlPost(Post):
-    def __init__(self, app, id, title, posted, url, **kwargs):
-        super(UrlPost, self).__init__(app, id, title, posted, **kwargs)
-        self.url = url
-
-class UrlPostHandler(PostHandler):
-    cls = UrlPost
-
-    def create_post(self, **args):
-        url = args['url'].strip()
+    @classmethod
+    def create(cls, app, **kwargs):
+        url = kwargs['url'].strip()
         if not url:
             raise ValueError('url')
         if not url.startswith(('http://', 'https://')):
             url = 'http://' + url
-        post = UrlPost(self.app, randstr(), url, None, url)
-        self.app.db.hmset(post.id, post.json())
+        post = UrlPost(app, randstr(), url, None, url)
+        app.db.hmset(post.id, post.json())
         return post
+
+    def __init__(self, app, id, title, posted, url, **kwargs):
+        super(UrlPost, self).__init__(app, id, title, posted, **kwargs)
+        self.url = url
 
 class SearchHandler(object):
     def __init__(self, id, title, color):
