@@ -43,11 +43,8 @@ ns.ImagePostHandler = function() {
 $.extend(ns.ImagePostHandler.prototype, wall.PostHandler.prototype, {
     type: "ImagePost",
 
-    _html: '<img class="image-post" src="" />',
-
     initPost: function(elem, post) {
-        elem.append($(this._html));
-        var img = $(".image-post", elem);
+        var img = $('<img src="" />').appendTo(elem);
         img.load(function() {
             img.fitToParent();
         });
