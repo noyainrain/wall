@@ -33,9 +33,8 @@
 
 * {
     line-height: 1.5;
-    -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
     box-sizing: border-box;
+    -moz-box-sizing: border-box;
 }
 
 h1, h2, h3, p, ul, ol, input {
@@ -211,23 +210,6 @@ body
     box-shadow: 0.2rem 0.2rem 0.2rem #222;
     color: #eee;
     font-size: 0.6rem;
-}
-
-/* current post */
-#post {
-    display: none;
-    margin-bottom: 1rem;
-    color: #222;
-    background: #eee;
-    box-shadow: 0.2rem 0.2rem 0.2rem #222;
-}
-
-#post p {
-    margin: 1.5rem 0 0 0;
-    padding: 0.4rem;
-    color: #333;
-    font-size: 0.9rem;
-    font-weight: bold;
 }
 
 #post-new-panel {
