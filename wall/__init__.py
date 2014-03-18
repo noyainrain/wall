@@ -171,6 +171,10 @@ class WallApp(Application, EventTarget):
         return sorted(self.posts.values(), key=lambda p: p.posted, reverse=True)
 
     def add_post_type(self, post_type):
+        """
+        Extension API: register a new post type. `post_type` is a class (type)
+        that extends `Post`.
+        """
         self.post_types[post_type.__name__] = post_type
 
     def _post(self, **kwargs):
