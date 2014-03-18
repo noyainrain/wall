@@ -10,10 +10,9 @@ wall.bricks = {};
 
 ns.Ui = function(bricks) {
     this.bricks = {};
-    this.postHandlers = {};
+    this.postElementTypes = {};
     this.msgHandlers = {};
-    this.currentPost = null;
-    this.currentPostHandler = null;
+    this.currentPostElement = null;
     this.socket = null;
     this.connectionState = "closed";
 };
@@ -21,10 +20,6 @@ ns.Ui = function(bricks) {
 ns.Ui.prototype = {
     run: function() {
         this._connect();
-    },
-
-    addPostHandler: function(handler) {
-        this.postHandlers[handler.type] = handler;
     },
 
     send: function(msg) {
@@ -49,6 +44,15 @@ ns.Ui.prototype = {
             var brick = new module[type](this);
             this.bricks[brick.id] = brick;
         }
+    },
+
+    /**
+     * Extension API: register a new post element type. `postElementType` is a
+     * class (constructor) that extends `PostElement`.
+     */
+    addPostElementType: function(postElementType) {
+        this.postElementTypes[postElementType.prototype.postType] =
+            postElementType;
     },
 
     _connect: function() {
@@ -84,6 +88,28 @@ ns.Ui.prototype = {
     }
 };
 
+/* ==== Element ==== */
+
+ns.Element = function(ui) {
+    this.ui = ui;
+    this.element = null;
+};
+
+ns.Element.prototype = {
+    cleanup: function() {}
+};
+
+/* ==== PostElement ==== */
+
+ns.PostElement = function(post, ui) {
+    ns.Element.call(this, ui);
+    this.post = post;
+};
+
+ns.PostElement.prototype = $.extend(Object.create(ns.Element.prototype), {
+    postType: null
+});
+
 /* ==== Brick ==== */
 
 ns.Brick = function(ui) {
@@ -92,18 +118,6 @@ ns.Brick = function(ui) {
 
 ns.Brick.prototype = {
     id: null
-};
-
-/* ==== PostHandler ==== */
-
-ns.PostHandler = function() {};
-
-ns.PostHandler.prototype = {
-    type: null,
-
-    initPost: function(elem, post) {},
-
-    cleanupPost: function() {}
 };
 
 /* ==== */
@@ -128,10 +142,10 @@ $.fn.fitToParent = function() {
             });
         }
     });
-}
+};
 
 ns.hyphenate = function(camelcased) {
     return camelcased.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
-}
+};
 
 }(wall));
