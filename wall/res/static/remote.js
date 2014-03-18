@@ -142,19 +142,19 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
     },
 
     _postedMsg: function(msg) {
-        // TODO: implement BasePostHandler
+        // TODO: implement (remote) PostElement
 
-        if (this.currentPostHandler) {
-            this.currentPostHandler.cleanupPost();
-            $("#post").empty().hide();
+        if (this.currentPostElement) {
+            this.currentPostElement.element.remove();
+            this.currentPostElement.cleanup();
+            this.currentPostElement = null;
         }
 
-        this.currentPost = msg.data;
-        this.currentPostHandler =
-            this.postHandlers[this.currentPost.__type__] || null;
-        if (this.currentPostHandler) {
-            this.currentPostHandler.initPost($("#post").show(),
-                this.currentPost);
+        var post = msg.data;
+        var postElementType = this.postElementTypes[post.__type__];
+        if (postElementType) {
+            this.currentPostElement = new postElementType(post, this);
+            $("#post").append(this.currentPostElement.element);
         }
     },
 

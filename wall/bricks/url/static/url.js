@@ -10,45 +10,44 @@ wall.bricks.url = {};
 
 ns.DisplayBrick = function(ui) {
     wall.Brick.call(this, ui);
-    this.ui.addPostHandler(new ns.DisplayUrlPostHandler(this));
+    this.ui.addPostElementType(ns.DisplayUrlPostElement);
 };
 
 $.extend(ns.DisplayBrick.prototype, wall.Brick.prototype, {
     id: "url"
 });
 
-/* ==== DisplayUrlPostHandler ==== */
+/* ==== DisplayUrlPostElement ==== */
 
-ns.DisplayUrlPostHandler = function() {
-    wall.PostHandler.call(this);
-    this._timeout = null;
+ns.DisplayUrlPostElement = function(post, ui) {
+    wall.display.PostElement.call(this, post, ui);
+
+    $(
+        '<p class="url-post-state">                                   ' +
+        '    Loading <span class="url-post-url"></span> ...           ' +
+        '</p>                                                         ' +
+        '<p class="url-post-embedding">                               ' +
+        '    Some websites don\'t allow them being embedded by other  ' +
+        '    applications like Wall. If this website fails to load, it' +
+        '    might be one of them. Sorry :/ !                         ' +
+        '</p>                                                         ' +
+        '<iframe class="url-post-frame" sandbox="allow-same-origin allow-scripts"></iframe>'
+    ).appendTo(this.content);
+    $(".url-post-url", this.content).text(post.url);
+    $(".url-post-frame", this.content).attr("src", post.url);
+
+    this._timeout = setTimeout(function() {
+        $(".url-post-embedding", this.content).show();
+        this._timeout = null;
+    }.bind(this), 10000);
 };
 
-$.extend(ns.DisplayUrlPostHandler.prototype, wall.PostHandler.prototype, {
-    type: "UrlPost",
+ns.DisplayUrlPostElement.prototype = $.extend(
+    Object.create(wall.display.PostElement.prototype),
+{
+    postType: "UrlPost",
 
-    initPost: function(elem, post) {
-        elem.append($(
-            '<p class="url-post-state">                                   ' +
-            '    Loading <span class="url-post-url"></span> ...           ' +
-            '</p>                                                         ' +
-            '<p class="url-post-embedding">                               ' +
-            '    Some websites don\'t allow them being embedded by other  ' +
-            '    applications like Wall. If this website fails to load, it' +
-            '    might be one of them. Sorry :/ !                         ' +
-            '</p>                                                         ' +
-            '<iframe class="url-post-frame" sandbox="allow-same-origin allow-scripts"></iframe>'
-        ));
-        $('.url-post-url', elem).text(post.url);
-        $('.url-post-frame', elem).attr('src', post.url);
-
-        this._timeout = setTimeout(function() {
-            $(".url-post-embedding", elem).show();
-            this._timeout = null;
-        }.bind(this), 10000);
-    },
-
-    cleanupPost: function() {
+    cleanup: function() {
         clearTimeout(this._timeout);
     }
 });
@@ -57,7 +56,7 @@ $.extend(ns.DisplayUrlPostHandler.prototype, wall.PostHandler.prototype, {
 
 ns.ClientBrick = function(ui) {
     wall.Brick.call(this, ui);
-    this.ui.addPostHandler(new ns.ClientUrlPostHandler());
+    this.ui.addPostElementType(ns.RemoteUrlPostElement);
     this.ui.addDoPostHandler(new ns.DoPostUrlHandler(this.ui));
 };
 
@@ -65,18 +64,17 @@ $.extend(ns.ClientBrick.prototype, wall.Brick.prototype, {
     id: "url"
 });
 
-/* ==== ClientUrlPostHandler ==== */
+/* ==== RemoteUrlPostElement ==== */
 
-ns.ClientUrlPostHandler = function() {
-    wall.PostHandler.call(this);
+ns.RemoteUrlPostElement = function(post, ui) {
+    wall.PostElement.call(this, post, ui);
+    this.element = $('<p class="post url-post"></p>').text(post.url);
 };
 
-$.extend(ns.ClientUrlPostHandler.prototype, wall.PostHandler.prototype, {
-    type: "UrlPost",
-
-    initPost: function(elem, post) {
-        $("<a>").attr("href", post.url).text(post.url).appendTo(elem);
-    }
+ns.RemoteUrlPostElement.prototype = $.extend(
+    Object.create(wall.PostElement.prototype),
+{
+    postType: "UrlPost"
 });
 
 /* ==== DoPostUrlHandler ==== */
