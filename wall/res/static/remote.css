@@ -224,15 +224,3 @@ body
 #post-new-panel {
     display: none;
 }
-
-#notification {
-    text-align: center;
-    color: white;
-    background: rgba(0, 0, 0, 0.9);
-    display: none;
-    position: fixed;
-    left: 0;
-    top: 0;
-    padding: 0.3em;
-    width: 100%;
-}
