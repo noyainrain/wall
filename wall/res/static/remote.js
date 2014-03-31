@@ -61,16 +61,26 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
     },
 
     showScreen: function(screen) {
-        if (this.screenStack.length) {
-            this.screenStack[this.screenStack.length - 1].hide();
-        }
         this.screenStack.push(screen);
-        $("body").append(screen);
+
+        screen.addClass("screen-pushed")
+            .css("z-index", this.screenStack.length - 1);
+        $(".screen-stack").append(screen);
+
+        // apply screen style (so that subsequent style changes may trigger
+        // animations)
+        getComputedStyle(screen[0]).width;
+
+        screen.addClass("screen-open").removeClass("screen-pushed");
     },
 
     popScreen: function() {
-        this.screenStack.pop().detach();
-        this.screenStack[this.screenStack.length - 1].show();
+        var screen = this.screenStack.pop();
+
+        screen.addClass("screen-popped").removeClass("screen-open");
+        screen.one("transitionend", function(event) {
+            screen.detach();
+        });
     },
 
     showNotSupportedScreen: function(what) {
