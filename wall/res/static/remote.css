@@ -33,6 +33,7 @@
 
 * {
     line-height: 1.5;
+    overflow: hidden;
     box-sizing: border-box;
     -moz-box-sizing: border-box;
 }
@@ -149,13 +150,21 @@ ul.overlay-menu li
 
 /* ==== Page ==== */
 
-html,
+html
+{
+    background: black;
+    overflow: auto;
+}
+
 body
 {
     color: #eee;
     background: #333;
     font-family: Arial, Verdana, sans-serif;
-    height: 100%;
+    position: relative;
+    max-width: 70ch;
+    min-height: 100vh;
+    margin: 0 auto;
 }
 
 #browser_not_supported {
