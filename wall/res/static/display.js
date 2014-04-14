@@ -9,6 +9,7 @@ wall.display = {};
 
 ns.DisplayUi = function(bricks) {
     wall.Ui.call(this, bricks);
+    this.currentPostElement = null;
     this.loadBricks(bricks, "DisplayBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
     this.addPostElementType(ns.ImagePostElement);

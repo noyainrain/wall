@@ -16,13 +16,8 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     wall.Ui.call(this);
     this.doPostHandlers = [];
     this.screenStack = [];
-
-    this._connectionScreen = $(
-        '<div class="screen connection-screen">      ' +
-        '    <p class="connection-screen-state"></p> ' +
-        '    <p class="connection-screen-detail"></p>' +
-        '</div>                                      '
-    );
+    this.mainScreen = null;
+    this._connectionScreen = null;
 
     window.onerror = $.proxy(this._erred, this);
 
@@ -39,11 +34,19 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     if (doPostHandlers.indexOf("history") >= 0) {
         this.addDoPostHandler(new ns.DoPostHistoryHandler(this));
     }
+
+    this.mainScreen = new ns.PostScreen(this);
+    this._connectionScreen = $(
+        '<div class="screen connection-screen">      ' +
+        '    <p class="connection-screen-state"></p> ' +
+        '    <p class="connection-screen-detail"></p>' +
+        '</div>                                      '
+    );
 };
 
 $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
     run: function() {
-        this.showScreen($("#main").detach());
+        this.showScreen(this.mainScreen);
         this.showScreen(this._connectionScreen);
         wall.Ui.prototype.run.call(this);
     },
@@ -61,25 +64,31 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
     },
 
     showScreen: function(screen) {
+        // backward compatibility: wrap HTML elements as pseudo Screen objects
+        // TODO: port all (HTML element) screens to Screen type and remove this
+        if (screen instanceof $) {
+            screen = {element: screen};
+        }
+
         this.screenStack.push(screen);
 
-        screen.addClass("screen-pushed")
+        screen.element.addClass("screen-pushed")
             .css("z-index", this.screenStack.length - 1);
-        $(".screen-stack").append(screen);
+        $(".screen-stack").append(screen.element);
 
         // apply screen style (so that subsequent style changes may trigger
         // animations)
-        getComputedStyle(screen[0]).width;
+        getComputedStyle(screen.element[0]).width;
 
-        screen.addClass("screen-open").removeClass("screen-pushed");
+        screen.element.addClass("screen-open").removeClass("screen-pushed");
     },
 
     popScreen: function() {
         var screen = this.screenStack.pop();
 
-        screen.addClass("screen-popped").removeClass("screen-open");
-        screen.one("transitionend", function(event) {
-            screen.detach();
+        screen.element.addClass("screen-popped").removeClass("screen-open");
+        screen.element.one("transitionend", function(event) {
+            screen.element.removeClass("screen-popped").detach();
         });
     },
 
@@ -98,12 +107,6 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
 
     addDoPostHandler: function(handler) {
         this.doPostHandlers.push(handler);
-        $("<button>")
-            .text(handler.title)
-            .css("background-image", "url(" + handler.icon + ")")
-            .data("handler", handler)
-            .click($.proxy(this._postMenuItemClicked, this))
-            .appendTo($("#post-menu"));
     },
 
     _connect: function() {
@@ -146,31 +149,114 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
         }
     },
 
-    _postMenuItemClicked: function(event) {
-        var handler = $(event.currentTarget).data("handler");
-        handler.post();
-    },
-
     _postedMsg: function(msg) {
-        // TODO: implement (remote) PostElement
-
-        if (this.currentPostElement) {
-            this.currentPostElement.element.remove();
-            this.currentPostElement.cleanup();
-            this.currentPostElement = null;
-        }
-
-        var post = msg.data;
-        var postElementType = this.postElementTypes[post.__type__];
-        if (postElementType) {
-            this.currentPostElement = new postElementType(post, this);
-            $("#post").append(this.currentPostElement.element);
-        }
+        this.mainScreen.post = msg.data;
     },
 
     _erred: function(msg, url, line) {
         this.notify("fatal error: " + msg);
     }
+});
+
+/* ==== Screen ==== */
+
+ns.Screen = function(ui) {
+    wall.Element.call(this, ui);
+    this._title = null;
+
+    this.element = $(
+        '<div class="screen">                  ' +
+        '    <header><h1></h1></header>        ' +
+        '    <div class="screen-content"></div>' +
+        '</div>                                '
+    );
+    this.content = $(".screen-content", this.element);
+
+    this.title = null;
+};
+
+ns.Screen.prototype = Object.create(wall.Element.prototype, {
+    title: {
+        set: function(value) {
+            this._title = value;
+            $("header", this.element).css("display", this._title ? "" : "none");
+            $("header h1", this.element).text(this._title || "");
+        },
+        get: function() {
+            return this._title;
+        }
+    }
+});
+
+/* ==== PostScreen ==== */
+
+ns.PostScreen = function(ui, post) {
+    post = post || null;
+
+    ns.Screen.call(this, ui);
+    this._post = null;
+    this._postElement = null;
+
+    this.element.addClass("post-screen");
+    this.content.append($(
+        '<div class="post-space"></div>' +
+        '<div class="post-menu"></div> '
+    ));
+
+    // build post menu
+    for (var i = 0; i < this.ui.doPostHandlers.length; i++) {
+        var handler = this.ui.doPostHandlers[i];
+         $("<button>")
+             .text(handler.title)
+             .css("background-image", "url(" + handler.icon + ")")
+             .data("handler", handler)
+             .click(this._postMenuItemClicked.bind(this))
+            .appendTo($(".post-menu", this.content));
+    }
+
+    this.title = "Empty Wall";
+    this.post = post;
+};
+
+ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
+    post: {
+        set: function(value) {
+            // TODO: implement (remote) PostElement
+
+            if (this._post) {
+                this._post = null;
+                if (this._postElement) {
+                    $(".post-space", this.content).empty();
+                    this._postElement.cleanup();
+                    this._postElement = null;
+                }
+                this.title = "Empty Wall";
+            }
+
+            this._post = value;
+            if (!this._post) {
+                return;
+            }
+
+            var postElementType =
+                this.ui.postElementTypes[this._post.__type__];
+            if (postElementType) {
+                this._postElement =
+                    new postElementType(this._post, this.ui);
+                $(".post-space", this.content).append(
+                    this._postElement.element);
+            }
+            this.title = this._post.title;
+        },
+        get: function() {
+            return this._post;
+        }
+    },
+
+    _postMenuItemClicked: {value: function(event) {
+        var handler = $(event.currentTarget).data("handler");
+        handler.post();
+     }}
 });
 
 /* ==== DoPostHandler ==== */

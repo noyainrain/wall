@@ -12,7 +12,6 @@ ns.Ui = function(bricks) {
     this.bricks = {};
     this.postElementTypes = {};
     this.msgHandlers = {};
-    this.currentPostElement = null;
     this.socket = null;
     this.connectionState = "closed";
 };
