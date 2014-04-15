@@ -10,50 +10,52 @@ wall.bricks.pyng = {};
 
 ns.DisplayPyngBrick = function(ui) {
     wall.Brick.call(this, ui);
-    this.ui.addPostHandler(new ns.DisplayPyngPostHandler(this.ui));
+    this.ui.addPostElementType(ns.DisplayPyngPostElement);
 };
 
 $.extend(ns.DisplayPyngBrick.prototype, wall.Brick.prototype, {
     id: "pyng"
 });
 
-/* ==== DisplayPyngPostHandler ==== */
+/* ==== DisplayPyngPostElement ==== */
 
-ns.DisplayPyngPostHandler = function(ui) {
-    this.ui = ui;
+ns.DisplayPyngPostElement = function(post, ui) {
+    wall.display.PostElement.call(this, post, ui);
+    this.players = {};
+    this.ball = null;
+
+    this.ui.msgHandlers["pyng.joined"] = $.proxy(this._joinedMsg, this);
+    this.ui.msgHandlers["pyng.scored"] = $.proxy(this._scoredMsg, this);
+    this.ui.msgHandlers["pyng.game_over"] =
+        $.proxy(this._gameOverMsg, this);
+    this.ui.msgHandlers["pyng.update"] = $.proxy(this._updateMsg, this);
+
+    $(
+        '<div id="pyng-playground">       ' +
+        '    <div id="pyng-divider"></div>' +
+        '</div>                           ' +
+        '<div id="pyng-info"></div>       '
+    ).appendTo(this.content);
+
+    this.ui.call("pyng.subscribe", {}, $.proxy(function(players) {
+        this.players = {};
+        for (var i = 0; i < players.length; i++) {
+            var player = players[i];
+            this.players[player.id] = new ns.Player(player, this);
+        }
+        this.ball = new ns.Ball(this);
+    }, this));
 };
 
-$.extend(ns.DisplayPyngPostHandler.prototype, wall.PostHandler.prototype, {
-    type: "PyngPost",
-
-    initPost: function(elem, post) {
-        this.elem = elem;
-
-        this.players = {};
-        this.ball = null;
-
-        this.ui.msgHandlers["pyng.joined"] = $.proxy(this._joinedMsg, this);
-        this.ui.msgHandlers["pyng.scored"] = $.proxy(this._scoredMsg, this);
-        this.ui.msgHandlers["pyng.game_over"] =
-            $.proxy(this._gameOverMsg, this);
-        this.ui.msgHandlers["pyng.update"] = $.proxy(this._updateMsg, this);
-
-        this.elem.append($(ns._html));
-
-        this.ui.call("pyng.subscribe", {}, $.proxy(function(players) {
-            this.players = {};
-            for (var i = 0; i < players.length; i++) {
-                var player = players[i];
-                this.players[player.id] = new ns.Player(player, this);
-            }
-            this.ball = new ns.Ball(this);
-        }, this));
-    },
+ns.DisplayPyngPostElement.prototype = $.extend(
+    Object.create(wall.display.PostElement.prototype),
+{
+    postType: "PyngPost",
 
     _joinedMsg: function(msg) {
         player = new ns.Player(msg.data, this);
         this.players[player.id] = player;
-        $("#pyng-info", this.elem).hide();
+        $("#pyng-info", this.content).hide();
     },
 
     _scoredMsg: function(msg) {
@@ -69,7 +71,7 @@ $.extend(ns.DisplayPyngPostHandler.prototype, wall.PostHandler.prototype, {
         this.players = {};
         this.ball.destroy();
         this.ball = new ns.Ball(this);
-        $("#pyng-info", this.elem).text("Game Over!").show();
+        $("#pyng-info", this.content).text("Game Over!").show();
     },
 
     _updateMsg: function(msg) {
@@ -80,58 +82,59 @@ $.extend(ns.DisplayPyngPostHandler.prototype, wall.PostHandler.prototype, {
             var player = this.players[player_state.id];
             player.update(player_state.x, player_state.y);
         }
-    },
+    }
 });
 
-/* ==== ClientPyngBrick ==== */
+/* ==== RemotePyngBrick ==== */
 
 ns.ClientPyngBrick = function(ui) {
     wall.Brick.call(this, ui);
-    this.ui.addPostHandler(new ns.ClientPyngPostHandler(this.ui));
+    this.ui.addPostElementType(ns.RemotePyngPostElement);
     this.ui.addDoPostHandler(
-        new wall.remote.DoPostSingleHandler(this.ui, "PyngPost", "Pyng", null));
+        new wall.remote.SingleDoPostHandler("PyngPost", "Pyng", null, this.ui));
 };
 
 $.extend(ns.ClientPyngBrick.prototype, wall.Brick.prototype, {
     id: "pyng"
 });
 
-/* ==== ClientPyngPostHandler ==== */
+/* ==== RemotePyngPostElement ==== */
 
-ns.ClientPyngPostHandler = function(ui) {
-    this.ui = ui;
+ns.RemotePyngPostElement = function(post, ui) {
+    wall.PostElement.call(this, post, ui);
+    this.tps = 30;
+    this.angleRange = 60;
+    this.beta = null;
+    this.pos = 0;
+    this._clock = null;
+
+    this.element = $('<p class="post pyng-post">...</p>');
+
+    this._clock = setInterval($.proxy(this._tick, this), 1000 / this.tps);
+
+    // TODO: stop when post is removed from the wall
+    window.addEventListener("deviceorientation",
+        $.proxy(this._deviceOrientationUpdated, this));
+    //// simulate device orientation events
+    //ns.addDeviceOrientationListener(
+    //    $.proxy(this._orientationUpdated, this));
+
+    this.ui.call("pyng.join", {}, function(error) {
+        if (error && error.__type__ == "ValueError"
+            && error.args[0] == "mode") {
+            this.element.text("Ongoing match, please wait.");
+            return;
+        }
+        this.element.text("Joined match.");
+    }.bind(this));
 };
 
-$.extend(ns.ClientPyngPostHandler.prototype, wall.PostHandler.prototype, {
-    type: "PyngPost",
+ns.RemotePyngPostElement.prototype = $.extend(
+    Object.create(wall.PostElement.prototype),
+{
+    postType: "PyngPost",
 
-    initPost: function(elem, post) {
-        this.tps = 30;
-        this.angleRange = 60;
-        this.beta = null;
-        this.pos = 0;
-        this._clock = null;
-
-        this._clock = setInterval($.proxy(this._tick, this), 1000 / this.tps);
-
-        // TODO: stop when post is removed from the wall
-        window.addEventListener("deviceorientation",
-                $.proxy(this._deviceOrientationUpdated, this));
-        //// simulate device orientation events
-        //ns.addDeviceOrientationListener(
-        //    $.proxy(this._orientationUpdated, this));
-
-        this.ui.call("pyng.join", {}, $.proxy(function(error) {
-            if (error && error.__type__ == "ValueError"
-                && error.args[0] == "mode") {
-                elem.text("Ongoing match, please wait.");
-                return;
-            }
-            elem.text("Joined match.");
-        }, this));
-    },
-
-    cleanupPost: function() {
+    cleanup: function() {
         clearInterval(this._clock);
     },
 
@@ -161,9 +164,9 @@ ns.Player = function(attrs, pyng) {
     $.extend(this, attrs);
 
     this.elem = $('<div class="pyng-player pyng-object"></div>')
-        .appendTo($("#pyng-playground", this.pyng.elem));
+        .appendTo($("#pyng-playground", this.pyng.content));
     this.label = $('<div class="pyng-player-label pyng-object"></div>')
-        .appendTo($("#pyng-playground", this.pyng.elem));
+        .appendTo($("#pyng-playground", this.pyng.content));
 
     this.update(this.x, this.y);
     this.setScore(this.score);
@@ -195,7 +198,7 @@ ns.Ball = function(pyng) {
     this.x = 0;
     this.y = 0;
     this.elem = $('<div class="pyng-ball pyng-object"></div>')
-        .appendTo($("#pyng-playground", this.pyng.elem));
+        .appendTo($("#pyng-playground", this.pyng.content));
     this.update(this.x, this.y);
 };
 
@@ -242,12 +245,6 @@ ns.constRotation = function(t) {
         return -range * x + max;
     }
 };
-
-ns._html =
-    '<div id="pyng-playground">       ' +
-    '    <div id="pyng-divider"></div>' +
-    '</div>                           ' +
-    '<div id="pyng-info"></div>       ';
 
 ns.DisplayBrick = ns.DisplayPyngBrick;
 ns.ClientBrick = ns.ClientPyngBrick;

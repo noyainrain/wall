@@ -20,6 +20,8 @@ from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
 from wall.util import EventTarget, RedisContainer
 
+release = 7
+
 res_path = os.path.join(os.path.dirname(__file__), 'res')
 static_path = os.path.join(res_path, 'static')
 template_path = os.path.join(res_path, 'templates')
@@ -31,7 +33,7 @@ class WallApp(Application, EventTarget):
 
         self.logger = getLogger('wall')
         self.bricks = {}
-        self.post_handlers = {}
+        self.post_types = {}
         self.clients = []
         self.current_post = None
         self._init = True
@@ -66,8 +68,8 @@ class WallApp(Application, EventTarget):
             'get_history': self.get_history_msg
         }
 
-        self.add_post_handler(ImagePostHandler(self))
-        self.add_post_handler(TextPostHandler(self))
+        self.add_post_type(TextPost)
+        self.add_post_type(ImagePost)
 
         # initialize bricks
         bricks = self.config['bricks'].split()
@@ -150,32 +152,35 @@ class WallApp(Application, EventTarget):
             raise KeyError('id')
 
         if self.current_post:
-            self.post_handlers[type(self.current_post).__name__].cleanup_post()
-
-        post.posted = datetime.utcnow().isoformat()
-        self.db.hset(post.id, 'posted', post.posted)
+            self.current_post.deactivate()
 
         self.current_post = post
-        self.post_handlers[type(post).__name__].init_post(post)
+        post.posted = datetime.utcnow().isoformat()
+        self.db.hset(post.id, 'posted', post.posted)
+        post.activate()
 
         self.sendall(Message('posted', post.json()))
         return post
 
     def post_new(self, type, **args):
-        handler = self.post_handlers[type]
-        post = handler.create_post(**args)
+        post_type = self.post_types[type]
+        post = post_type.create(self, **args)
         self.db.sadd('posts', post.id)
         return self.post(post.id)
 
     def get_history(self):
         return sorted(self.posts.values(), key=lambda p: p.posted, reverse=True)
 
-    def add_post_handler(self, handler):
-        self.post_handlers[handler.type] = handler
+    def add_post_type(self, post_type):
+        """
+        Extension API: register a new post type. `post_type` is a class (type)
+        that extends `Post`.
+        """
+        self.post_types[post_type.__name__] = post_type
 
     def _post(self, **kwargs):
-        cls = self.post_handlers[kwargs['__type__']].cls
-        return cls(self, **kwargs)
+        post_type = self.post_types[kwargs['__type__']]
+        return post_type(self, **kwargs)
 
     def _setup_logger(self):
         logger = getLogger()
@@ -240,29 +245,42 @@ class DisplayPostPage(RequestHandler):
     def get(self):
         self.render('display-post.html', app=self.application)
 
-class PostHandler(object):
-    type = None
-    cls = None
+class Post(object):
+    @classmethod
+    def create(cls, app, **kwargs):
+        """
+        Extension API: create a post of this type. Must be overridden and create
+        a post, store it in the database and return it. Specific arguments are
+        passed to `create` as `kwargs`. `app` is the wall instance.
 
-    def __init__(self, app):
-        self.type = self.type or self.cls.__name__
-        self.app = app
-
-    def create_post(self, **args):
+        Called when a new post of this type should be created via
+        `Wall.post_new`.
+        """
         raise NotImplementedError()
 
-    def init_post(self, post):
-        pass
-
-    def cleanup_post(self):
-        pass
-
-class Post(object):
     def __init__(self, app, id, title, posted, **kwargs):
         self.app = app
         self.id = id
         self.title = title
         self.posted = posted
+
+    def activate(self):
+        """
+        Activate the post.
+
+        Extension API: may be overridden for advanced posts. Called when the
+        post is posted to / shown on the wall.
+        """
+        pass
+
+    def deactivate(self):
+        """
+        Deactivate the post.
+
+        Extension API: may be overridden for advanced posts. Called when the
+        post is removed / hidden from the wall.
+        """
+        pass
 
     def json(self, view=None):
         if not view:
@@ -317,35 +335,31 @@ class Brick(object):
             else:
                 self.stylesheets = []
 
+class TextPost(Post):
+    @classmethod
+    def create(cls, app, **kwargs):
+        content = kwargs['content']
+        title = content[:10]
+        post = TextPost(app, randstr(), title, None, content)
+        app.db.hmset(post.id, post.json())
+        return post
+
+    def __init__(self, app, id, title, posted, content, **kwargs):
+        super(TextPost, self).__init__(app, id, title, posted, **kwargs)
+        self.content = content
+
 class ImagePost(Post):
+    @classmethod
+    def create(cls, app, **kwargs):
+        # TODO: check args
+        url = kwargs['url']
+        post = ImagePost(app, randstr(), 'Image', None, url)
+        app.db.hmset(post.id, post.json())
+        return post
+
     def __init__(self, app, id, title, posted, url, **kwargs):
         super(ImagePost, self).__init__(app, id, title, posted, **kwargs)
         self.url = url
-
-class ImagePostHandler(PostHandler):
-    cls = ImagePost
-
-    def create_post(self, **args):
-        # TODO: check args
-        url = args['url']
-        post = ImagePost(self.app, randstr(), 'Image', None, url)
-        self.app.db.hmset(post.id, post.json())
-        return post
-
-class TextPost(Post):
-    def __init__(self, id, title, posted, content, **kwargs):
-        super(TextPost, self).__init__(id, title, posted)
-        self.content = content
-
-class TextPostHandler(PostHandler):
-    cls = TextPost
-
-    def create_post(self, **args):
-        content = args['content']
-        title = content[:10]
-        post = TextPost(randstr(), title, None, content)
-        self.app.db.hmset(post.id, post.json())
-        return post
 
 def randstr(length=8, charset=ascii_lowercase):
     return ''.join(choice(charset) for i in xrange(length))
@@ -359,26 +373,22 @@ from wall.util import TestCase
 from tempfile import NamedTemporaryFile
 
 class TestPost(Post):
-    pass
-
-class TestPostHandler(PostHandler):
-    cls = TestPost
-
-    def __init__(self, app):
-        super(TestPostHandler, self).__init__(app)
-        self.init_post_called = False
-        self.cleanup_post_called = False
-
-    def create_post(self, **args):
-        post = TestPost(self.app, randstr(), 'Test', None)
-        self.app.db.hmset(post.id, post.json())
+    @classmethod
+    def create(cls, app, **kwargs):
+        post = TestPost(app, randstr(), 'Test', None)
+        app.db.hmset(post.id, post.json())
         return post
 
-    def init_post(self, post):
-        self.init_post_called = True
+    def __init__(self, app, id, title, posted, **kwargs):
+        super(TestPost, self).__init__(app, id, title, posted, **kwargs)
+        self.activate_called = False
+        self.deactivate_called = False
 
-    def cleanup_post(self):
-        self.cleanup_post_called = True
+    def activate(self):
+        self.activate_called = True
+
+    def deactivate(self):
+        self.deactivate_called = True
 
 class WallTest(TestCase):
     def setUp(self):
@@ -407,16 +417,15 @@ class WallTest(TestCase):
     def test_post_new(self):
         # test post_new and also post
 
-        handler = TestPostHandler(self.app)
-        self.app.add_post_handler(handler)
+        self.app.add_post_type(TestPost)
 
         post = self.app.post_new('TestPost')
         self.assertTrue(self.app.posts)
         self.assertEqual(self.app.current_post, post)
-        self.assertTrue(handler.init_post_called)
+        self.assertTrue(post.activate_called)
 
         self.app.post(post.id)
-        self.assertTrue(handler.cleanup_post_called)
+        self.assertTrue(post.deactivate_called)
 
         self.assertRaises(KeyError, self.app.post_new, 'foo')
         self.assertRaises(KeyError, self.app.post, 'foo')
