@@ -43,7 +43,8 @@ ns.DoPostPhotoHandler = function(ui) {
 $.extend(ns.DoPostPhotoHandler.prototype, wall.remote.DoPostHandler.prototype, {
     post: function() {
         if (!navigator.getUserMedia || !window.URL) {
-            this.ui.showNotSupportedScreen("camera access");
+            this.ui.showScreen(
+                new wall.remote.NotSupportedScreen("camera access", this.ui));
             return;
         }
         this._init();

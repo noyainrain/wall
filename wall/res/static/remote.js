@@ -86,11 +86,6 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
         });
     },
 
-    showNotSupportedScreen: function(what) {
-        this.showScreen($(ns._not_supported_html));
-        $("#not-supported-what").text(what);
-    },
-
     post: function(id, callback) {
         this.call("post", {"id": id}, callback);
     },
@@ -237,7 +232,6 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
 
 ns.ConnectionScreen = function(ui) {
     ns.Screen.call(this, ui);
-    this.element.addClass("connection-screen");
     this.content.append($(
         '<p class="connection-screen-state"></p> ' +
         '<p class="connection-screen-detail"></p>'
@@ -267,6 +261,19 @@ ns.ConnectionScreen.prototype = Object.create(ns.Screen.prototype, {
         }
     }}
 });
+
+/* ==== NotSupportedScreen ==== */
+
+ns.NotSupportedScreen = function(what, ui) {
+    ns.Screen.call(this, ui);
+    this.what = what;
+
+    this.content.append($('<p>Unfortunately, your browser does not support <span class="not-supported-what"></span>. Please use a current browser.</p>'));
+    $(".not-supported-what", this.content).text(what);
+    this.title = "Not Supported";
+};
+
+ns.NotSupportedScreen.prototype = Object.create(ns.Screen.prototype);
 
 /* ==== PostHistoryScreen ==== */
 
@@ -339,13 +346,5 @@ ns.SingleDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
         this.ui.postNew(this.postType, {}, function(post) {});
     }}
 });
-
-/* ==== */
-
-ns._not_supported_html =
-    '<div id="#not-supported-screen" class="screen">\n' +
-    '    <h2>Not Supported</h2>\n' +
-    '    <p>Unfortunately, your browser does not support <span id="not-supported-what"></span>. Please use a current browser.</p>\n' +
-    '</div>\n';
 
 }(wall.remote));
