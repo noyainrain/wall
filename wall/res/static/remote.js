@@ -263,55 +263,53 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
 
 ns.DoPostHandler = function(ui) {
     this.ui = ui;
+    this.title = null;
+    this.icon = null;
 };
 
 ns.DoPostHandler.prototype = {
-    title: null,
-    icon: null,
-
     post: function() {}
 };
 
-/* ==== DoPostSingleHandler ==== */
+/* ==== ScreenDoPostHandler ==== */
 
-ns.DoPostSingleHandler = function(ui, postType, title, icon) {
+ns.ScreenDoPostHandler = function(screenType, title, icon, ui) {
+    ns.DoPostHandler.call(this, ui);
+    this.screenType = screenType;
+    this.title = title;
+    this.icon = icon;
+};
+
+ns.ScreenDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
+    post: {value: function() {
+        this.ui.showScreen(new this.screenType(this.ui));
+    }}
+});
+
+/* ==== SingleDoPostHandler ==== */
+
+ns.SingleDoPostHandler = function(postType, title, icon, ui) {
     ns.DoPostHandler.call(this, ui);
     this.postType = postType;
     this.title = title;
     this.icon = icon;
 };
 
-$.extend(ns.DoPostSingleHandler.prototype, ns.DoPostHandler.prototype, {
-    post: function() {
+ns.SingleDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
+    post: {value: function() {
         this.ui.postNew(this.postType, {}, function(post) {});
-    }
-});
-
-/* ==== ScreenDoPostHandler ==== */
-
-ns.ScreenDoPostHandler = function(screenClass, title, icon, ui) {
-    ns.DoPostHandler.call(this, ui);
-    this.screenClass = screenClass;
-    this.title = title;
-    this.icon = icon;
-};
-
-$.extend(ns.ScreenDoPostHandler.prototype, ns.DoPostHandler.prototype, {
-    post: function() {
-        this.ui.showScreen(new this.screenClass(this.ui));
-    }
+    }}
 });
 
 /* ==== DoPostHistoryHandler ==== */
 
 ns.DoPostHistoryHandler = function(ui) {
     ns.DoPostHandler.call(this, ui);
+    this.title = "History";
+    this.icon = "/static/images/history.svg";
 };
 
 $.extend(ns.DoPostHistoryHandler.prototype, ns.DoPostHandler.prototype, {
-    title: "History",
-    icon: "/static/images/history.svg",
-
     post: function() {
         this.ui.showScreen($(
             '<div id="post-history-screen" class="screen"> ' +

@@ -35,13 +35,12 @@ $.extend(ns.ClientPhotoBrick.prototype, wall.Brick.prototype, {
 
 ns.DoPostPhotoHandler = function(ui) {
     wall.remote.DoPostHandler.call(this, ui);
+    this.title = "Photo";
+    this.icon = "/static/photo/photo.svg";
     this._stream = null;
 };
 
 $.extend(ns.DoPostPhotoHandler.prototype, wall.remote.DoPostHandler.prototype, {
-    title: "Photo",
-    icon: "/static/photo/photo.svg",
-
     post: function() {
         if (!navigator.getUserMedia || !window.URL) {
             this.ui.showNotSupportedScreen("camera access");
