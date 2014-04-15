@@ -56,6 +56,7 @@ To run the test cases, simply type:
 Software Used
 -------------
 
-* normalize.css - https://github.com/necolas/normalize.css
-* Clarity Icons - https://github.com/jcubic/Clarity
-* jQuery Tubeplayer Plugin - https://github.com/nirvanatikku/jQuery-TubePlayer-Plugin
+ * normalize.css by Nicolas Gallagher, Jonathan Neal -
+   https://necolas.github.io/normalize.css/
+ * Open Sans by Google - http://opensans.com/
+ * Clarity by Jakub Jankiewicz - https://github.com/jcubic/Clarity
