@@ -32,7 +32,8 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
         }
     }
     if (doPostHandlers.indexOf("history") >= 0) {
-        this.addDoPostHandler(new ns.DoPostHistoryHandler(this));
+        this.addDoPostHandler(new ns.ScreenDoPostHandler(ns.PostHistoryScreen,
+            "History", "/static/images/history.svg", this));
     }
 
     this.mainScreen = new ns.PostScreen(this);
@@ -259,6 +260,36 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
      }}
 });
 
+/* ==== PostHistoryScreen ==== */
+
+ns.PostHistoryScreen = function(ui) {
+    ns.Screen.call(this, ui);
+    this.title = "History";
+
+    this.element.addClass("post-history-screen");
+    this.content.append($('<ul class="select"></ul>'));
+
+    this.ui.call("get_history", {}, function(posts) {
+        posts.forEach(function(post) {
+            var li = $("<li>")
+                .data("post", post)
+                .click(this._postClicked.bind(this))
+                .appendTo($("ul", this.content));
+            $("<p>").text(post.title).appendTo(li);
+        }, this);
+    }.bind(this));
+};
+
+ns.PostHistoryScreen.prototype = Object.create(ns.Screen.prototype, {
+    _postClicked: {value: function(event) {
+        var post = $(event.currentTarget).data("post");
+        this.ui.post(post.id, function(post) {
+            // TODO: error handling
+            this.ui.popScreen();
+        }.bind(this));
+    }}
+});
+
 /* ==== DoPostHandler ==== */
 
 ns.DoPostHandler = function(ui) {
@@ -299,43 +330,6 @@ ns.SingleDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
     post: {value: function() {
         this.ui.postNew(this.postType, {}, function(post) {});
     }}
-});
-
-/* ==== DoPostHistoryHandler ==== */
-
-ns.DoPostHistoryHandler = function(ui) {
-    ns.DoPostHandler.call(this, ui);
-    this.title = "History";
-    this.icon = "/static/images/history.svg";
-};
-
-$.extend(ns.DoPostHistoryHandler.prototype, ns.DoPostHandler.prototype, {
-    post: function() {
-        this.ui.showScreen($(
-            '<div id="post-history-screen" class="screen"> ' +
-            '    <h2>History</h2>                          ' +
-            '    <ul class="select"></ul>                  ' +
-            '</div>                                        '
-        ));
-
-        this.ui.call("get_history", {}, $.proxy(function(posts) {
-            posts.forEach(function(post) {
-                var li = $("<li>")
-                    .data("post", post)
-                    .click($.proxy(this._postClicked, this))
-                    .appendTo($("#post-history-screen ul"));
-                $("<p>").text(post.title).appendTo(li);
-            }, this);
-        }, this));
-    },
-
-    _postClicked: function(event) {
-        var post = $(event.currentTarget).data("post");
-        this.ui.post(post.id, $.proxy(function(post) {
-            // TODO: error handling
-            this.ui.popScreen();
-        }, this));
-    }
 });
 
 /* ==== */
