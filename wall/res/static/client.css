@@ -1,0 +1,78 @@
+/*
+ * Wall
+ *
+ * Colors:
+ *  - text:                  #fff
+ *  - background:            #333
+ *  - background, secondary: #222
+ *  - delimiter:             #555
+ *
+ * Spacing:
+ *  - line height:     1.50rem
+ *  - standard margin: 1.50rem
+ */
+
+@import url("normalize.css");
+
+/* ==== Fonts ==== */
+
+@font-face
+{
+    font-family: "Open Sans";
+    src: url("fonts/open-sans.woff");
+}
+
+@font-face
+{
+    font-family: "Open Sans";
+    src: url("fonts/open-sans-italic.woff");
+    font-style: italic;
+}
+
+@font-face
+{
+    font-family: "Open Sans";
+    src: url("fonts/open-sans-bold.woff");
+    font-weight: bold;
+}
+
+/* ==== General ==== */
+
+*
+{
+    line-height: 1.5;
+    overflow: hidden;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+}
+
+html
+{
+    color: #fff;
+    background: #333;
+    font-family: "Open Sans", sans-serif;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+input
+{
+    font-weight: normal;
+    display: block;
+    margin: 1.5rem 0;
+    padding: 0;
+}
+
+h1
+{
+    font-size: 1.66rem;
+}
+
+h2
+{
+    font-size: 1.33rem;
+}
