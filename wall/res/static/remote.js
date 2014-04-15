@@ -17,7 +17,6 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     this.doPostHandlers = [];
     this.screenStack = [];
     this.mainScreen = null;
-    this._connectionScreen = null;
 
     window.onerror = $.proxy(this._erred, this);
 
@@ -32,22 +31,17 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
         }
     }
     if (doPostHandlers.indexOf("history") >= 0) {
-        this.addDoPostHandler(new ns.DoPostHistoryHandler(this));
+        this.addDoPostHandler(new ns.ScreenDoPostHandler(ns.PostHistoryScreen,
+            "History", "/static/images/history.svg", this));
     }
 
     this.mainScreen = new ns.PostScreen(this);
-    this._connectionScreen = $(
-        '<div class="screen connection-screen">      ' +
-        '    <p class="connection-screen-state"></p> ' +
-        '    <p class="connection-screen-detail"></p>' +
-        '</div>                                      '
-    );
 };
 
 $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
     run: function() {
         this.showScreen(this.mainScreen);
-        this.showScreen(this._connectionScreen);
+        this.showScreen(new ns.ConnectionScreen(this));
         wall.Ui.prototype.run.call(this);
     },
 
@@ -92,11 +86,6 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
         });
     },
 
-    showNotSupportedScreen: function(what) {
-        this.showScreen($(ns._not_supported_html));
-        $("#not-supported-what").text(what);
-    },
-
     post: function(id, callback) {
         this.call("post", {"id": id}, callback);
     },
@@ -111,7 +100,8 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
 
     _connect: function() {
         wall.Ui.prototype._connect.call(this);
-        this._setConnectionScreenState(this.connectionState);
+        this.screenStack[this.screenStack.length - 1].setState(
+            this.connectionState);
     },
 
     _opened: function(event) {
@@ -122,31 +112,10 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
     _closed: function(event) {
         wall.Ui.prototype._closed.call(this, event);
         if (this.connectionState == "disconnected") {
-            this.showScreen(this._connectionScreen);
+            this.showScreen(new ns.ConnectionScreen(this));
         }
-        this._setConnectionScreenState(this.connectionState);
-    },
-
-    _setConnectionScreenState: function(state) {
-        switch (state) {
-        case "connecting":
-            $(".connection-screen-state", this._connectionScreen)
-                .text("Connecting...");
-            $(".connection-screen-detail", this._connectionScreen).empty();
-            break;
-        case "failed":
-            $(".connection-screen-state", this._connectionScreen)
-                .text("Failed to connect!");
-            $(".connection-screen-detail", this._connectionScreen)
-                .text("Retrying shortly.");
-            break;
-        case "disconnected":
-            $(".connection-screen-state", this._connectionScreen)
-                .text("Connection lost!");
-            $(".connection-screen-detail", this._connectionScreen)
-                .text("Trying to reconnect shortly.");
-            break;
-        }
+        this.screenStack[this.screenStack.length - 1].setState(
+            this.connectionState);
     },
 
     _postedMsg: function(msg) {
@@ -259,78 +228,123 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
      }}
 });
 
+/* ==== ConnectionScreen ==== */
+
+ns.ConnectionScreen = function(ui) {
+    ns.Screen.call(this, ui);
+    this.content.append($(
+        '<p class="connection-screen-state"></p> ' +
+        '<p class="connection-screen-detail"></p>'
+    ));
+    this.title = "Connection";
+};
+
+ns.ConnectionScreen.prototype = Object.create(ns.Screen.prototype, {
+    setState: {value: function(state) {
+        switch (state) {
+        case "connecting":
+            $(".connection-screen-state", this.content).text("Connecting...");
+            $(".connection-screen-detail", this.content).empty();
+            break;
+        case "failed":
+            $(".connection-screen-state", this.content)
+                .text("Failed to connect!");
+            $(".connection-screen-detail", this.content)
+                .text("Retrying shortly.");
+            break;
+        case "disconnected":
+            $(".connection-screen-state", this.content)
+                .text("Connection lost!");
+            $(".connection-screen-detail", this.content)
+                .text("Trying to reconnect shortly.");
+            break;
+        }
+    }}
+});
+
+/* ==== NotSupportedScreen ==== */
+
+ns.NotSupportedScreen = function(what, ui) {
+    ns.Screen.call(this, ui);
+    this.what = what;
+
+    this.content.append($('<p>Unfortunately, your browser does not support <span class="not-supported-what"></span>. Please use a current browser.</p>'));
+    $(".not-supported-what", this.content).text(what);
+    this.title = "Not Supported";
+};
+
+ns.NotSupportedScreen.prototype = Object.create(ns.Screen.prototype);
+
+/* ==== PostHistoryScreen ==== */
+
+ns.PostHistoryScreen = function(ui) {
+    ns.Screen.call(this, ui);
+    this.title = "History";
+
+    this.element.addClass("post-history-screen");
+    this.content.append($('<ul class="select"></ul>'));
+
+    this.ui.call("get_history", {}, function(posts) {
+        posts.forEach(function(post) {
+            var li = $("<li>")
+                .data("post", post)
+                .click(this._postClicked.bind(this))
+                .appendTo($("ul", this.content));
+            $("<p>").text(post.title).appendTo(li);
+        }, this);
+    }.bind(this));
+};
+
+ns.PostHistoryScreen.prototype = Object.create(ns.Screen.prototype, {
+    _postClicked: {value: function(event) {
+        var post = $(event.currentTarget).data("post");
+        this.ui.post(post.id, function(post) {
+            // TODO: error handling
+            this.ui.popScreen();
+        }.bind(this));
+    }}
+});
+
 /* ==== DoPostHandler ==== */
 
 ns.DoPostHandler = function(ui) {
     this.ui = ui;
+    this.title = null;
+    this.icon = null;
 };
 
 ns.DoPostHandler.prototype = {
-    title: null,
-    icon: null,
-
     post: function() {}
 };
 
-/* ==== DoPostSingleHandler ==== */
+/* ==== ScreenDoPostHandler ==== */
 
-ns.DoPostSingleHandler = function(ui, postType, title, icon) {
+ns.ScreenDoPostHandler = function(screenType, title, icon, ui) {
+    ns.DoPostHandler.call(this, ui);
+    this.screenType = screenType;
+    this.title = title;
+    this.icon = icon;
+};
+
+ns.ScreenDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
+    post: {value: function() {
+        this.ui.showScreen(new this.screenType(this.ui));
+    }}
+});
+
+/* ==== SingleDoPostHandler ==== */
+
+ns.SingleDoPostHandler = function(postType, title, icon, ui) {
     ns.DoPostHandler.call(this, ui);
     this.postType = postType;
     this.title = title;
     this.icon = icon;
 };
 
-$.extend(ns.DoPostSingleHandler.prototype, ns.DoPostHandler.prototype, {
-    post: function() {
+ns.SingleDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
+    post: {value: function() {
         this.ui.postNew(this.postType, {}, function(post) {});
-    }
+    }}
 });
-
-/* ==== DoPostHistoryHandler ==== */
-
-ns.DoPostHistoryHandler = function(ui) {
-    ns.DoPostHandler.call(this, ui);
-};
-
-$.extend(ns.DoPostHistoryHandler.prototype, ns.DoPostHandler.prototype, {
-    title: "History",
-    icon: "/static/images/history.svg",
-
-    post: function() {
-        this.ui.showScreen($(
-            '<div id="post-history-screen" class="screen"> ' +
-            '    <h2>History</h2>                          ' +
-            '    <ul class="select"></ul>                  ' +
-            '</div>                                        '
-        ));
-
-        this.ui.call("get_history", {}, $.proxy(function(posts) {
-            posts.forEach(function(post) {
-                var li = $("<li>")
-                    .data("post", post)
-                    .click($.proxy(this._postClicked, this))
-                    .appendTo($("#post-history-screen ul"));
-                $("<p>").text(post.title).appendTo(li);
-            }, this);
-        }, this));
-    },
-
-    _postClicked: function(event) {
-        var post = $(event.currentTarget).data("post");
-        this.ui.post(post.id, $.proxy(function(post) {
-            // TODO: error handling
-            this.ui.popScreen();
-        }, this));
-    }
-});
-
-/* ==== */
-
-ns._not_supported_html =
-    '<div id="#not-supported-screen" class="screen">\n' +
-    '    <h2>Not Supported</h2>\n' +
-    '    <p>Unfortunately, your browser does not support <span id="not-supported-what"></span>. Please use a current browser.</p>\n' +
-    '</div>\n';
 
 }(wall.remote));

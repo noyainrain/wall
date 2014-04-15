@@ -91,7 +91,7 @@ ns.ClientPyngBrick = function(ui) {
     wall.Brick.call(this, ui);
     this.ui.addPostElementType(ns.RemotePyngPostElement);
     this.ui.addDoPostHandler(
-        new wall.remote.DoPostSingleHandler(this.ui, "PyngPost", "Pyng", null));
+        new wall.remote.SingleDoPostHandler("PyngPost", "Pyng", null, this.ui));
 };
 
 $.extend(ns.ClientPyngBrick.prototype, wall.Brick.prototype, {

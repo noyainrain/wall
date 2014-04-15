@@ -81,12 +81,11 @@ ns.RemoteUrlPostElement.prototype = $.extend(
 
 ns.DoPostUrlHandler = function(ui) {
     wall.remote.DoPostHandler.call(this, ui);
+    this.title = "URL";
+    this.icon = "/static/url/url.svg";
 };
 
 $.extend(ns.DoPostUrlHandler.prototype, wall.remote.DoPostHandler.prototype, {
-    title: "URL",
-    icon: "/static/url/url.svg",
-
     post: function() {
         this.ui.call(
             "url.get_search_handlers",
