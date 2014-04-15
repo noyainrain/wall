@@ -17,7 +17,6 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     this.doPostHandlers = [];
     this.screenStack = [];
     this.mainScreen = null;
-    this._connectionScreen = null;
 
     window.onerror = $.proxy(this._erred, this);
 
@@ -37,18 +36,12 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     }
 
     this.mainScreen = new ns.PostScreen(this);
-    this._connectionScreen = $(
-        '<div class="screen connection-screen">      ' +
-        '    <p class="connection-screen-state"></p> ' +
-        '    <p class="connection-screen-detail"></p>' +
-        '</div>                                      '
-    );
 };
 
 $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
     run: function() {
         this.showScreen(this.mainScreen);
-        this.showScreen(this._connectionScreen);
+        this.showScreen(new ns.ConnectionScreen(this));
         wall.Ui.prototype.run.call(this);
     },
 
@@ -112,7 +105,8 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
 
     _connect: function() {
         wall.Ui.prototype._connect.call(this);
-        this._setConnectionScreenState(this.connectionState);
+        this.screenStack[this.screenStack.length - 1].setState(
+            this.connectionState);
     },
 
     _opened: function(event) {
@@ -123,31 +117,10 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
     _closed: function(event) {
         wall.Ui.prototype._closed.call(this, event);
         if (this.connectionState == "disconnected") {
-            this.showScreen(this._connectionScreen);
+            this.showScreen(new ns.ConnectionScreen(this));
         }
-        this._setConnectionScreenState(this.connectionState);
-    },
-
-    _setConnectionScreenState: function(state) {
-        switch (state) {
-        case "connecting":
-            $(".connection-screen-state", this._connectionScreen)
-                .text("Connecting...");
-            $(".connection-screen-detail", this._connectionScreen).empty();
-            break;
-        case "failed":
-            $(".connection-screen-state", this._connectionScreen)
-                .text("Failed to connect!");
-            $(".connection-screen-detail", this._connectionScreen)
-                .text("Retrying shortly.");
-            break;
-        case "disconnected":
-            $(".connection-screen-state", this._connectionScreen)
-                .text("Connection lost!");
-            $(".connection-screen-detail", this._connectionScreen)
-                .text("Trying to reconnect shortly.");
-            break;
-        }
+        this.screenStack[this.screenStack.length - 1].setState(
+            this.connectionState);
     },
 
     _postedMsg: function(msg) {
@@ -258,6 +231,41 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
         var handler = $(event.currentTarget).data("handler");
         handler.post();
      }}
+});
+
+/* ==== ConnectionScreen ==== */
+
+ns.ConnectionScreen = function(ui) {
+    ns.Screen.call(this, ui);
+    this.element.addClass("connection-screen");
+    this.content.append($(
+        '<p class="connection-screen-state"></p> ' +
+        '<p class="connection-screen-detail"></p>'
+    ));
+    this.title = "Connection";
+};
+
+ns.ConnectionScreen.prototype = Object.create(ns.Screen.prototype, {
+    setState: {value: function(state) {
+        switch (state) {
+        case "connecting":
+            $(".connection-screen-state", this.content).text("Connecting...");
+            $(".connection-screen-detail", this.content).empty();
+            break;
+        case "failed":
+            $(".connection-screen-state", this.content)
+                .text("Failed to connect!");
+            $(".connection-screen-detail", this.content)
+                .text("Retrying shortly.");
+            break;
+        case "disconnected":
+            $(".connection-screen-state", this.content)
+                .text("Connection lost!");
+            $(".connection-screen-detail", this.content)
+                .text("Trying to reconnect shortly.");
+            break;
+        }
+    }}
 });
 
 /* ==== PostHistoryScreen ==== */
