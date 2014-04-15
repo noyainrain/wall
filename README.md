@@ -57,6 +57,6 @@ Software Used
 -------------
 
  * normalize.css by Nicolas Gallagher, Jonathan Neal -
-   http://necolas.github.io/normalize.css/
+   https://necolas.github.io/normalize.css/
  * Open Sans by Google - http://opensans.com/
  * Clarity by Jakub Jankiewicz - https://github.com/jcubic/Clarity
