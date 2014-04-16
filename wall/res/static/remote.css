@@ -142,12 +142,12 @@ ul.overlay-menu li
 
 html
 {
-    background: black;
     overflow: auto;
 }
 
 body
 {
+    box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.8);
     position: relative;
     max-width: 70ch;
     min-height: 100vh;
