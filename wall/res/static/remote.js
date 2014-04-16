@@ -36,6 +36,7 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     }
 
     this.mainScreen = new ns.PostScreen(this);
+    this.mainScreen.hasGoBack = false;
 };
 
 $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
@@ -132,14 +133,23 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
 ns.Screen = function(ui) {
     wall.Element.call(this, ui);
     this._title = null;
+    this._hasGoBack = true;
 
     this.element = $(
-        '<div class="screen">                  ' +
-        '    <header><h1></h1></header>        ' +
-        '    <div class="screen-content"></div>' +
-        '</div>                                '
+        '<div class="screen">                                 ' +
+        '    <header class="bar">                             ' +
+        '        <h1></h1>                                    ' +
+        '        <button class="screen-settings">Wall</button>' +
+        '        <button class="bar-secondary screen-go-back">' +
+        '            <img src="static/images/go-back.svg"/>   ' +
+        '        </button>                                    ' +
+        '    </header>                                        ' +
+        '    <div class="screen-content"></div>               ' +
+        '</div>                                               '
     );
     this.content = $(".screen-content", this.element);
+    $(".screen-settings", this.element).click(this._settingsClicked.bind(this));
+    $(".screen-go-back", this.element).click(this._goBackClicked.bind(this));
 
     this.title = null;
 };
@@ -148,13 +158,34 @@ ns.Screen.prototype = Object.create(wall.Element.prototype, {
     title: {
         set: function(value) {
             this._title = value;
-            $("header", this.element).css("display", this._title ? "" : "none");
-            $("header h1", this.element).text(this._title || "");
+            $("header.bar", this.element).css("display",
+                 this._title ? "" : "none");
+            $("header.bar h1", this.element).text(this._title || "");
         },
         get: function() {
             return this._title;
         }
-    }
+    },
+
+    hasGoBack: {
+        set: function(value) {
+            this._hasGoBack = value;
+            $(".screen-go-back", this.element).css("display",
+                this._hasGoBack ? "" : "none");
+        },
+        get: function() {
+            return this._hasGoBack;
+        }
+    },
+
+    _settingsClicked: {value: function(event) {
+        // TODO: implement settings
+        location.reload();
+    }},
+
+    _goBackClicked: {value: function(event) {
+        this.ui.popScreen();
+    }}
 });
 
 /* ==== PostScreen ==== */
@@ -232,11 +263,13 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
 
 ns.ConnectionScreen = function(ui) {
     ns.Screen.call(this, ui);
+    this.element.addClass("connection-screen");
     this.content.append($(
         '<p class="connection-screen-state"></p> ' +
         '<p class="connection-screen-detail"></p>'
     ));
     this.title = "Connection";
+    this.hasGoBack = false;
 };
 
 ns.ConnectionScreen.prototype = Object.create(ns.Screen.prototype, {

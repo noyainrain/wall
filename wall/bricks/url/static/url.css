@@ -35,3 +35,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.post-url-screen
+{
+    padding: 0 1rem;
+}
