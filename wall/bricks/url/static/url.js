@@ -91,6 +91,7 @@ $.extend(ns.DoPostUrlHandler.prototype, wall.remote.DoPostHandler.prototype, {
             "url.get_search_handlers",
             {},
             $.proxy(function(handlers) {
+                // TODO: port to PostUrlScreen
                 this.ui.showScreen($(ns._html));
                 handlers = handlers.map(function(h) { return h.title; });
                 $("#url-handlers").text(handlers.join(", "));
@@ -146,7 +147,7 @@ $.extend(ns.DoPostUrlHandler.prototype, wall.remote.DoPostHandler.prototype, {
 });
 
 ns._html =
-    '<div class="screen">                               ' +
+    '<div class="screen post-url-screen">               ' +
     '    <h2>Post URL</h2>                              ' +
     '    <input id="url-url" type="url">                ' +
     '    <p class="buttons">                            ' +

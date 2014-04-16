@@ -33,15 +33,12 @@ button {
     background: #333;
     position: absolute;
     width: 100%;
-    min-height: calc(100vh - 7rem);
-    padding: 0 1rem;
+    min-height: 100vh;
 }
 
-.screen header h1
+.screen-content
 {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    margin: 0;
+    padding: 0 1rem;
 }
 
 .fullscreen
@@ -72,6 +69,57 @@ button {
 {
     transition: transform, opacity;
     transition-duration: 0.5s;
+}
+
+/* ==== Bar ==== */
+
+header.bar
+{
+    background: #222;
+    display: flex;
+}
+
+header.bar h1
+{
+    font-size: 1rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex: auto;
+    padding: 0.5rem 1rem;
+    margin: 0;
+}
+
+header.bar button
+{
+    border: solid #444;
+    border-width: 0 0 0 1px;
+    flex: none;
+    order: 1;
+    padding: 0.5rem;
+}
+
+/* TODO: style button in general */
+header.bar button
+{
+    text-align: center;
+    color: inherit;
+    background: transparent;
+    border-radius: 0;
+    display: block;
+}
+
+/* TODO: style button in general */
+header.bar button img
+{
+    vertical-align: top;
+    height: 1rem;
+    margin: 0.25rem;
+}
+
+header.bar button.bar-secondary
+{
+    border-width: 0 1px 0 0;
+    order: -1;
 }
 
 /* ==== Selectable List ==== */
@@ -128,7 +176,7 @@ ul.overlay-menu li
 
 /* ==== Connection Screen ==== */
 
-.connection-screen
+.connection-screen .screen-content
 {
     text-align: center;
 }
@@ -142,30 +190,16 @@ ul.overlay-menu li
 
 html
 {
-    background: black;
     overflow: auto;
 }
 
 body
 {
+    box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.8);
     position: relative;
     max-width: 70ch;
     min-height: 100vh;
     margin: 0 auto;
-}
-
-#header
-{
-    background: #222;
-    padding: 1rem 0 0 0;
-}
-
-#header h1
-{
-    line-height: 5.0rem;
-    font-size: 4rem;
-    text-align: center;
-    margin: 0;
 }
 
 .screen-stack
