@@ -57,7 +57,8 @@ ns.DisplayUrlPostElement.prototype = $.extend(
 ns.ClientBrick = function(ui) {
     wall.Brick.call(this, ui);
     this.ui.addPostElementType(ns.RemoteUrlPostElement);
-    this.ui.addDoPostHandler(new ns.DoPostUrlHandler(this.ui));
+    this.ui.addDoPostHandler(new wall.remote.ScreenDoPostHandler(
+        ns.PostUrlScreen, "URL", "static/url/url.svg", this.ui));
 };
 
 $.extend(ns.ClientBrick.prototype, wall.Brick.prototype, {
@@ -77,91 +78,92 @@ ns.RemoteUrlPostElement.prototype = $.extend(
     postType: "UrlPost"
 });
 
-/* ==== DoPostUrlHandler ==== */
+/* ==== PostUrlScreen ==== */
 
-ns.DoPostUrlHandler = function(ui) {
-    wall.remote.DoPostHandler.call(this, ui);
-    this.title = "URL";
-    this.icon = "/static/url/url.svg";
+ns.PostUrlScreen = function(ui) {
+    wall.remote.Screen.call(this, ui);
+    this.title = "Post URL";
+
+    this.content.append($(
+        '<form class="url-post" novalidate="novalidate">                 ' +
+        '    <input class="url-url" type="url">                          ' +
+        '    <p class="buttons">                                         ' +
+        '        <button><img src="static/images/post.svg"/>Post</button>' +
+        '    </p>                                                        ' +
+        '</form>                                                         ' +
+        '<section>                                                       ' +
+        '    <h2 style="display: inline;">Search</h2>                    ' +
+        '    <small class="url-handlers"></small>                        ' +
+        '    <form class="url-search" novalidate="novalidate">           ' +
+        '        <input class="url-query" type="search">                 ' +
+        '        <p class="buttons">                                     ' +
+        '            <button>                                            ' +
+        '                <img src="static/images/search.svg"/>Search     ' +
+        '            </button>                                           ' +
+        '        </p>                                                    ' +
+        '    </form>                                                     ' +
+        '    <ul class="select url-results"></ul>                        ' +
+        '</section>                                                      '
+    ));
+    $(".url-post", this.content).submit(this._postSubmitted.bind(this));
+    $(".url-search", this.content).submit(this._searchSubmitted.bind(this));
+
+    this.ui.call(
+        "url.get_search_handlers",
+        {},
+        function(handlers) {
+            handlers = handlers.map(function(h) { return h.title; });
+            $(".url-handlers", this.content).text(handlers.join(", "));
+        }.bind(this)
+    );
 };
 
-$.extend(ns.DoPostUrlHandler.prototype, wall.remote.DoPostHandler.prototype, {
-    post: function() {
-        this.ui.call(
-            "url.get_search_handlers",
-            {},
-            $.proxy(function(handlers) {
-                // TODO: port to PostUrlScreen
-                this.ui.showScreen($(ns._html));
-                handlers = handlers.map(function(h) { return h.title; });
-                $("#url-handlers").text(handlers.join(", "));
-                $("#url-post").click($.proxy(this._postClicked, this));
-                $("#url-search").click($.proxy(this._searchClicked, this));
-            }, this)
-        );
-    },
-
-    _postClicked: function(event) {
+ns.PostUrlScreen.prototype = Object.create(wall.remote.Screen.prototype, {
+    _postSubmitted: {value: function(event) {
+        event.preventDefault();
         this.ui.postNew(
             "UrlPost",
-            {"url": $("#url-url").val()},
-            $.proxy(function(post) {
+            {"url": $(".url-url", this.content).val()},
+            function(post) {
                 if (post.__type__ == "ValueError" && post.args[0] == "url") {
                     this.ui.notify("URL missing.");
                     return;
                 }
                 this.ui.popScreen();
-            }, this)
+            }.bind(this)
         );
-    },
+    }},
 
-    _searchClicked: function(event) {
+    _searchSubmitted: {value: function(event) {
+        event.preventDefault();
         this.ui.notify("Searching...");
         this.ui.call(
             "url.search",
-            {"query": $("#url-query").val()},
-            $.proxy(function(results) {
+            {"query": $(".url-query", this.content).val()},
+            function(results) {
                 this.ui.closeNotification();
-                $("#url-results").empty();
+                $(".url-results", this.content).empty();
                 for (var i = 0; i < results.length; i++) {
                     var result = results[i];
                     var li = $("<li>")
                         .data("result", result)
-                        .click($.proxy(this._resultClicked, this))
-                        .appendTo($("#url-results"));
+                        .click(this._resultClicked.bind(this))
+                        .appendTo($(".url-results", this.content));
                     if (result.thumbnail) {
                         $("<img>").attr("src", result.thumbnail).appendTo(li);
                     }
                     $("<p>").text(result.title).appendTo(li);
                 }
-            }, this)
+            }.bind(this)
         );
-    },
+    }},
 
-    _resultClicked: function(event) {
+    _resultClicked: {value: function(event) {
         var result = $(event.currentTarget).data("result");
-        this.ui.postNew("UrlPost", {"url": result.url}, $.proxy(function(post) {
+        this.ui.postNew("UrlPost", {"url": result.url}, function(post) {
             this.ui.popScreen();
-        }, this));
-    }
+        }.bind(this));
+    }}
 });
-
-ns._html =
-    '<div class="screen post-url-screen">               ' +
-    '    <h2>Post URL</h2>                              ' +
-    '    <input id="url-url" type="url">                ' +
-    '    <p class="buttons">                            ' +
-    '        <button id="url-post">Post</button>        ' +
-    '    </p>                                           ' +
-    '    <section>                                      ' +
-    '        <h3 style="display: inline;">Search</h3>   ' +
-    '        <small id="url-handlers"></small>          ' +
-    '        <input id="url-query" type="search">       ' +
-    '        <p class="buttons">                        ' +
-    '            <button id="url-search">Search</button>' +
-    '        </p>                                       ' +
-    '        <ul class="select" id="url-results"></ul>  ' +
-    '    </section>                                     ' +
-    '</div>                                             ';
 
 }(wall.bricks.url));
