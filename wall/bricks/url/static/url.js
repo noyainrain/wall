@@ -85,22 +85,28 @@ ns.PostUrlScreen = function(ui) {
     this.title = "Post URL";
 
     this.content.append($(
-        '<input class="url-url" type="url">                ' +
-        '<p class="buttons">                               ' +
-        '    <button class="url-post">Post</button>        ' +
-        '</p>                                              ' +
-        '<section>                                         ' +
-        '    <h2 style="display: inline;">Search</h2>      ' +
-        '    <small class="url-handlers"></small>          ' +
-        '    <input class="url-query" type="search">       ' +
-        '    <p class="buttons">                           ' +
-        '        <button class="url-search">Search</button>' +
-        '    </p>                                          ' +
-        '    <ul class="select url-results"></ul>          ' +
-        '</section>                                        '
+        '<form class="url-post" novalidate="novalidate">                 ' +
+        '    <input class="url-url" type="url">                          ' +
+        '    <p class="buttons">                                         ' +
+        '        <button><img src="static/images/post.svg"/>Post</button>' +
+        '    </p>                                                        ' +
+        '</form>                                                         ' +
+        '<section>                                                       ' +
+        '    <h2 style="display: inline;">Search</h2>                    ' +
+        '    <small class="url-handlers"></small>                        ' +
+        '    <form class="url-search" novalidate="novalidate">           ' +
+        '        <input class="url-query" type="search">                 ' +
+        '        <p class="buttons">                                     ' +
+        '            <button>                                            ' +
+        '                <img src="static/images/search.svg"/>Search     ' +
+        '            </button>                                           ' +
+        '        </p>                                                    ' +
+        '    </form>                                                     ' +
+        '    <ul class="select url-results"></ul>                        ' +
+        '</section>                                                      '
     ));
-    $(".url-post", this.content).click(this._postClicked.bind(this));
-    $(".url-search", this.content).click(this._searchClicked.bind(this));
+    $(".url-post", this.content).submit(this._postSubmitted.bind(this));
+    $(".url-search", this.content).submit(this._searchSubmitted.bind(this));
 
     this.ui.call(
         "url.get_search_handlers",
@@ -113,7 +119,8 @@ ns.PostUrlScreen = function(ui) {
 };
 
 ns.PostUrlScreen.prototype = Object.create(wall.remote.Screen.prototype, {
-    _postClicked: {value: function(event) {
+    _postSubmitted: {value: function(event) {
+        event.preventDefault();
         this.ui.postNew(
             "UrlPost",
             {"url": $(".url-url", this.content).val()},
@@ -127,7 +134,8 @@ ns.PostUrlScreen.prototype = Object.create(wall.remote.Screen.prototype, {
         );
     }},
 
-    _searchClicked: {value: function(event) {
+    _searchSubmitted: {value: function(event) {
+        event.preventDefault();
         this.ui.notify("Searching...");
         this.ui.call(
             "url.search",
