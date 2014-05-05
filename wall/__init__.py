@@ -7,6 +7,7 @@ from __future__ import (division, absolute_import, print_function,
 import sys
 import os
 import json
+import exceptions
 from datetime import datetime
 from logging import StreamHandler, Formatter, getLogger, DEBUG
 from ConfigParser import SafeConfigParser, Error as ConfigParserError
@@ -147,8 +148,8 @@ class WallApp(Application, EventTarget):
     def post(self, id):
         try:
             post = self.posts[id]
-        except KeyError:
-            raise KeyError('id')
+        except exceptions.KeyError:
+            raise ValueError('id_nonexistent')
 
         if self.current_post:
             self.current_post.deactivate()
@@ -162,7 +163,11 @@ class WallApp(Application, EventTarget):
         return post
 
     def post_new(self, type, **args):
-        post_type = self.post_types[type]
+        try:
+            post_type = self.post_types[type]
+        except exceptions.KeyError:
+            raise ValueError('type_nonexistent')
+
         post = post_type.create(self, **args)
         self.db.sadd('posts', post.id)
         return self.post(post.id)
@@ -347,11 +352,14 @@ class ImagePost(Post):
         super(ImagePost, self).__init__(app, id, title, posted, **kwargs)
         self.url = url
 
+class Error(Exception):
+    def json(self):
+        return {'args': self.args, '__type__': type(self).__name__}
+
+class ValueError(Error, exceptions.ValueError): pass
+
 def randstr(length=8, charset=ascii_lowercase):
     return ''.join(choice(charset) for i in xrange(length))
-
-def error_json(error):
-    return dict({'__type__': type(error).__name__, 'args': error.args})
 
 # ==== Tests ====
 
@@ -413,5 +421,5 @@ class WallTest(TestCase):
         self.app.post(post.id)
         self.assertTrue(post.deactivate_called)
 
-        self.assertRaises(KeyError, self.app.post_new, 'foo')
-        self.assertRaises(KeyError, self.app.post, 'foo')
+        self.assertRaises(ValueError, self.app.post_new, 'foo')
+        self.assertRaises(ValueError, self.app.post, 'foo')
