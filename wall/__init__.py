@@ -159,7 +159,7 @@ class WallApp(Application, EventTarget):
     def post(self, id):
         try:
             post = self.posts[id]
-        except exceptions.KeyError:
+        except KeyError:
             raise ValueError('id_nonexistent')
 
         if self.current_post:
@@ -176,7 +176,7 @@ class WallApp(Application, EventTarget):
     def post_new(self, type, **args):
         try:
             post_type = self.post_types[type]
-        except exceptions.KeyError:
+        except KeyError:
             raise ValueError('type_nonexistent')
 
         post = post_type.create(self, **args)
@@ -358,8 +358,17 @@ class Brick(object):
 class TextPost(Post):
     @classmethod
     def create(cls, app, **kwargs):
-        content = kwargs['content']
-        title = content[:10]
+        try:
+            content = kwargs['content'].strip()
+        except KeyError:
+            raise ValueError('content_missing')
+        if not content:
+            raise ValueError('content_empty')
+
+        title = content.splitlines()[0]
+        if len(title) > 64:
+            title = title[:63] + '\u2026' # ellipsis
+
         post = TextPost(app, randstr(), title, None, content)
         app.db.hmset(post.id, post.json())
         return post
