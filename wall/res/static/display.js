@@ -43,11 +43,14 @@ ns.PostElement = function(post, ui) {
         wall.hyphenate(this.postType));
     this.element.load(function(event) {
         $("body", this.element[0].contentDocument).append(this.content);
+        this.contentAttachedCallback();
     }.bind(this));
     this.element.attr("src", "/display/post");
 };
 
-ns.PostElement.prototype = Object.create(wall.PostElement.prototype);
+ns.PostElement.prototype = Object.create(wall.PostElement.prototype, {
+    contentAttachedCallback: {value: function() {}}
+});
 
 /* ==== ImagePostElement ==== */
 
