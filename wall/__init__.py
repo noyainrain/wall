@@ -79,7 +79,15 @@ class WallApp(Application, EventTarget):
             brick = module.Brick(self)
             self.bricks[brick.id] = brick
 
-        self.do_post_handlers = self.config['do_post_handlers'].split()
+        self.do_post_handlers = []
+        for handler in self.config['do_post_handlers'].split():
+            if handler not in ['history']:
+                self.logger.warning('configuration: invalid item in do_post_handlers: "{}" unknown'.format(handler));
+                continue
+            if handler in self.do_post_handlers:
+                self.logger.warning('configuration: invalid item in do_post_handlers: "{}" non-unique'.format(handler))
+                continue
+            self.do_post_handlers.append(handler)
 
         if self.config['debug'] == 'True':
             tornado.autoreload.watch(os.path.join(res_path, 'default.cfg'))

@@ -26,13 +26,13 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     // setup enabled do post handlers
     for (var i = 0; i < doPostHandlers.length; i++) {
         var handler = doPostHandlers[i];
-        if (["history"].indexOf(handler) < 0) {
-            console.warn('config: invalid do post handler "' + handler + '"');
+        switch (handler) {
+        case "history":
+            this.addDoPostHandler(
+                new ns.ScreenDoPostHandler(ns.PostHistoryScreen, "History",
+                    "/static/images/history.svg", this));
+            break;
         }
-    }
-    if (doPostHandlers.indexOf("history") >= 0) {
-        this.addDoPostHandler(new ns.ScreenDoPostHandler(ns.PostHistoryScreen,
-            "History", "/static/images/history.svg", this));
     }
 
     this.mainScreen = new ns.PostScreen(this);
