@@ -8,7 +8,7 @@ import random
 import math
 from math import sin, cos
 from tornado.ioloop import PeriodicCallback
-from wall import Brick, Post, Message, randstr, error_json
+from wall import Brick, Post, Message, ValueError, randstr
 
 class PyngBrick(Brick):
     id = 'pyng'
@@ -28,18 +28,14 @@ class PyngBrick(Brick):
         if not isinstance(self.app.current_post, PyngPost):
             return
         players = self.app.current_post.subscribe(msg.frm)
-        msg.frm.send(Message(msg.type, [p.json() for p in players]))
+        return Message('pyng.subscribe', [p.json() for p in players])
 
     def _join_msg(self, msg):
         # TODO: see _subscribe_msg
         if not isinstance(self.app.current_post, PyngPost):
             return
-        try:
-            self.app.current_post.join(msg.frm)
-            result = Message(msg.type)
-        except ValueError as e:
-            result = Message(msg.type, error_json(e))
-        msg.frm.send(result)
+        self.app.current_post.join(msg.frm)
+        return Message('pyng.join')
 
     def _update_msg(self, msg):
         # TODO: see _subscribe_msg
@@ -48,6 +44,7 @@ class PyngBrick(Brick):
         try:
             self.app.current_post.update(msg.frm, msg.data)
         except ValueError:
+            # ignore invalid update messages
             pass
 
 class PyngPost(Post):
