@@ -123,6 +123,15 @@ class WallApp(Application, EventTarget):
         IOLoop.instance().start()
 
     def add_message_handler(self, type, handler):
+        """
+        Extension API: register a new message `handler` for messages of the
+        given `type`.
+
+        A message handler is a function `handle(msg)` that processes a received
+        message. It may return a `Message`, which is sent back to the sender as
+        response. If a (subclass of) `Error` is raised, it is converted to a
+        `Message` and sent back to the sender as error response.
+        """
         self.msg_handlers[type] = handler
 
     def sendall(self, msg):
@@ -132,18 +141,19 @@ class WallApp(Application, EventTarget):
     def post_msg(self, msg):
         # TODO: error handling
         post = self.post(msg.data['id'])
-        msg.frm.send(Message('post', post.json()))
+        return Message('post', post.json())
 
     def post_new_msg(self, msg):
-        post_type = msg.data.pop('type')
-        post = self.post_new(post_type, **msg.data)
-        msg.frm.send(Message('post_new', post.json()))
         # wake display
         Popen('DISPLAY=:0.0 xset dpms force on', shell=True)
 
+        post_type = msg.data.pop('type')
+        post = self.post_new(post_type, **msg.data)
+        return Message('post_new', post.json())
+
     def get_history_msg(self, msg):
-        msg.frm.send(Message('get_history',
-            [p.json('common') for p in self.get_history()]))
+        return Message('get_history',
+            [p.json('common') for p in self.get_history()])
 
     def post(self, id):
         try:
@@ -215,12 +225,17 @@ class Socket(WebSocketHandler):
 
     def on_message(self, msgstr):
         msg = Message.parse(msgstr, self)
+
         handle = self.app.msg_handlers[msg.type]
-        #try:
-        handle(msg)
-        #except Exception as e:
-        #    e = {'args': e.args, '__type__': type(e).__name__}
-        #    self.send(Message(msg.type, e))
+        try:
+            # TODO: support Future for asynchronous handlers (see
+            # https://code.google.com/p/pythonfutures/ )
+            response = handle(msg)
+        except Error as e:
+            response = Message(msg.type, e.json())
+
+        if response:
+            msg.frm.send(response)
 
 class Message(object):
     @classmethod

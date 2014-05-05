@@ -76,11 +76,11 @@ class UrlBrick(Brick):
 
     def _get_search_handlers_msg(self, msg):
         handlers = [h.json() for h in self.search_handlers]
-        msg.frm.send(Message(msg.type, handlers))
+        return Message('url.get_search_handlers', handlers)
 
     def _search_msg(self, msg):
         def cb(results):
-            msg.frm.send(Message(msg.type, [vars(r) for r in results]))
+            msg.frm.send(Message('url.search', [vars(r) for r in results]))
         self.search(msg.data['query'], cb)
 
 class UrlPost(Post):
