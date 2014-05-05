@@ -47,24 +47,24 @@ ns.DisplayPyngPostElement = function(post, ui) {
     }, this));
 };
 
-ns.DisplayPyngPostElement.prototype = $.extend(
-    Object.create(wall.display.PostElement.prototype),
+ns.DisplayPyngPostElement.prototype =
+    Object.create(wall.display.PostElement.prototype,
 {
-    postType: "PyngPost",
+    postType: {value: "PyngPost"},
 
-    _joinedMsg: function(msg) {
+    _joinedMsg: {value: function(msg) {
         player = new ns.Player(msg.data, this);
         this.players[player.id] = player;
         $("#pyng-info", this.content).hide();
-    },
+    }},
 
-    _scoredMsg: function(msg) {
+    _scoredMsg: {value: function(msg) {
         var event = msg.data;
         var player = this.players[event.player];
         player.setScore(event.score);
-    },
+    }},
 
-    _gameOverMsg: function(msg) {
+    _gameOverMsg: {value: function(msg) {
         for (var id in this.players) {
             this.players[id].destroy();
         }
@@ -72,9 +72,9 @@ ns.DisplayPyngPostElement.prototype = $.extend(
         this.ball.destroy();
         this.ball = new ns.Ball(this);
         $("#pyng-info", this.content).text("Game Over!").show();
-    },
+    }},
 
-    _updateMsg: function(msg) {
+    _updateMsg: {value: function(msg) {
         var state = msg.data;
         this.ball.update(state.ball.x, state.ball.y);
         for (var i = 0; i < state.players.length; i++) {
@@ -82,7 +82,7 @@ ns.DisplayPyngPostElement.prototype = $.extend(
             var player = this.players[player_state.id];
             player.update(player_state.x, player_state.y);
         }
-    }
+    }}
 });
 
 /* ==== RemotePyngBrick ==== */
@@ -129,20 +129,18 @@ ns.RemotePyngPostElement = function(post, ui) {
     }.bind(this));
 };
 
-ns.RemotePyngPostElement.prototype = $.extend(
-    Object.create(wall.PostElement.prototype),
-{
-    postType: "PyngPost",
+ns.RemotePyngPostElement.prototype = Object.create(wall.PostElement.prototype, {
+    postType: {value: "PyngPost"},
 
-    cleanup: function() {
+    detachedCallback: {value: function() {
         clearInterval(this._clock);
-    },
+    }},
 
-    _tick: function() {
+    _tick: {value: function() {
         this.ui.send({"type": "pyng.update", "data": this.pos});
-    },
+    }},
 
-    _deviceOrientationUpdated: function(event) {
+    _deviceOrientationUpdated: {value: function(event) {
         // workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=878067
         if (navigator.userAgent.indexOf("Gecko") != -1) {
             event = {"beta": -event.beta};
@@ -154,7 +152,7 @@ ns.RemotePyngPostElement.prototype = $.extend(
         var db = event.beta - this.beta;
         this.beta = event.beta;
         this.pos = Math.min(Math.max(this.pos - (db / this.angleRange), 0), 1);
-    }
+    }}
 });
 
 /* ==== Player ==== */

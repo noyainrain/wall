@@ -62,7 +62,11 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
         // backward compatibility: wrap HTML elements as pseudo Screen objects
         // TODO: port all (HTML element) screens to Screen type and remove this
         if (screen instanceof $) {
-            screen = {element: screen};
+            screen = {
+                element: screen,
+                attachedCallback: function() {},
+                detachedCallback: function() {}
+            };
         }
 
         this.screenStack.push(screen);
@@ -70,6 +74,7 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
         screen.element.addClass("screen-pushed")
             .css("z-index", this.screenStack.length - 1);
         $(".screen-stack").append(screen.element);
+        screen.attachedCallback();
 
         // apply screen style (so that subsequent style changes may trigger
         // animations)
@@ -84,6 +89,7 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
         screen.element.addClass("screen-popped").removeClass("screen-open");
         screen.element.one("transitionend", function(event) {
             screen.element.removeClass("screen-popped").detach();
+            screen.detachedCallback();
         });
     },
 
@@ -227,7 +233,7 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
                 this._post = null;
                 if (this._postElement) {
                     $(".post-space", this.content).empty();
-                    this._postElement.cleanup();
+                    this._postElement.detachedCallback();
                     this._postElement = null;
                 }
                 this.title = "Empty Wall";
@@ -245,6 +251,7 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
                     new postElementType(this._post, this.ui);
                 $(".post-space", this.content).append(
                     this._postElement.element);
+                this._postElement.attachedCallback();
             }
             this.title = this._post.title;
         },
@@ -252,6 +259,10 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
             return this._post;
         }
     },
+
+    detachedCallback: {value: function() {
+        this.post = null;
+    }},
 
     _postMenuItemClicked: {value: function(event) {
         var handler = $(event.currentTarget).data("handler");
