@@ -42,14 +42,14 @@ ns.DisplayUrlPostElement = function(post, ui) {
     }.bind(this), 10000);
 };
 
-ns.DisplayUrlPostElement.prototype = $.extend(
-    Object.create(wall.display.PostElement.prototype),
+ns.DisplayUrlPostElement.prototype =
+    Object.create(wall.display.PostElement.prototype,
 {
-    postType: "UrlPost",
+    postType: {value: "UrlPost"},
 
-    cleanup: function() {
+    detachedCallback: {value: function() {
         clearTimeout(this._timeout);
-    }
+    }}
 });
 
 /* ==== ClientBrick ==== */

@@ -19,7 +19,7 @@ $.extend(ns.DisplayUi.prototype, wall.Ui.prototype, {
     _postedMsg: function(msg) {
         if (this.currentPostElement) {
             this.currentPostElement.element.remove();
-            this.currentPostElement.cleanup();
+            this.currentPostElement.detachedCallback();
             this.currentPostElement = null;
         }
 
@@ -27,6 +27,7 @@ $.extend(ns.DisplayUi.prototype, wall.Ui.prototype, {
         var postElementType = this.postElementTypes[post.__type__];
         this.currentPostElement = new postElementType(post, this);
         $("body").append(this.currentPostElement.element);
+        this.currentPostElement.attachedCallback();
     }
 });
 
@@ -55,10 +56,8 @@ ns.ImagePostElement = function(post, ui) {
     this.content.css("background-image", "url(" + this.post.url + ")");
 };
 
-ns.ImagePostElement.prototype = $.extend(
-    Object.create(ns.PostElement.prototype),
-{
-    postType: "ImagePost"
+ns.ImagePostElement.prototype = Object.create(ns.PostElement.prototype, {
+    postType: {value: "ImagePost"}
 });
 
 }(wall.display));
