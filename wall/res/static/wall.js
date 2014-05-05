@@ -94,9 +94,17 @@ ns.Element = function(ui) {
     this.element = null;
 };
 
-ns.Element.prototype = {
-    cleanup: function() {}
-};
+/**
+ * UI element.
+ *
+ * Inspired by the custom elements specification (see
+ * https://w3c.github.io/webcomponents/spec/custom/ ).
+ */
+ns.Element.prototype = Object.create(Object.prototype, {
+    attachedCallback: {value: function() {}},
+
+    detachedCallback: {value: function() {}}
+});
 
 /* ==== PostElement ==== */
 
@@ -105,8 +113,8 @@ ns.PostElement = function(post, ui) {
     this.post = post;
 };
 
-ns.PostElement.prototype = $.extend(Object.create(ns.Element.prototype), {
-    postType: null
+ns.PostElement.prototype = Object.create(ns.Element.prototype, {
+    postType: {value: null}
 });
 
 /* ==== Brick ==== */
