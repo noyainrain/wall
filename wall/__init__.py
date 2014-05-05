@@ -81,7 +81,7 @@ class WallApp(Application, EventTarget):
 
         self.do_post_handlers = []
         for handler in self.config['do_post_handlers'].split():
-            if handler not in ['history']:
+            if handler not in ['note', 'history']:
                 self.logger.warning('configuration: invalid item in do_post_handlers: "{}" unknown'.format(handler));
                 continue
             if handler in self.do_post_handlers:
