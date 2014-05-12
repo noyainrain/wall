@@ -35,16 +35,27 @@ body
     height: 100vh;
 }
 
-/* ==== Image Post ==== */
+/* ==== TextPost ==== */
+
+.text-post-content
+{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1.5rem 1rem;
+}
+
+.text-post-content pre
+{
+    flex: none;
+    margin: 0;
+}
+
+/* ==== ImagePost ==== */
 
 .image-post-content
 {
     background: center / contain no-repeat;
-}
-
-.text-post {
-    font-family: mono;
-    margin: 0 auto;
 }
 
 /* ==== Page ==== */

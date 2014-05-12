@@ -49,9 +49,9 @@
 
 html
 {
+    font-family: "Open Sans", sans-serif;
     color: #fff;
     background: #333;
-    font-family: "Open Sans", sans-serif;
 }
 
 h1,
@@ -59,8 +59,10 @@ h2,
 h3,
 p,
 ul,
-ol
+ol,
+pre
 {
+    font-family: inherit;
     font-weight: normal;
     display: block;
     margin: 1.5rem 0;

@@ -57,41 +57,21 @@ ns.PostElement.prototype = Object.create(wall.PostElement.prototype, {
 
 ns.TextPostElement = function(post, ui) {
     ns.PostElement.call(this, post, ui);
-
-    // First layout the post content by rendering it (with a fixed font
-    // size) into a container of fixed width. Then fit this container to the
-    // screen (scaling the text accordingly).
-    //
-    // Because font rendering is a rather complex process, the layout (e.g.
-    // word wrapping) of the scaled text may not exactly match the
-    // pre-rendered. We want to avoid the scaled version to be not as
-    // compact, since then the text may overflow its container.
-
-    // use a floating point font size to avoid a pixel perfect and thus
-    // possibly compact layout
-    var fontSize = 16.5;
-    var lineHeight = fontSize * 1.5;
-    // a line should hold about 70 characters (assuming a character ratio of
-    // about 3/1)
-    var lineWidth = lineHeight * (70 / 3);
-
-    var pre = $("<pre>").addClass("text-post").text(post.content)
-        .appendTo(this.content);
-    pre.css({
-        "font-size": fontSize + "px",
-        "width": lineWidth + "px"
-    });
-
-    // add an additional line to counter a possible compact layout
-    var lineCount = Math.round(pre.height() / lineHeight) + 1;
-    pre.css({"height": lineCount * lineHeight + "px"});
-
-    pre.fitToParent();
-    pre.css({"font-size": pre.height() / lineCount / 1.5 + "px"});
+    $("<pre>").text(post.content).appendTo(this.content);
 };
 
-$.extend(ns.TextPostElement.prototype, ns.PostElement.prototype, {
-    postType: "TextPost"
+ns.TextPostElement.prototype = Object.create(ns.PostElement.prototype, {
+    postType: {value: "TextPost"},
+
+    contentAttachedCallback: {value: function() {
+        // First layout the text by rendering it (with a fixed font size) into
+        // an element with a fixed maximum width. Then fit this element to the
+        // post element (scaling the text accordingly).
+        var pre = this.content[0].querySelector("pre");
+        pre.style.fontSize = "16px";
+        pre.style.maxWidth = "70ch";
+        $(pre).fitToParent({maxFontSize: (20 / 1.5) + "vh"});
+    }}
 });
 
 /* ==== ImagePostElement ==== */
