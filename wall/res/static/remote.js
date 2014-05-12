@@ -26,13 +26,18 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     // setup enabled do post handlers
     for (var i = 0; i < doPostHandlers.length; i++) {
         var handler = doPostHandlers[i];
-        if (["history"].indexOf(handler) < 0) {
-            console.warn('config: invalid do post handler "' + handler + '"');
+        switch (handler) {
+        case "note":
+            this.addDoPostHandler(
+                new ns.ScreenDoPostHandler(ns.PostNoteScreen, "Note",
+                    "static/images/note.svg", this));
+            break;
+        case "history":
+            this.addDoPostHandler(
+                new ns.ScreenDoPostHandler(ns.PostHistoryScreen, "History",
+                    "/static/images/history.svg", this));
+            break;
         }
-    }
-    if (doPostHandlers.indexOf("history") >= 0) {
-        this.addDoPostHandler(new ns.ScreenDoPostHandler(ns.PostHistoryScreen,
-            "History", "/static/images/history.svg", this));
     }
 
     this.mainScreen = new ns.PostScreen(this);
@@ -318,6 +323,46 @@ ns.NotSupportedScreen = function(what, ui) {
 };
 
 ns.NotSupportedScreen.prototype = Object.create(ns.Screen.prototype);
+
+/* ==== PostNoteScreen ==== */
+
+ns.PostNoteScreen = function(ui) {
+    ns.Screen.call(this, ui);
+
+    this.content.append($(
+        '<form class="post-note-screen-post">                            ' +
+        '    <textarea name="content"></textarea>                        ' +
+        '    <p class="buttons">                                         ' +
+        '        <button><img src="static/images/post.svg"/>Post</button>' +
+        '    </div>                                                      ' +
+        '</form>                                                         '
+    ));
+    var form = this.content[0].querySelector(".post-note-screen-post");
+    form.addEventListener("submit", this._postSubmitted.bind(this));
+
+    this.title = "Post Note";
+};
+
+ns.PostNoteScreen.prototype = Object.create(ns.Screen.prototype, {
+    _postSubmitted: {value: function(event) {
+        event.preventDefault();
+
+        var content = this.content[0].querySelector(
+            ".post-note-screen-post textarea").value;
+
+        this.ui.notify("Posting…");
+        this.ui.postNew("TextPost", {content: content}, function(post) {
+            this.ui.closeNotification();
+            if (post.__type__ == "ValueError" &&
+                post.args[0] == "content_empty")
+            {
+                this.ui.notify("Some content for the note is required.");
+                return;
+            }
+            this.ui.popScreen();
+        }.bind(this));
+    }}
+});
 
 /* ==== PostHistoryScreen ==== */
 

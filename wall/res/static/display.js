@@ -12,6 +12,7 @@ ns.DisplayUi = function(bricks) {
     this.currentPostElement = null;
     this.loadBricks(bricks, "DisplayBrick");
     this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
+    this.addPostElementType(ns.TextPostElement);
     this.addPostElementType(ns.ImagePostElement);
 };
 
@@ -50,6 +51,27 @@ ns.PostElement = function(post, ui) {
 
 ns.PostElement.prototype = Object.create(wall.PostElement.prototype, {
     contentAttachedCallback: {value: function() {}}
+});
+
+/* ==== TextPostElement ==== */
+
+ns.TextPostElement = function(post, ui) {
+    ns.PostElement.call(this, post, ui);
+    $("<pre>").text(post.content).appendTo(this.content);
+};
+
+ns.TextPostElement.prototype = Object.create(ns.PostElement.prototype, {
+    postType: {value: "TextPost"},
+
+    contentAttachedCallback: {value: function() {
+        // First layout the text by rendering it (with a fixed font size) into
+        // an element with a fixed maximum width. Then fit this element to the
+        // post element (scaling the text accordingly).
+        var pre = this.content[0].querySelector("pre");
+        pre.style.fontSize = "16px";
+        pre.style.maxWidth = "70ch";
+        $(pre).fitToParent({maxFontSize: (20 / 1.5) + "vh"});
+    }}
 });
 
 /* ==== ImagePostElement ==== */

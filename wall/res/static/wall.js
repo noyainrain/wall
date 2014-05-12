@@ -26,11 +26,13 @@ ns.Ui.prototype = {
     },
 
     call: function(method, args, callback) {
-        args = args || {};
-        this.msgHandlers[method] = $.proxy(function(msg) {
+        callback = callback || null;
+        this.msgHandlers[method] = function(msg) {
             delete this.msgHandlers[method];
-            callback(msg.data);
-        }, this);
+            if (callback) {
+                callback(msg.data);
+            }
+        }.bind(this);
         this.send({"type": method, "data": args});
     },
 
@@ -129,25 +131,61 @@ ns.Brick.prototype = {
 
 /* ==== */
 
-$.fn.fitToParent = function() {
+$.fn.fitToParent = function(options) {
+    options =
+        $.extend({method: "size", maxFontSize: null}, options);
+
     return this.each(function(index, elem) {
-        elem = $(elem);
-        var parent = elem.parent();
+        var style = getComputedStyle(elem);
+        var width = elem.offsetWidth;
+        var height = elem.offsetHeight;
+        var fontSize = parseFloat(style.fontSize);
+        var ratio = width / height;
 
-        var ratio = elem.width() / elem.height();
-        var parentRatio = parent.width() / parent.height();
+        var parent = elem.parentNode;
+        var parentStyle = getComputedStyle(parent);
+        var parentWidth = parent.clientWidth -
+            parseFloat(parentStyle.paddingLeft) -
+            parseFloat(parentStyle.paddingRight);
+        var parentHeight = parent.clientHeight -
+            parseFloat(parentStyle.paddingTop) -
+            parseFloat(parentStyle.paddingBottom);
+        var parentRatio = parentWidth / parentHeight;
 
+        var scale;
         if (ratio <= parentRatio) {
-            elem.css({
-                "width": parent.height() * ratio,
-                "height": parent.height()
-            });
+            scale = parentHeight / height;
         } else {
-            elem.css({
-                "width": parent.width(),
-                "height": parent.width() / ratio
-            });
+            scale = parentWidth / width;
         }
+
+        if (options.maxFontSize) {
+            // get computed value (in pixels) for maxFontSize
+            elem.style.fontSize = options.maxFontSize;
+            // workaround for TODO: report and link bug
+            elem.offsetWidth;
+            var maxFontSize = parseFloat(style.fontSize);
+            elem.style.fontSize = fontSize + "px";
+
+            scale = Math.min(scale, maxFontSize / fontSize);
+        }
+
+        switch (options.method) {
+        case "size":
+            elem.style.width = (width * scale) + "px";
+            elem.style.height = (height * scale) + "px";
+            // Some text renderers draw text with the font size rounded to the
+            // nearest integer. This may result in an exaggerated text scale,
+            // thus always round down.
+            elem.style.fontSize = Math.floor(fontSize * scale) + "px";
+            break;
+        case "transform":
+            elem.style.transform = "scale(" + scale + ")";
+            elem.style.webkitTransform = "scale(" + scale + ")";
+            break;
+        }
+
+        return elem;
     });
 };
 

@@ -21,7 +21,7 @@ from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
 from wall.util import EventTarget, RedisContainer
 
-release = 12
+release = 13
 
 res_path = os.path.join(os.path.dirname(__file__), 'res')
 static_path = os.path.join(res_path, 'static')
@@ -69,6 +69,7 @@ class WallApp(Application, EventTarget):
             'get_history': self.get_history_msg
         }
 
+        self.add_post_type(TextPost)
         self.add_post_type(ImagePost)
 
         # initialize bricks
@@ -78,7 +79,15 @@ class WallApp(Application, EventTarget):
             brick = module.Brick(self)
             self.bricks[brick.id] = brick
 
-        self.do_post_handlers = self.config['do_post_handlers'].split()
+        self.do_post_handlers = []
+        for handler in self.config['do_post_handlers'].split():
+            if handler not in ['note', 'history']:
+                self.logger.warning('configuration: invalid item in do_post_handlers: "{}" unknown'.format(handler));
+                continue
+            if handler in self.do_post_handlers:
+                self.logger.warning('configuration: invalid item in do_post_handlers: "{}" non-unique'.format(handler))
+                continue
+            self.do_post_handlers.append(handler)
 
         if self.config['debug'] == 'True':
             tornado.autoreload.watch(os.path.join(res_path, 'default.cfg'))
@@ -158,7 +167,7 @@ class WallApp(Application, EventTarget):
     def post(self, id):
         try:
             post = self.posts[id]
-        except exceptions.KeyError:
+        except KeyError:
             raise ValueError('id_nonexistent')
 
         if self.current_post:
@@ -175,7 +184,7 @@ class WallApp(Application, EventTarget):
     def post_new(self, type, **args):
         try:
             post_type = self.post_types[type]
-        except exceptions.KeyError:
+        except KeyError:
             raise ValueError('type_nonexistent')
 
         post = post_type.create(self, **args)
@@ -353,6 +362,28 @@ class Brick(object):
                 self.stylesheets = [self.id + '.css']
             else:
                 self.stylesheets = []
+
+class TextPost(Post):
+    @classmethod
+    def create(cls, app, **kwargs):
+        try:
+            content = kwargs['content'].strip()
+        except KeyError:
+            raise ValueError('content_missing')
+        if not content:
+            raise ValueError('content_empty')
+
+        title = content.splitlines()[0]
+        if len(title) > 64:
+            title = title[:63] + '\u2026' # ellipsis
+
+        post = TextPost(app, randstr(), title, None, content)
+        app.db.hmset(post.id, post.json())
+        return post
+
+    def __init__(self, app, id, title, posted, content, **kwargs):
+        super(TextPost, self).__init__(app, id, title, posted, **kwargs)
+        self.content = content
 
 class ImagePost(Post):
     @classmethod
