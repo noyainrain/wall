@@ -52,6 +52,7 @@ html
     font-family: "Open Sans", sans-serif;
     color: #fff;
     background: #333;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.75);
 }
 
 h1,

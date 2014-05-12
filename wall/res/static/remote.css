@@ -58,6 +58,7 @@ button
     text-align: center;
     color: inherit;
     background: transparent;
+    text-shadow: inherit;
     border: none;
     border-radius: 0;
     display: block;
@@ -239,7 +240,7 @@ html
 
 body
 {
-    box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.8);
+    box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.75);
     position: relative;
     max-width: 70ch;
     min-height: 100vh;
