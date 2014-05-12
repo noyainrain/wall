@@ -26,11 +26,13 @@ ns.Ui.prototype = {
     },
 
     call: function(method, args, callback) {
-        args = args || {};
-        this.msgHandlers[method] = $.proxy(function(msg) {
+        callback = callback || null;
+        this.msgHandlers[method] = function(msg) {
             delete this.msgHandlers[method];
-            callback(msg.data);
-        }, this);
+            if (callback) {
+                callback(msg.data);
+            }
+        }.bind(this);
         this.send({"type": method, "data": args});
     },
 
