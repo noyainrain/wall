@@ -14,12 +14,13 @@ from ConfigParser import SafeConfigParser, Error as ConfigParserError
 from subprocess import Popen
 from string import ascii_lowercase
 from random import choice
+from collections import OrderedDict
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RequestHandler, StaticFileHandler
 import tornado.autoreload
 from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
-from wall.util import EventTarget, Event, RedisContainer
+from wall.util import EventTarget, Event, RedisContainer, truncate
 
 release = 13
 
@@ -221,10 +222,12 @@ class Socket(WebSocketHandler):
 
     def send(self, msg):
         self.write_message(str(msg))
+        self.app.logger.debug('sent message %s to %s', truncate(str(msg)),
+            self.request.remote_ip)
 
     def open(self):
-        print('client connected')
         self.app.clients.append(self)
+        self.app.logger.debug('client %s connected', self.request.remote_ip)
         self.app.dispatch_event(Event('connected', client=self))
 
         # TODO: announce current post as response to hello message
@@ -232,12 +235,14 @@ class Socket(WebSocketHandler):
             self.send(Message('posted', {'post': self.app.current_post.json()}))
 
     def on_close(self):
-        print('client disconnected')
         self.app.clients.remove(self)
+        self.app.logger.debug('client %s disconnected', self.request.remote_ip)
         self.app.dispatch_event(Event('disconnected', client=self))
 
     def on_message(self, msgstr):
         msg = Message.parse(msgstr, self)
+        self.app.logger.debug('received message %s from %s', truncate(str(msg)),
+            self.request.remote_ip)
 
         handle = self.app.msg_handlers[msg.type]
         try:
@@ -262,7 +267,9 @@ class Message(object):
         self.frm  = frm
 
     def __str__(self):
-        return json.dumps({'type': self.type, 'data': self.data})
+        return json.dumps(
+            OrderedDict([('type', self.type), ('data', self.data)])
+        )
 
 class ClientPage(RequestHandler):
     def get(self):
@@ -377,9 +384,7 @@ class TextPost(Post):
         if not content:
             raise ValueError('content_empty')
 
-        title = content.splitlines()[0]
-        if len(title) > 64:
-            title = title[:63] + '\u2026' # ellipsis
+        title = truncate(content.splitlines()[0])
 
         post = TextPost(app, randstr(), title, None, content)
         app.db.hmset(post.id, post.json())

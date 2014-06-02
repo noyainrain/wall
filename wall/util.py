@@ -153,6 +153,12 @@ class TestCase(AsyncTestCase):
     def get_new_ioloop(self):
         return IOLoop.instance()
 
+def truncate(s, length=64, ellipsis='\u2026'):
+    if len(s) > length:
+        return s[:length - len(ellipsis)] + ellipsis
+    else:
+        return s
+
 # ==== Tests ====
 
 class EventTargetTest(TestCase):
