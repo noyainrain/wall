@@ -9,6 +9,7 @@ import math
 from math import sin, cos
 from tornado.ioloop import PeriodicCallback
 from wall import Brick, Post, Message, ValueError, randstr
+from wall.util import Event
 
 class PyngBrick(Brick):
     id = 'pyng'
@@ -191,9 +192,9 @@ class PyngPost(Post):
         for subscriber in self.subscribers:
             subscriber.user.send(msg)
 
-    def _disconnected(self, user):
+    def _disconnected(self, event):
         try:
-            self.unsubscribe(user)
+            self.unsubscribe(event.args['client'])
         except ValueError:
             pass
 

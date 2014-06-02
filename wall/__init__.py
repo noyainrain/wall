@@ -19,7 +19,7 @@ from tornado.web import Application, RequestHandler, StaticFileHandler
 import tornado.autoreload
 from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
-from wall.util import EventTarget, RedisContainer
+from wall.util import EventTarget, Event, RedisContainer
 
 release = 13
 
@@ -223,14 +223,15 @@ class Socket(WebSocketHandler):
     def open(self):
         print('client connected')
         self.app.clients.append(self)
-        self.app.dispatch_event('connected', self)
+        self.app.dispatch_event(Event('connected', client=self))
+
         if self.app.current_post:
             self.send(Message('posted', self.app.current_post.json()))
 
     def on_close(self):
         print('client disconnected')
         self.app.clients.remove(self)
-        self.app.dispatch_event('disconnected', self)
+        self.app.dispatch_event(Event('disconnected', client=self))
 
     def on_message(self, msgstr):
         msg = Message.parse(msgstr, self)
