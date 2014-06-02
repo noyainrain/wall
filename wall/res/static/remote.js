@@ -19,9 +19,9 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     this.mainScreen = null;
 
     window.onerror = $.proxy(this._erred, this);
+    this.addEventListener("posted", this._posted.bind(this));
 
     this.loadBricks(bricks, "ClientBrick");
-    this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
 
     // setup enabled do post handlers
     for (var i = 0; i < doPostHandlers.length; i++) {
@@ -44,26 +44,26 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     this.mainScreen.hasGoBack = false;
 };
 
-$.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
-    run: function() {
+ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
+    run: {value: function() {
         this.showScreen(this.mainScreen);
         this.showScreen(new ns.ConnectionScreen(this));
         wall.Ui.prototype.run.call(this);
-    },
+    }},
 
-    isBrowserSupported: function(){
+    isBrowserSupported: {value: function(){
         return 'WebSocket' in window;
-    },
+    }},
 
-    notify: function(msg) {
+    notify: {value: function(msg) {
         $("#notification").text(msg).show();
-    },
+    }},
 
-    closeNotification: function() {
+    closeNotification: {value: function() {
         $("#notification").hide();
-    },
+    }},
 
-    showScreen: function(screen) {
+    showScreen: {value: function(screen) {
         // backward compatibility: wrap HTML elements as pseudo Screen objects
         // TODO: port all (HTML element) screens to Screen type and remove this
         if (screen instanceof $) {
@@ -86,9 +86,9 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
         getComputedStyle(screen.element[0]).width;
 
         screen.element.addClass("screen-open").removeClass("screen-pushed");
-    },
+    }},
 
-    popScreen: function() {
+    popScreen: {value: function() {
         var screen = this.screenStack.pop();
 
         screen.element.addClass("screen-popped").removeClass("screen-open");
@@ -96,47 +96,47 @@ $.extend(ns.RemoteUi.prototype, wall.Ui.prototype, {
             screen.element.removeClass("screen-popped").detach();
             screen.detachedCallback();
         });
-    },
+    }},
 
-    post: function(id, callback) {
+    post: {value: function(id, callback) {
         this.call("post", {"id": id}, callback);
-    },
+    }},
 
-    postNew: function(type, args, callback) {
+    postNew: {value: function(type, args, callback) {
         this.call("post_new", $.extend({"type": type}, args), callback);
-    },
+    }},
 
-    addDoPostHandler: function(handler) {
+    addDoPostHandler: {value: function(handler) {
         this.doPostHandlers.push(handler);
-    },
+    }},
 
-    _connect: function() {
+    _connect: {value: function() {
         wall.Ui.prototype._connect.call(this);
         this.screenStack[this.screenStack.length - 1].setState(
             this.connectionState);
-    },
+    }},
 
-    _opened: function(event) {
+    _opened: {value: function(event) {
         wall.Ui.prototype._opened.call(this, event);
         this.popScreen();
-    },
+    }},
 
-    _closed: function(event) {
+    _closed: {value: function(event) {
         wall.Ui.prototype._closed.call(this, event);
         if (this.connectionState == "disconnected") {
             this.showScreen(new ns.ConnectionScreen(this));
         }
         this.screenStack[this.screenStack.length - 1].setState(
             this.connectionState);
-    },
+    }},
 
-    _postedMsg: function(msg) {
-        this.mainScreen.post = msg.data;
-    },
-
-    _erred: function(msg, url, line) {
+    _erred: {value: function(msg, url, line) {
         this.notify("fatal error: " + msg);
-    }
+    }},
+
+    _posted: {value: function(event) {
+        this.mainScreen.post = event.args.post;
+    }}
 });
 
 /* ==== Screen ==== */

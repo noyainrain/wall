@@ -62,15 +62,14 @@ class WallApp(Application, EventTarget):
         self.db = StrictRedis(db=int(self.config['db']))
         self.posts = RedisContainer(self.db, 'posts', self._post)
 
-        # setup message handlers
+        self.add_post_type(TextPost)
+        self.add_post_type(ImagePost)
         self.msg_handlers = {
             'post': self.post_msg,
             'post_new': self.post_new_msg,
             'get_history': self.get_history_msg
         }
-
-        self.add_post_type(TextPost)
-        self.add_post_type(ImagePost)
+        self.add_event_listener('posted', self._posted)
 
         # initialize bricks
         bricks = self.config['bricks'].split()
@@ -178,7 +177,7 @@ class WallApp(Application, EventTarget):
         self.db.hset(post.id, 'posted', post.posted)
         post.activate()
 
-        self.sendall(Message('posted', post.json()))
+        self.dispatch_event(Event('posted', post=post))
         return post
 
     def post_new(self, type, **args):
@@ -213,6 +212,9 @@ class WallApp(Application, EventTarget):
             Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s'))
         logger.addHandler(handler)
 
+    def _posted(self, event):
+        self.sendall(Message('posted', {'post': event.args['post'].json()}))
+
 class Socket(WebSocketHandler):
     def initialize(self):
         self.app = self.application
@@ -225,8 +227,9 @@ class Socket(WebSocketHandler):
         self.app.clients.append(self)
         self.app.dispatch_event(Event('connected', client=self))
 
+        # TODO: announce current post as response to hello message
         if self.app.current_post:
-            self.send(Message('posted', self.app.current_post.json()))
+            self.send(Message('posted', {'post': self.app.current_post.json()}))
 
     def on_close(self):
         print('client disconnected')
