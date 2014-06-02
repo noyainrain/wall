@@ -10,26 +10,31 @@ wall.display = {};
 ns.DisplayUi = function(bricks) {
     wall.Ui.call(this, bricks);
     this.currentPostElement = null;
-    this.loadBricks(bricks, "DisplayBrick");
-    this.msgHandlers["posted"] = $.proxy(this._postedMsg, this);
+
     this.addPostElementType(ns.TextPostElement);
     this.addPostElementType(ns.ImagePostElement);
+    this.addEventListener("posted", this._posted.bind(this));
+
+    this.loadBricks(bricks, "DisplayBrick");
 };
 
-$.extend(ns.DisplayUi.prototype, wall.Ui.prototype, {
-    _postedMsg: function(msg) {
+ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
+    _post: {value: function(post) {
         if (this.currentPostElement) {
             this.currentPostElement.element.remove();
             this.currentPostElement.detachedCallback();
             this.currentPostElement = null;
         }
 
-        var post = msg.data;
         var postElementType = this.postElementTypes[post.__type__];
         this.currentPostElement = new postElementType(post, this);
         $("body").append(this.currentPostElement.element);
         this.currentPostElement.attachedCallback();
-    }
+    }},
+
+    _posted: {value: function(event) {
+        this._post(event.args.post);
+    }}
 });
 
 /* ==== PostElement ==== */

@@ -2,30 +2,34 @@
  * Wall
  */
 
-var wall = {};
-wall.bricks = {};
+var wall = wall || {};
+wall.bricks = wall.bricks || {};
 (function(ns) {
 
 /* ==== Ui ==== */
 
 ns.Ui = function(bricks) {
+    wall.util.EventTarget.call(this);
+
     this.bricks = {};
     this.postElementTypes = {};
     this.msgHandlers = {};
     this.socket = null;
     this.connectionState = "closed";
+
+    this.msgHandlers["posted"] = this.eventMessage.bind(this);
 };
 
-ns.Ui.prototype = {
-    run: function() {
+ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
+    run: {value: function() {
         this._connect();
-    },
+    }},
 
-    send: function(msg) {
+    send: {value: function(msg) {
         this.socket.send(JSON.stringify(msg));
-    },
+    }},
 
-    call: function(method, args, callback) {
+    call: {value: function(method, args, callback) {
         callback = callback || null;
         this.msgHandlers[method] = function(msg) {
             delete this.msgHandlers[method];
@@ -34,9 +38,9 @@ ns.Ui.prototype = {
             }
         }.bind(this);
         this.send({"type": method, "data": args});
-    },
+    }},
 
-    loadBricks: function(bricks, type) {
+    loadBricks: {value: function(bricks, type) {
         // initialize bricks (inspired by server's wall.WallApp.__init__)
         for (var i = 0; i < bricks.length; i++) {
             var name = bricks[i];
@@ -45,32 +49,36 @@ ns.Ui.prototype = {
             var brick = new module[type](this);
             this.bricks[brick.id] = brick;
         }
-    },
+    }},
 
     /**
      * Extension API: register a new post element type. `postElementType` is a
      * class (constructor) that extends `PostElement`.
      */
-    addPostElementType: function(postElementType) {
+    addPostElementType: {value: function(postElementType) {
         this.postElementTypes[postElementType.prototype.postType] =
             postElementType;
-    },
+    }},
 
-    _connect: function() {
+    eventMessage: {value: function(msg) {
+        this.dispatchEvent(new wall.util.Event(msg.type, msg.data));
+    }},
+
+    _connect: {value: function() {
         console.log("connecting...");
         this.socket = new WebSocket("ws://" + location.host + "/api/socket");
         this.socket.addEventListener("open",    $.proxy(this._opened,   this));
         this.socket.addEventListener("close",   $.proxy(this._closed,   this));
         this.socket.addEventListener("message", $.proxy(this._received, this));
         this.connectionState = "connecting";
-    },
+    }},
 
-    _opened: function(event) {
+    _opened: {value: function(event) {
         console.log("connected");
         this.connectionState = "open";
-    },
+    }},
 
-    _closed: function(event) {
+    _closed: {value: function(event) {
         console.log("disconnected");
         if (this.connectionState == "connecting") {
             this.connectionState = "failed";
@@ -81,13 +89,13 @@ ns.Ui.prototype = {
             throw new Error();
         }
         setTimeout(this._connect.bind(this), 5000);
-    },
+    }},
 
-    _received: function(event) {
+    _received: {value: function(event) {
         var msg = JSON.parse(event.data);
         this.msgHandlers[msg.type] && this.msgHandlers[msg.type](msg);
-    }
-};
+    }}
+});
 
 /* ==== Element ==== */
 

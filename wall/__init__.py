@@ -14,14 +14,15 @@ from ConfigParser import SafeConfigParser, Error as ConfigParserError
 from subprocess import Popen
 from string import ascii_lowercase
 from random import choice
+from collections import OrderedDict
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RequestHandler, StaticFileHandler
 import tornado.autoreload
 from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
-from wall.util import EventTarget, RedisContainer
+from wall.util import EventTarget, Event, RedisContainer, truncate
 
-release = 13
+release = 14
 
 res_path = os.path.join(os.path.dirname(__file__), 'res')
 static_path = os.path.join(res_path, 'static')
@@ -62,15 +63,14 @@ class WallApp(Application, EventTarget):
         self.db = StrictRedis(db=int(self.config['db']))
         self.posts = RedisContainer(self.db, 'posts', self._post)
 
-        # setup message handlers
+        self.add_post_type(TextPost)
+        self.add_post_type(ImagePost)
         self.msg_handlers = {
             'post': self.post_msg,
             'post_new': self.post_new_msg,
             'get_history': self.get_history_msg
         }
-
-        self.add_post_type(TextPost)
-        self.add_post_type(ImagePost)
+        self.add_event_listener('posted', self._posted)
 
         # initialize bricks
         bricks = self.config['bricks'].split()
@@ -178,7 +178,7 @@ class WallApp(Application, EventTarget):
         self.db.hset(post.id, 'posted', post.posted)
         post.activate()
 
-        self.sendall(Message('posted', post.json()))
+        self.dispatch_event(Event('posted', post=post))
         return post
 
     def post_new(self, type, **args):
@@ -213,27 +213,36 @@ class WallApp(Application, EventTarget):
             Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s'))
         logger.addHandler(handler)
 
+    def _posted(self, event):
+        self.sendall(Message('posted', {'post': event.args['post'].json()}))
+
 class Socket(WebSocketHandler):
     def initialize(self):
         self.app = self.application
 
     def send(self, msg):
         self.write_message(str(msg))
+        self.app.logger.debug('sent message %s to %s', truncate(str(msg)),
+            self.request.remote_ip)
 
     def open(self):
-        print('client connected')
         self.app.clients.append(self)
-        self.app.dispatch_event('connected', self)
+        self.app.logger.debug('client %s connected', self.request.remote_ip)
+        self.app.dispatch_event(Event('connected', client=self))
+
+        # TODO: announce current post as response to hello message
         if self.app.current_post:
-            self.send(Message('posted', self.app.current_post.json()))
+            self.send(Message('posted', {'post': self.app.current_post.json()}))
 
     def on_close(self):
-        print('client disconnected')
         self.app.clients.remove(self)
-        self.app.dispatch_event('disconnected', self)
+        self.app.logger.debug('client %s disconnected', self.request.remote_ip)
+        self.app.dispatch_event(Event('disconnected', client=self))
 
     def on_message(self, msgstr):
         msg = Message.parse(msgstr, self)
+        self.app.logger.debug('received message %s from %s', truncate(str(msg)),
+            self.request.remote_ip)
 
         handle = self.app.msg_handlers[msg.type]
         try:
@@ -258,7 +267,9 @@ class Message(object):
         self.frm  = frm
 
     def __str__(self):
-        return json.dumps({'type': self.type, 'data': self.data})
+        return json.dumps(
+            OrderedDict([('type', self.type), ('data', self.data)])
+        )
 
 class ClientPage(RequestHandler):
     def get(self):
@@ -373,9 +384,7 @@ class TextPost(Post):
         if not content:
             raise ValueError('content_empty')
 
-        title = content.splitlines()[0]
-        if len(title) > 64:
-            title = title[:63] + '\u2026' # ellipsis
+        title = truncate(content.splitlines()[0])
 
         post = TextPost(app, randstr(), title, None, content)
         app.db.hmset(post.id, post.json())
