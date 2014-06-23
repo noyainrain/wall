@@ -286,11 +286,11 @@ class DisplayPostPage(RequestHandler):
 
 class Post(object):
     @classmethod
-    def create(cls, app, **kwargs):
+    def create(cls, app, **args):
         """
         Extension API: create a post of this type. Must be overridden and create
         a post, store it in the database and return it. Specific arguments are
-        passed to `create` as `kwargs`. `app` is the wall instance.
+        passed to `create` as `args`. `app` is the wall instance.
 
         Called when a new post of this type should be created via
         `Wall.post_new`.
@@ -331,6 +331,15 @@ class Post(object):
 
         return dict(((k, v) for k, v in vars(self).items() if filter(k)),
             __type__=type(self).__name__)
+
+    def __eq__(self, other):
+        # TODO: replace this by identity mapping / caching (see
+        # https://docs.python.org/2/library/weakref.html )
+        return self.id == other.id
+
+    def __str__(self):
+        return '<{} {}>'.format(self.__class__.__name__, self.id)
+    __repr__ = __str__
 
 class Brick(object):
     """
@@ -418,32 +427,10 @@ def randstr(length=8, charset=ascii_lowercase):
 
 # ==== Tests ====
 
-from wall.util import TestCase
+from wall.test import TestCase, CommonPostTest
 from tempfile import NamedTemporaryFile
 
-class TestPost(Post):
-    @classmethod
-    def create(cls, app, **kwargs):
-        post = TestPost(app, randstr(), 'Test', None)
-        app.db.hmset(post.id, post.json())
-        return post
-
-    def __init__(self, app, id, title, posted, **kwargs):
-        super(TestPost, self).__init__(app, id, title, posted, **kwargs)
-        self.activate_called = False
-        self.deactivate_called = False
-
-    def activate(self):
-        self.activate_called = True
-
-    def deactivate(self):
-        self.deactivate_called = True
-
 class WallTest(TestCase):
-    def setUp(self):
-        super(WallTest, self).setUp()
-        self.app = WallApp(config={'db': 15})
-
     def test_init(self):
         # without config file
         app = WallApp()
@@ -463,18 +450,38 @@ class WallTest(TestCase):
         app = WallApp(config_path=f.name)
         self.assertFalse(app._init)
 
-    def test_post_new(self):
-        # test post_new and also post
-
-        self.app.add_post_type(TestPost)
-
+    def test_post(self):
         post = self.app.post_new('TestPost')
-        self.assertTrue(self.app.posts)
+        self.assertIn(post.id, self.app.posts)
         self.assertEqual(self.app.current_post, post)
         self.assertTrue(post.activate_called)
-
         self.app.post(post.id)
         self.assertTrue(post.deactivate_called)
 
-        self.assertRaises(ValueError, self.app.post_new, 'foo')
-        self.assertRaises(ValueError, self.app.post, 'foo')
+    def test_post_new(self):
+        post = self.app.post_new('TestPost')
+        self.assertIn(post.id, self.app.posts)
+
+    def test_post_new_unknown_type(self):
+        with self.assertRaises(ValueError):
+            self.app.post_new('foo')
+
+    def test_get_history(self):
+        posts = []
+        posts.insert(0, self.app.post_new('TestPost'))
+        posts.insert(0, self.app.post_new('TestPost'))
+        self.assertEqual(posts, self.app.get_history()[0:2])
+
+class TextPostTest(TestCase, CommonPostTest):
+    def setUp(self):
+        super(TextPostTest, self).setUp()
+        CommonPostTest.setUp(self)
+        self.post_type = TextPost
+        self.create_args = {'content': 'Babylon 5'}
+
+class ImagePostTest(TestCase, CommonPostTest):
+    def setUp(self):
+        super(ImagePostTest, self).setUp()
+        CommonPostTest.setUp(self)
+        self.post_type = ImagePost
+        self.create_args = {'url': 'https://welcome.b5/logo.png'}

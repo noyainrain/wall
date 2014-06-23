@@ -6,13 +6,9 @@ from __future__ import (division, absolute_import, print_function,
 
 import sys
 import json
-import logging
 from urllib import urlencode
-from logging import getLogger
 from collections import Mapping
 from tornado.httpclient import AsyncHTTPClient
-from tornado.testing import AsyncTestCase
-from tornado.ioloop import IOLoop
 from redis import StrictRedis
 
 class WebAPI(object):
@@ -140,19 +136,6 @@ class Pool(object):
         if self.done():
             self.callback()
 
-class TestCase(AsyncTestCase):
-    @classmethod
-    def setUpClass(cls):
-        getLogger('wall').setLevel(logging.CRITICAL)
-
-    def setUp(self):
-        super(TestCase, self).setUp()
-        self.db = StrictRedis(db=15)
-        self.db.flushdb()
-
-    def get_new_ioloop(self):
-        return IOLoop.instance()
-
 def truncate(s, length=64, ellipsis='\u2026'):
     if len(s) > length:
         return s[:length - len(ellipsis)] + ellipsis
@@ -160,6 +143,8 @@ def truncate(s, length=64, ellipsis='\u2026'):
         return s
 
 # ==== Tests ====
+
+from unittest import TestCase
 
 class EventTargetTest(TestCase):
     class Ship(EventTarget):

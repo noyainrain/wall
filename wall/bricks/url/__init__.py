@@ -207,13 +207,11 @@ class Box(object):
 
 # ==== Tests ====
 
-from wall import WallApp
-from wall.util import TestCase
+from wall.test import TestCase
 
 class BrickTest(TestCase):
     def setUp(self):
         super(BrickTest, self).setUp()
-        self.app = WallApp()
         self.brick = self.app.bricks['url']
 
     def test_search(self):
