@@ -38,7 +38,7 @@ Currently available bricks:
 
  * URL
 
-Browser support
+Browser Support
 ---------------
 
 * **Display:** Mozilla Firefox 11+, Google Chrome 16+, Opera 12.10+, Internet Explorer 10+, Safari 6+
@@ -46,18 +46,14 @@ Browser support
 
 **Note:** The Android stock browser is not supported, because it lacks support of websockets.
 
-Testing
--------
+Built With
+----------
 
-To run the test cases, simply type:
-
-    python -m unittest -v wall wall.util wall.bricks.url
-
-Software Used
--------------
-
- * normalize.css by Nicolas Gallagher, Jonathan Neal -
+ * Python (2.6) by Python Software Foundation - https://python.org/
+ * Tornado (2.3) by Facebook - http://www.tornadoweb.org/en/stable/
+ * Redis (2.4) by Salvatore Sanfilippo - http://redis.io/
+ * redis-py (2.4) by Andy McCurdy - https://github.com/andymccurdy/redis-py
+ * Open Sans (2014-28-01) by Google - http://opensans.com/
+ * Font Awesome (4.1) by Dave Gandy - http://fontawesome.io/
+ * normalize.css (2.1) by Nicolas Gallagher, Jonathan Neal -
    https://necolas.github.io/normalize.css/
- * Open Sans by Google - http://opensans.com/
- * Font Awesome by Dave Gandy - http://fontawesome.io/
- * Clarity by Jakub Jankiewicz - https://github.com/jcubic/Clarity
