@@ -1,34 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg xmlns:dc="http://purl.org/dc/elements/1.1/"
-     xmlns:cc="http://creativecommons.org/ns#"
-     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-     xmlns:svg="http://www.w3.org/2000/svg"
-     xmlns="http://www.w3.org/2000/svg"
-     xmlns:xlink="http://www.w3.org/1999/xlink"
-     width="128" height="128" version="1.1">
-    <title>Clarity Icon</title>
-    <desc>This is shape (source) for Clarity vector icon theme for gtk</desc>
-    <metadata>
-        <rdf:RDF>
-            <cc:Work rdf:about="">
-                <dc:title>Clarity Icon</dc:title>
-                <dc:description>This is shape (source) for Clarity vector icon theme for gtk</dc:description>
-                <dc:creator>
-                    <cc:Agent>
-                        <dc:title>Jakub Jankiewicz</dc:title>
-                    </cc:Agent>
-                </dc:creator>
-                <dc:rights>
-                    <cc:Agent>
-                        <dc:title>Jakub Jankiewicz</dc:title>
-                    </cc:Agent>
-                </dc:rights>
-                <dc:date>2010</dc:date>
-                <dc:format>image/svg+xml</dc:format>
-                <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-                <cc:license rdf:resource="http://www.gnu.org/copyleft/gpl.html" />
-             </cc:Work>
-        </rdf:RDF>
-    </metadata>
-    <path d="m 64.044846,13.784007 c -27.7126,0 -50.176831,22.464234 -50.176831,50.176834 0,27.712593 22.464231,50.176839 50.176831,50.176839 27.7126,0 50.176824,-22.464246 50.176824,-50.176839 0,-27.7126 -22.464224,-50.176834 -50.176824,-50.176834 z m 0,7.45141 c 3.169262,0 5.738787,2.646053 5.738787,5.889017 0,3.242964 -2.569525,5.858971 -5.738787,5.858971 -3.169262,0 -5.738787,-2.616007 -5.738787,-5.858971 0,-3.242964 2.569525,-5.889017 5.738787,-5.889017 z m 2.013082,30.106102 c 0.915197,0.02625 1.827788,0.292576 2.674095,0.781196 2.708198,1.563575 3.636749,5.013625 2.073174,7.721823 -0.09249,0.160211 -0.342745,0.543011 -0.510782,0.811243 10.713175,6.591843 23.945994,14.780683 26.680854,16.194797 4.398951,2.274574 7.225681,5.626554 6.279611,7.451409 -0.94608,1.824846 -5.275854,1.433277 -9.67481,-0.841288 -2.825978,-1.461236 -18.081725,-7.919838 -29.805638,-12.919782 -3.98886,5.964204 -8.272392,12.328833 -9.133986,13.821162 -1.563575,2.708192 -4.344624,4.026985 -6.219523,2.944512 -1.87491,-1.082486 -2.134459,-4.142304 -0.570874,-6.850492 0.811415,-1.405423 3.88203,-7.682865 6.880535,-13.791117 -2.107239,-0.918033 -3.843533,-1.686634 -4.416763,-1.983037 -3.383834,-1.749677 -4.696494,-5.904852 -2.944509,-9.284216 1.751976,-3.379363 5.930438,-4.724233 9.314262,-2.974554 0.557875,0.288461 2.111153,1.205542 3.996119,2.343588 0.0924,-0.171671 0.235753,-0.488851 0.30046,-0.60092 1.074955,-1.861891 3.064347,-2.882099 5.077775,-2.824324 z" style="fill:#aaaaaa"/>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg2" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="16" width="16" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <metadata id="metadata7">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g id="layer1" transform="translate(0,-1036.3622)">
+  <g id="flowRoot3018" style="letter-spacing:0px;text-anchor:middle;word-spacing:0px;text-align:center;" font-weight="normal" transform="translate(0,1038.3622)" line-height="100%" font-stretch="normal" font-size="14px" font-variant="normal" font-style="normal" font-family="FontAwesome" fill="#FFF">
+   <path id="path2988" fill="#FFF" d="m13.998,6c0-3.3047-2.6953-6-6-6-1.539,0-3.0312,0.61719-4.1328,1.6562l-1.0156-1.0078c-0.1406-0.14844-0.3594-0.1875-0.5391-0.10938-0.1875,0.07813-0.3125,0.25782-0.3125,0.46094v3.5c0,0.27344,0.22656,0.5,0.5,0.5h3.5c0.2032,0,0.3829-0.125,0.461-0.3125,0.0781-0.1797,0.039-0.3984-0.1094-0.5391l-1.0703-1.0781c0.7266-0.6797,1.6953-1.0703,2.7187-1.0703,2.203,0,4,1.7969,4,4s-1.7969,4-4,4c-1.2422,0-2.3906-0.5625-3.1562-1.5547-0.039063-0.054687-0.10938-0.085937-0.17969-0.09375-0.070312,0-0.14063,0.023437-0.19531,0.070312l-1.0703,1.0781c-0.086,0.0859-0.0938,0.2344-0.0156,0.3359,1.1406,1.3751,2.8281,2.1641,4.6171,2.1641,3.305,0,6-2.6953,6-6m-5-2.25c0-0.14062-0.10938-0.25-0.25-0.25h-0.5c-0.14062,0-0.25,0.10938-0.25,0.25v2.75h-1.75c-0.14062,0-0.25,0.10938-0.25,0.25v0.5c0,0.14062,0.10938,0.25,0.25,0.25h2.5c0.14062,0,0.25-0.10938,0.25-0.25v-3.5"/>
+  </g>
+ </g>
 </svg>
