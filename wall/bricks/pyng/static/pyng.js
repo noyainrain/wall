@@ -90,8 +90,8 @@ ns.DisplayPyngPostElement.prototype =
 ns.ClientPyngBrick = function(ui) {
     wall.Brick.call(this, ui);
     this.ui.addPostElementType(ns.RemotePyngPostElement);
-    this.ui.addDoPostHandler(
-        new wall.remote.SingleDoPostHandler("PyngPost", "Pyng", null, this.ui));
+    this.ui.addDoPostHandler(new wall.remote.SingleDoPostHandler(
+        "PyngPost", "Pyng", "static/pyng/pyng.svg", this.ui));
 };
 
 $.extend(ns.ClientPyngBrick.prototype, wall.Brick.prototype, {

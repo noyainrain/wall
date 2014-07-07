@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg2" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="16" width="16" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <metadata id="metadata7">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g id="layer1" transform="translate(0,-1036.3622)">
+  <g id="flowRoot3018" style="letter-spacing:0px;text-anchor:middle;word-spacing:0px;text-align:center;" font-weight="normal" transform="translate(-1,1038.3622)" line-height="100%" font-stretch="normal" font-size="14px" font-variant="normal" font-style="normal" font-family="FontAwesome" fill="#FFF">
+   <path id="path2992" fill="#FFF" d="m7.9941,7.5c0,0.14062-0.10938,0.25-0.25,0.25h-1.5v1.5c0,0.14062-0.10938,0.25-0.25,0.25h-1c-0.14062,0-0.25-0.10938-0.25-0.25v-1.5h-1.5c-0.14062,0-0.25-0.10938-0.25-0.25v-1c0-0.14062,0.10938-0.25,0.25-0.25h1.5v-1.5c0-0.14062,0.10938-0.25,0.25-0.25h1c0.14062,0,0.25,0.10938,0.25,0.25v1.5h1.5c0.14062,0,0.25,0.10938,0.25,0.25v1m4.4999,0.5c0,0.55469-0.44531,1-1,1s-1-0.44531-1-1,0.44531-1,1-1,1,0.44531,1,1m2-2c0,0.55469-0.44531,1-1,1s-1-0.44531-1-1,0.44531-1,1-1,1,0.44531,1,1m2,1c0-2.2109-1.7891-4-4-4h-6.9999c-2.2109,0-4,1.7891-4,4s1.7891,4,4,4c1.0156,0,1.9375-0.38281,2.6406-1h1.7188c0.70312,0.61719,1.625,1,2.6406,1,2.2109,0,4-1.7891,4-4"/>
+  </g>
+ </g>
+</svg>
