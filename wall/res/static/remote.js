@@ -68,7 +68,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         // TODO: port all (HTML element) screens to Screen type and remove this
         if (screen instanceof $) {
             screen = {
-                element: screen,
+                element: screen[0],
                 attachedCallback: function() {},
                 detachedCallback: function() {}
             };
@@ -76,26 +76,29 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
 
         this.screenStack.push(screen);
 
-        screen.element.addClass("screen-pushed")
-            .css("z-index", this.screenStack.length - 1);
-        $(".screen-stack").append(screen.element);
+        screen.element.classList.add("screen-pushed");
+        screen.element.style.zIndex = this.screenStack.length - 1;
+        document.querySelector(".screen-stack").appendChild(screen.element);
         screen.attachedCallback();
 
         // apply screen style (so that subsequent style changes may trigger
         // animations)
-        getComputedStyle(screen.element[0]).width;
+        getComputedStyle(screen.element).width;
 
-        screen.element.addClass("screen-open").removeClass("screen-pushed");
+        screen.element.classList.add("screen-open")
+        screen.element.classList.remove("screen-pushed");
     }},
 
     popScreen: {value: function() {
         var screen = this.screenStack.pop();
 
-        screen.element.addClass("screen-popped").removeClass("screen-open");
-        screen.element.one("transitionend", function(event) {
-            screen.element.removeClass("screen-popped").detach();
+        screen.element.classList.add("screen-popped");
+        screen.element.classList.remove("screen-open");
+        $(screen.element).one("transitionend", function(event) {
+            screen.element.classList.remove("screen-popped");
+            document.querySelector(".screen-stack").removeChild(screen.element);
             screen.detachedCallback();
-        });
+        }.bind(this));
     }},
 
     post: {value: function(id, callback) {
@@ -146,21 +149,13 @@ ns.Screen = function(ui) {
     this._title = null;
     this._hasGoBack = true;
 
-    this.element = $(
-        '<div class="screen">                                 ' +
-        '    <header class="bar">                             ' +
-        '        <h1></h1>                                    ' +
-        '        <button class="screen-settings">Wall</button>' +
-        '        <button class="bar-secondary screen-go-back">' +
-        '            <img src="static/images/go-back.svg"/>   ' +
-        '        </button>                                    ' +
-        '    </header>                                        ' +
-        '    <div class="screen-content"></div>               ' +
-        '</div>                                               '
-    );
-    this.content = $(".screen-content", this.element);
-    $(".screen-settings", this.element).click(this._settingsClicked.bind(this));
-    $(".screen-go-back", this.element).click(this._goBackClicked.bind(this));
+    this.element = wall.util.cloneChildNodes(
+        document.querySelector(".screen-template")).firstElementChild;
+    this.content = this.element.querySelector(".screen-content");
+    this.element.querySelector(".screen-settings").addEventListener(
+        "click", this._settingsClicked.bind(this));
+    this.element.querySelector(".screen-go-back").addEventListener(
+        "click", this._goBackClicked.bind(this));
 
     this.title = null;
 };
@@ -169,9 +164,10 @@ ns.Screen.prototype = Object.create(wall.Element.prototype, {
     title: {
         set: function(value) {
             this._title = value;
-            $("header.bar", this.element).css("display",
-                 this._title ? "" : "none");
-            $("header.bar h1", this.element).text(this._title || "");
+            this.element.querySelector("header.bar").style.display =
+                this._title ? "" : "none";
+            this.element.querySelector("header.bar h1").textContent =
+                this._title || "";
         },
         get: function() {
             return this._title;
@@ -181,8 +177,8 @@ ns.Screen.prototype = Object.create(wall.Element.prototype, {
     hasGoBack: {
         set: function(value) {
             this._hasGoBack = value;
-            $(".screen-go-back", this.element).css("display",
-                this._hasGoBack ? "" : "none");
+            this.element.querySelector(".screen-go-back").style.display =
+                this._hasGoBack ? "" : "none";
         },
         get: function() {
             return this._hasGoBack;
@@ -208,8 +204,8 @@ ns.PostScreen = function(ui, post) {
     this._post = null;
     this._postElement = null;
 
-    this.element.addClass("post-screen");
-    this.content.append($(
+    $(this.element).addClass("post-screen");
+    $(this.content).append($(
         '<div class="post-space"></div>' +
         '<div class="post-menu"></div> '
     ));
@@ -279,33 +275,30 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
 
 ns.ConnectionScreen = function(ui) {
     ns.Screen.call(this, ui);
-    this.element.addClass("connection-screen");
-    this.content.append($(
-        '<p class="connection-screen-state"></p> ' +
-        '<p class="connection-screen-detail"></p>'
-    ));
+    this.element.classList.add("connection-screen");
+    this.content.appendChild(wall.util.cloneChildNodes(
+        document.querySelector(".connection-screen-template")));
     this.title = "Connection";
     this.hasGoBack = false;
 };
 
 ns.ConnectionScreen.prototype = Object.create(ns.Screen.prototype, {
     setState: {value: function(state) {
+        var stateP = this.element.querySelector(".connection-screen-state");
+        var detailP = this.element.querySelector(".connection-screen-detail");
+
         switch (state) {
         case "connecting":
-            $(".connection-screen-state", this.content).text("Connecting...");
-            $(".connection-screen-detail", this.content).empty();
+            stateP.textContent = "Connecting...";
+            detailP.textContent = "";
             break;
         case "failed":
-            $(".connection-screen-state", this.content)
-                .text("Failed to connect!");
-            $(".connection-screen-detail", this.content)
-                .text("Retrying shortly.");
+            stateP.textContent = "Failed to connect!";
+            detailP.textContent = "Retrying shortly.";
             break;
         case "disconnected":
-            $(".connection-screen-state", this.content)
-                .text("Connection lost!");
-            $(".connection-screen-detail", this.content)
-                .text("Trying to reconnect shortly.");
+            stateP.textContent = "Connection lost!";
+            detailP.textContent = "Trying to reconnect shortly.";
             break;
         }
     }}
@@ -317,7 +310,7 @@ ns.NotSupportedScreen = function(what, ui) {
     ns.Screen.call(this, ui);
     this.what = what;
 
-    this.content.append($('<p>Unfortunately, your browser does not support <span class="not-supported-what"></span>. Please use a current browser.</p>'));
+    $(this.content).append($('<p>Unfortunately, your browser does not support <span class="not-supported-what"></span>. Please use a current browser.</p>'));
     $(".not-supported-what", this.content).text(what);
     this.title = "Not Supported";
 };
@@ -329,7 +322,7 @@ ns.NotSupportedScreen.prototype = Object.create(ns.Screen.prototype);
 ns.PostNoteScreen = function(ui) {
     ns.Screen.call(this, ui);
 
-    this.content.append($(
+    $(this.content).append($(
         '<form class="post-note-screen-post">                            ' +
         '    <textarea name="content"></textarea>                        ' +
         '    <p class="buttons">                                         ' +
@@ -337,7 +330,7 @@ ns.PostNoteScreen = function(ui) {
         '    </div>                                                      ' +
         '</form>                                                         '
     ));
-    var form = this.content[0].querySelector(".post-note-screen-post");
+    var form = this.content.querySelector(".post-note-screen-post");
     form.addEventListener("submit", this._postSubmitted.bind(this));
 
     this.title = "Post Note";
@@ -347,8 +340,8 @@ ns.PostNoteScreen.prototype = Object.create(ns.Screen.prototype, {
     _postSubmitted: {value: function(event) {
         event.preventDefault();
 
-        var content = this.content[0].querySelector(
-            ".post-note-screen-post textarea").value;
+        var content =
+            this.content.querySelector(".post-note-screen-post textarea").value;
 
         this.ui.notify("Posting…");
         this.ui.postNew("TextPost", {content: content}, function(post) {
@@ -370,8 +363,8 @@ ns.PostHistoryScreen = function(ui) {
     ns.Screen.call(this, ui);
     this.title = "History";
 
-    this.element.addClass("post-history-screen");
-    this.content.append($('<ul class="select"></ul>'));
+    $(this.element).addClass("post-history-screen");
+    $(this.content).append($('<ul class="select"></ul>'));
 
     this.ui.call("get_history", {}, function(posts) {
         posts.forEach(function(post) {
