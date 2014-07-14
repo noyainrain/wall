@@ -21,14 +21,14 @@ ns.DisplayUi = function(bricks) {
 ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
     _post: {value: function(post) {
         if (this.currentPostElement) {
-            this.currentPostElement.element.remove();
+            document.body.removeChild(this.currentPostElement.element);
             this.currentPostElement.detachedCallback();
             this.currentPostElement = null;
         }
 
         var postElementType = this.postElementTypes[post.__type__];
         this.currentPostElement = new postElementType(post, this);
-        $("body").append(this.currentPostElement.element);
+        document.body.appendChild(this.currentPostElement.element);
         this.currentPostElement.attachedCallback();
     }},
 
@@ -42,16 +42,19 @@ ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
 ns.PostElement = function(post, ui) {
     wall.PostElement.call(this, post, ui);
 
-    this.content = $('<div class="post-content"></div>').addClass(
-            wall.hyphenate(this.postType) + "-content");
+    this.content = document.createElement("div");
+    this.content.classList.add("post-content");
+    this.content.classList.add(wall.hyphenate(this.postType) + "-content");
 
-    this.element = $('<iframe class="post"></iframe>').addClass(
-        wall.hyphenate(this.postType));
-    this.element.load(function(event) {
-        $("body", this.element[0].contentDocument).append(this.content);
+    this.element = document.createElement("iframe");
+    this.element.classList.add("post");
+    this.element.classList.add(wall.hyphenate(this.postType));
+
+    $(this.element).one("load", function(event) {
+        this.element.contentDocument.body.appendChild(this.content);
         this.contentAttachedCallback();
     }.bind(this));
-    this.element.attr("src", "/display/post");
+    this.element.src = "/display/post";
 };
 
 ns.PostElement.prototype = Object.create(wall.PostElement.prototype, {
@@ -62,7 +65,9 @@ ns.PostElement.prototype = Object.create(wall.PostElement.prototype, {
 
 ns.TextPostElement = function(post, ui) {
     ns.PostElement.call(this, post, ui);
-    $("<pre>").text(post.content).appendTo(this.content);
+    var pre = document.createElement("pre");
+    pre.textContent = this.post.content;
+    this.content.appendChild(pre);
 };
 
 ns.TextPostElement.prototype = Object.create(ns.PostElement.prototype, {
@@ -72,7 +77,7 @@ ns.TextPostElement.prototype = Object.create(ns.PostElement.prototype, {
         // First layout the text by rendering it (with a fixed font size) into
         // an element with a fixed maximum width. Then fit this element to the
         // post element (scaling the text accordingly).
-        var pre = this.content[0].querySelector("pre");
+        var pre = this.content.querySelector("pre");
         pre.style.fontSize = "16px";
         pre.style.maxWidth = "70ch";
         $(pre).fitToParent({maxFontSize: (20 / 1.5) + "vh"});
@@ -83,7 +88,7 @@ ns.TextPostElement.prototype = Object.create(ns.PostElement.prototype, {
 
 ns.ImagePostElement = function(post, ui) {
     ns.PostElement.call(this, post, ui);
-    this.content.css("background-image", "url(" + this.post.url + ")");
+    this.content.style.backgroundImage = "url(" + this.post.url + ")";
 };
 
 ns.ImagePostElement.prototype = Object.create(ns.PostElement.prototype, {

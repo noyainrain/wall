@@ -89,6 +89,10 @@ p.buttons button:first-child
     border-left: none;
 }
 
+.templates {
+    display: none;
+}
+
 /* ==== Screen ==== */
 
 .screen

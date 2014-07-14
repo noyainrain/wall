@@ -90,6 +90,7 @@ class WallApp(Application, EventTarget):
             self.do_post_handlers.append(handler)
 
         if self.config['debug'] == 'True':
+            self.settings['debug'] = True
             tornado.autoreload.watch(os.path.join(res_path, 'default.cfg'))
             tornado.autoreload.start()
 

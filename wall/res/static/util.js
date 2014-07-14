@@ -57,4 +57,14 @@ ns.Event = function(type, args) {
     this.args = args;
 };
 
+/* ==== */
+
+ns.cloneChildNodes = function(node) {
+    var fragment = document.createDocumentFragment();
+    for (var i = 0; i < node.childNodes.length; i++) {
+        fragment.appendChild(node.childNodes[i].cloneNode(true));
+    }
+    return fragment;
+};
+
 }(wall.util));

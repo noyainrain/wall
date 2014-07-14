@@ -84,7 +84,7 @@ ns.PostUrlScreen = function(ui) {
     wall.remote.Screen.call(this, ui);
     this.title = "Post URL";
 
-    this.content.append($(
+    $(this.content).append($(
         '<form class="url-post" novalidate="novalidate">                 ' +
         '    <input class="url-url" type="url">                          ' +
         '    <p class="buttons">                                         ' +
