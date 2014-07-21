@@ -23,15 +23,13 @@ body
 
 /* ==== Post ==== */
 
-.post
-{
+.post {
+    width: 100%;
+    height: 100%;
     border: none;
-    flex: auto;
-    order: 0;
 }
 
-.post-content
-{
+.post-content {
     height: 100vh;
 }
 
@@ -60,23 +58,26 @@ body
 
 /* ==== Page ==== */
 
-.display
-{
+.display {
     display: flex;
-    flex-direction: column;
+    flex-flow: column nowrap;
 }
 
-.info
-{
+.display > .post-space {
+    order: 0;
+    flex: auto;
+}
+
+.info {
+    order: 1;
+    flex: none;
+    padding: 1vh 4vh;
+    background: #222;
     text-align: center;
     white-space: nowrap;
     text-overflow: ellipsis;
-    background: #222;
-    padding: 1vh 4vh;
-    flex: none;
-    order: 1;
 }
-.info:empty
-{
+
+.info:empty {
     display: none;
 }

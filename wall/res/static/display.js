@@ -9,31 +9,22 @@ wall.display = {};
 
 ns.DisplayUi = function(bricks) {
     wall.Ui.call(this, bricks);
-    this.currentPostElement = null;
+    this._postSpace = null;
 
     this.addPostElementType(ns.TextPostElement);
     this.addPostElementType(ns.ImagePostElement);
     this.addEventListener("posted", this._posted.bind(this));
 
     this.loadBricks(bricks, "DisplayBrick");
+
+    this._postSpace = new ns.PostSpace(this);
+    document.body.appendChild(this._postSpace.element);
+    this._postSpace.attachedCallback();
 };
 
 ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
-    _post: {value: function(post) {
-        if (this.currentPostElement) {
-            document.body.removeChild(this.currentPostElement.element);
-            this.currentPostElement.detachedCallback();
-            this.currentPostElement = null;
-        }
-
-        var postElementType = this.postElementTypes[post.__type__];
-        this.currentPostElement = new postElementType(post, this);
-        document.body.appendChild(this.currentPostElement.element);
-        this.currentPostElement.attachedCallback();
-    }},
-
     _posted: {value: function(event) {
-        this._post(event.args.post);
+        this._postSpace.post = event.args.post;
     }}
 });
 
@@ -93,6 +84,52 @@ ns.ImagePostElement = function(post, ui) {
 
 ns.ImagePostElement.prototype = Object.create(ns.PostElement.prototype, {
     postType: {value: "ImagePost"}
+});
+
+/* ==== PostSpace ==== */
+
+ns.PostSpace = function(ui) {
+    wall.Element.call(this, ui);
+    this._post = null;
+    this._postElement = null;
+    this.element = document.createElement("div");
+    this.element.classList.add("post-space");
+};
+
+/**
+ * Space for a `PostElement`.
+ *
+ * Attributes:
+ *
+ *  - post: post for which the `PostSpace` holds a `PostElement` or `null` if
+ *    the `PostSpace` is currently empty. Setting this constructs a
+ *    `PostElement` inside the `PostSpace` or empties the `PostSpace` if the
+ *    value is `null`.
+ */
+ns.PostSpace.prototype = Object.create(wall.Element.prototype, {
+    post: {
+        set: function(value) {
+            if (this._post) {
+                this.element.removeChild(this._postElement.element);
+                this._postElement.detachedCallback();
+                this._postElement = null;
+                this._post = null;
+            }
+
+            this._post = value;
+
+            if (this._post) {
+                var postElementType =
+                    this.ui.postElementTypes[this._post.__type__];
+                this._postElement = new postElementType(this._post, this.ui);
+                this.element.appendChild(this._postElement.element);
+                this._postElement.attachedCallback();
+            }
+        },
+        get: function() {
+            return this._post;
+        }
+    }
 });
 
 }(wall.display));
