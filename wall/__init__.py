@@ -22,7 +22,7 @@ from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
 from wall.util import EventTarget, Event, ObjectRedis, RedisContainer, truncate
 
-release = 19
+release = 20
 
 res_path = os.path.join(os.path.dirname(__file__), 'res')
 static_path = os.path.join(res_path, 'static')
@@ -397,7 +397,7 @@ class TextPost(Post):
 
         title = truncate(content.splitlines()[0])
 
-        post = TextPost(app, randstr(), title, None, content)
+        post = TextPost(app, 'text_post:' + randstr(), title, None, content)
         app.db.hmset(post.id, post.json())
         return post
 
@@ -410,7 +410,7 @@ class ImagePost(Post):
     def create(cls, app, **kwargs):
         # TODO: check args
         url = kwargs['url']
-        post = ImagePost(app, randstr(), 'Image', None, url)
+        post = ImagePost(app, 'image_post:' + randstr(), 'Image', None, url)
         app.db.hmset(post.id, post.json())
         return post
 

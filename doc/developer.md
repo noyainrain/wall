@@ -1,5 +1,5 @@
-Wall Developer's Guide
-======================
+Wall Developer Documentation
+============================
 
 Testing
 -------
