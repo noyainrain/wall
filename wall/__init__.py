@@ -20,9 +20,9 @@ from tornado.web import Application, RequestHandler, StaticFileHandler
 import tornado.autoreload
 from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
-from wall.util import EventTarget, Event, RedisContainer, truncate
+from wall.util import EventTarget, Event, ObjectRedis, RedisContainer, truncate
 
-release = 18
+release = 19
 
 res_path = os.path.join(os.path.dirname(__file__), 'res')
 static_path = os.path.join(res_path, 'static')
@@ -60,8 +60,9 @@ class WallApp(Application, EventTarget):
                 self.config[prefix + key] = value
         self.config.update(config)
 
-        self.db = StrictRedis(db=int(self.config['db']))
-        self.posts = RedisContainer(self.db, 'posts', self._post)
+        self.db = ObjectRedis(StrictRedis(db=int(self.config['db'])),
+            self._decode_redis_hash)
+        self.posts = RedisContainer(self.db, 'posts')
 
         self.add_post_type(TextPost)
         self.add_post_type(ImagePost)
@@ -202,9 +203,9 @@ class WallApp(Application, EventTarget):
         """
         self.post_types[post_type.__name__] = post_type
 
-    def _post(self, **kwargs):
-        post_type = self.post_types[kwargs['__type__']]
-        return post_type(self, **kwargs)
+    def _decode_redis_hash(self, hash):
+        post_type = self.post_types[hash['__type__']]
+        return post_type(self, **hash)
 
     def _setup_logger(self):
         logger = getLogger()
