@@ -22,7 +22,7 @@ from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
 from wall.util import EventTarget, Event, ObjectRedis, RedisContainer, truncate
 
-release = 18
+release = 19
 
 res_path = os.path.join(os.path.dirname(__file__), 'res')
 static_path = os.path.join(res_path, 'static')
