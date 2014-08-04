@@ -204,22 +204,15 @@ ns.PostScreen = function(ui, post) {
     this._post = null;
     this._postElement = null;
 
-    $(this.element).addClass("post-screen");
-    $(this.content).append($(
-        '<div class="post-space"></div>' +
-        '<div class="post-menu"></div> '
-    ));
+    this.element.classList.add("post-screen");
+    var postSpace = document.createElement("div");
+    postSpace.classList.add("post-space");
+    this.content.appendChild(postSpace);
 
-    // build post menu
-    for (var i = 0; i < this.ui.doPostHandlers.length; i++) {
-        var handler = this.ui.doPostHandlers[i];
-         $("<button>")
-             .text(handler.title)
-             .css("background-image", "url(" + handler.icon + ")")
-             .data("handler", handler)
-             .click(this._postMenuItemClicked.bind(this))
-            .appendTo($(".post-menu", this.content));
-    }
+    this._postMenu = new ns.PostMenu(this.ui);
+    this._postMenu.addTarget({collectionId: "wall", label: "Wall"});
+    this.content.appendChild(this._postMenu.element);
+    this._postMenu.attachedCallback();
 
     this.title = "Empty Wall";
     this.post = post;
@@ -229,15 +222,19 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
     post: {
         set: function(value) {
             // TODO: implement (remote) PostElement
+            var postSpace = this.element.querySelector(".post-space");
 
             if (this._post) {
-                this._post = null;
                 if (this._postElement) {
-                    $(".post-space", this.content).empty();
+                    postSpace.removeChild(this._postElement.element);
                     this._postElement.detachedCallback();
                     this._postElement = null;
                 }
                 this.title = "Empty Wall";
+                if (!this._post.is_collection) {
+                    this._postMenu.removeTarget(this._postMenu.targets[1]);
+                }
+                this._post = null;
             }
 
             this._post = value;
@@ -245,16 +242,19 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
                 return;
             }
 
-            var postElementType =
-                this.ui.postElementTypes[this._post.__type__];
+            var postElementType = this.ui.postElementTypes[this._post.__type__];
             if (postElementType) {
                 this._postElement =
                     new postElementType(this._post, this.ui);
-                $(".post-space", this.content).append(
-                    this._postElement.element);
+                postSpace.appendChild(this._postElement.element);
                 this._postElement.attachedCallback();
             }
             this.title = this._post.title;
+            if (this._post.is_collection) {
+                this._postMenu.addTarget(
+                    {collectionId: this._post.id, label: "this collection"});
+                this._postMenu.target = this._postMenu.targets[1];
+            }
         },
         get: function() {
             return this._post;
@@ -263,12 +263,7 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
 
     detachedCallback: {value: function() {
         this.post = null;
-    }},
-
-    _postMenuItemClicked: {value: function(event) {
-        var handler = $(event.currentTarget).data("handler");
-        handler.post();
-     }}
+    }}
 });
 
 /* ==== ConnectionScreen ==== */
@@ -385,6 +380,79 @@ ns.PostHistoryScreen.prototype = Object.create(ns.Screen.prototype, {
             this.ui.popScreen();
         }.bind(this));
     }}
+});
+
+/* ==== PostMenu ==== */
+
+ns.PostMenu = function(ui) {
+    wall.Element.call(this, ui);
+    this.targets = [];
+    this._target = null;
+
+    this.element = wall.util.cloneChildNodes(
+        document.querySelector(".post-menu-template")).firstElementChild;
+
+    this._targetButton = this.element.querySelector(".post-menu-target");
+    this._targetButton.addEventListener("click",
+        this._targetClicked.bind(this));
+
+    var actionsDiv = this.element.querySelector(".post-menu-actions");
+    for (var i = 0; i < this.ui.doPostHandlers.length; i++) {
+        var handler = this.ui.doPostHandlers[i];
+        var icon = document.createElement("img");
+        icon.setAttribute("src", handler.icon);
+        var button = document.createElement("button");
+        button._handler = handler;
+        button.appendChild(icon);
+        button.appendChild(document.createTextNode(handler.title));
+        button.addEventListener("click", this._actionClicked.bind(this));
+        actionsDiv.appendChild(button);
+    }
+};
+
+ns.PostMenu.prototype = Object.create(wall.Element.prototype, {
+    target: {
+        set: function(value) {
+            this._target = value;
+            this._targetButton.textContent = this._target.label;
+        },
+        get: function() {
+            return this._target;
+        }
+    },
+
+    addTarget: {value: function(postTarget) {
+        this.targets.push(postTarget);
+        if (this.targets.length === 1) {
+            this.target = postTarget;
+        } else if (this.targets.length === 2) {
+            this._targetButton.classList.remove("incognito");
+            this._targetButton.disabled = false;
+        }
+    }},
+
+    removeTarget: {value: function(postTarget) {
+        if (this.target === postTarget) {
+            this.toggleTarget();
+        }
+        this.targets.splice(this.targets.indexOf(postTarget), 1);
+        if (this.targets.length === 1) {
+            this._targetButton.classList.add("incognito");
+            this._targetButton.disabled = true;
+        }
+    }},
+
+    toggleTarget: {value: function() {
+        var next =
+            (this.targets.indexOf(this.target) + 1) % this.targets.length;
+        this.target = this.targets[next];
+    }},
+
+    _targetClicked: {value: function(event) { this.toggleTarget(); }},
+
+    _actionClicked: {value: function(event) {
+        event.currentTarget._handler.post(this.target.collectionId);
+     }}
 });
 
 /* ==== DoPostHandler ==== */

@@ -53,39 +53,45 @@ label small
     display: block;
 }
 
-button
-{
-    text-align: center;
-    color: inherit;
-    background: transparent;
-    text-shadow: inherit;
-    border: none;
-    border-radius: 0;
-    display: block;
+button {
+    display: inline-block;
     padding: 0.25rem;
+    color: inherit;
+    background: #444;
+    border: 1px solid #666;
+    border-radius: 0.25rem;
+    text-align: center;
+    text-shadow: inherit;
 }
 
-button img
-{
+button > img {
     vertical-align: top;
     height: 1rem;
     margin: 0.25rem;
 }
 
-p.buttons
-{
-    border-top: 1px solid #555;
+button.incognito {
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+p.buttons {
     display: flex;
+    border-top: 1px solid #555;
+    border-radius: 0.25rem;
 }
 
-p.buttons button
-{
-    border-left: 1px solid #555;
+p.buttons > button {
+    display: block;
     flex: 1 1 0;
+    background: transparent;
+    border: none;
+    border-left: 1px solid #555;
+    border-radius: 0;
 }
 
-p.buttons button:first-child
-{
+p.buttons > button:first-child {
     border-left: none;
 }
 
@@ -140,35 +146,33 @@ p.buttons button:first-child
 
 /* ==== Bar ==== */
 
-header.bar
-{
-    background: #222;
+header.bar {
     display: flex;
+    background: #222;
 }
 
-header.bar h1
-{
-    font-size: 1rem;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+header.bar > h1 {
     flex: auto;
     padding: 0.5rem 1rem;
     margin: 0;
+    font-size: 1rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
-header.bar button
-{
+header.bar > button {
+    order: 1;
+    flex: none;
+    padding: 0.5rem;
+    background: transparent;
     border: solid #444;
     border-width: 0 0 0 1px;
-    flex: none;
-    order: 1;
-    padding: 0.5rem;
+    border-radius: 0;
 }
 
-header.bar button.bar-secondary
-{
-    border-width: 0 1px 0 0;
+header.bar > button.bar-secondary {
     order: -1;
+    border-width: 0 1px 0 0;
 }
 
 /* ==== Selectable List ==== */
@@ -235,6 +239,37 @@ ul.overlay-menu li
     font-size: 0.9rem;
 }
 
+/* ==== Post Space ==== */
+
+.post-space {
+    overflow: visible;
+}
+
+/* ==== Post Menu ==== */
+
+.post-menu {
+    margin: 1.5rem 0;
+}
+
+.post-menu-label {
+    margin-top: 0;
+}
+
+.post-menu-actions {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: center;
+}
+
+.post-menu-actions > button {
+    flex: none;
+    width: 12ch;
+    margin: 1px;
+    background: #555;
+    border: none;
+    text-align: left;
+}
+
 /* ==== Page ==== */
 
 html
@@ -273,33 +308,4 @@ body
 #browser_not_supported
 {
     font-size: 1.5rem;
-}
-
-/* ==== PostScreen ==== */
-
-.post-space
-{
-    overflow: visible;
-}
-
-.post-menu
-{
-    text-align: center;
-    font-size: 0; /* remove whitespaces between inline block elements */
-    margin: 1.5rem 0 0.5rem 1rem;
-}
-
-.post-menu button
-{
-    display: inline-block;
-    height: 5rem;
-    width: 5rem;
-    padding: 3.75rem 0.2rem 0.2rem 0.2rem;
-    margin: 0 1rem 1rem 0;
-
-    background: #666 no-repeat center 50%;
-    background-size: 2.4rem 2.4rem;
-
-    box-shadow: 0.2rem 0.2rem 0.2rem #222;
-    font-size: 0.6rem;
 }
