@@ -29,15 +29,6 @@ Run Wall with:
  * config_file: path to a config file (optional). Documentation is available in
    the default config file (`wall/res/default.cfg`).
 
-Bricks (aka Plugins)
---------------------
-
-If you want to create a brick, have a look at wall/bricks/url for reference.
-
-Currently available bricks:
-
- * URL
-
 Browser Support
 ---------------
 
