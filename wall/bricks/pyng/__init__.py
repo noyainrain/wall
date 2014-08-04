@@ -52,9 +52,9 @@ class PyngPost(Post):
     @classmethod
     def create(cls, app, **kwargs):
         try:
-            return app.posts['pyng']
+            return app.posts['pyng_post:pyng_post']
         except KeyError:
-            post = PyngPost(app, 'pyng', 'Pyng', None)
+            post = PyngPost(app, 'pyng_post:pyng_post', 'Pyng', None)
             app.db.hmset(post.id, post.json())
             return post
 

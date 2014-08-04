@@ -91,7 +91,7 @@ class UrlPost(Post):
             raise ValueError('url')
         if not url.startswith(('http://', 'https://')):
             url = 'http://' + url
-        post = UrlPost(app, randstr(), url, None, url)
+        post = UrlPost(app, 'url_post:' + randstr(), url, None, url)
         app.db.hmset(post.id, post.json())
         return post
 
