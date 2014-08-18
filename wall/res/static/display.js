@@ -13,7 +13,10 @@ ns.DisplayUi = function(bricks) {
 
     this.addPostElementType(ns.TextPostElement);
     this.addPostElementType(ns.ImagePostElement);
-    this.addEventListener("posted", this._posted.bind(this));
+    this.addEventListener("collection_item_activated",
+        this._itemActivated.bind(this));
+    this.addEventListener("collection_item_deactivated",
+        this._itemDeactivated.bind(this));
 
     this.loadBricks(bricks, "DisplayBrick");
 
@@ -23,8 +26,18 @@ ns.DisplayUi = function(bricks) {
 };
 
 ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
-    _posted: {value: function(event) {
+    _itemActivated: {value: function(event) {
+        if (event.args.collection_id !== "wall") {
+            return;
+        }
         this._postSpace.post = event.args.post;
+    }},
+
+    _itemDeactivated: {value: function(event) {
+        if (event.args.collection_id !== "wall") {
+            return;
+        }
+        this._postSpace.post = null;
     }}
 });
 

@@ -19,7 +19,10 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
     this.mainScreen = null;
 
     window.onerror = $.proxy(this._erred, this);
-    this.addEventListener("posted", this._posted.bind(this));
+    this.addEventListener("collection_item_activated",
+        this._itemActivated.bind(this));
+    this.addEventListener("collection_item_deactivated",
+        this._itemDeactivated.bind(this));
 
     this.loadBricks(bricks, "ClientBrick");
 
@@ -101,12 +104,15 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         }.bind(this));
     }},
 
-    post: {value: function(id, callback) {
-        this.call("post", {"id": id}, callback);
+    post: {value: function(collectionId, postId, callback) {
+        this.call("collection_post",
+            {"collection_id": collectionId, "post_id": postId}, callback);
     }},
 
-    postNew: {value: function(type, args, callback) {
-        this.call("post_new", $.extend({"type": type}, args), callback);
+    postNew: {value: function(collectionId, type, args, callback) {
+        this.call("collection_post_new",
+            $.extend({"collection_id": collectionId, "type": type}, args),
+            callback);
     }},
 
     addDoPostHandler: {value: function(handler) {
@@ -137,8 +143,18 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         this.notify("fatal error: " + msg);
     }},
 
-    _posted: {value: function(event) {
+    _itemActivated: {value: function(event) {
+        if (event.args.collection_id !== "wall") {
+            return;
+        }
         this.mainScreen.post = event.args.post;
+    }},
+
+    _itemDeactivated: {value: function(event) {
+        if (event.args.collection_id !== "wall") {
+            return;
+        }
+        this.mainScreen.post = null;
     }}
 });
 
@@ -267,7 +283,7 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
 
     _postMenuItemClicked: {value: function(event) {
         var handler = $(event.currentTarget).data("handler");
-        handler.post();
+        handler.post("wall");
      }}
 });
 
@@ -317,10 +333,19 @@ ns.NotSupportedScreen = function(what, ui) {
 
 ns.NotSupportedScreen.prototype = Object.create(ns.Screen.prototype);
 
+/* ==== DoPostScreen ==== */
+
+ns.DoPostScreen = function(ui) {
+    ns.Screen.call(this, ui);
+    this.collectionId = null;
+}
+
+ns.DoPostScreen.prototype = Object.create(ns.Screen.prototype);
+
 /* ==== PostNoteScreen ==== */
 
 ns.PostNoteScreen = function(ui) {
-    ns.Screen.call(this, ui);
+    ns.DoPostScreen.call(this, ui);
 
     $(this.content).append($(
         '<form class="post-note-screen-post">                            ' +
@@ -344,23 +369,24 @@ ns.PostNoteScreen.prototype = Object.create(ns.Screen.prototype, {
             this.content.querySelector(".post-note-screen-post textarea").value;
 
         this.ui.notify("Posting…");
-        this.ui.postNew("TextPost", {content: content}, function(post) {
-            this.ui.closeNotification();
-            if (post.__type__ == "ValueError" &&
-                post.args[0] == "content_empty")
-            {
-                this.ui.notify("Some content for the note is required.");
-                return;
-            }
-            this.ui.popScreen();
-        }.bind(this));
+        this.ui.postNew(this.collectionId, "TextPost", {content: content},
+            function(post) {
+                this.ui.closeNotification();
+                if (post.__type__ == "ValueError" &&
+                    post.args[0] == "content_empty")
+                {
+                    this.ui.notify("Some content for the note is required.");
+                    return;
+                }
+                this.ui.popScreen();
+            }.bind(this));
     }}
 });
 
 /* ==== PostHistoryScreen ==== */
 
 ns.PostHistoryScreen = function(ui) {
-    ns.Screen.call(this, ui);
+    ns.DoPostScreen.call(this, ui);
     this.title = "History";
 
     $(this.element).addClass("post-history-screen");
@@ -380,7 +406,7 @@ ns.PostHistoryScreen = function(ui) {
 ns.PostHistoryScreen.prototype = Object.create(ns.Screen.prototype, {
     _postClicked: {value: function(event) {
         var post = $(event.currentTarget).data("post");
-        this.ui.post(post.id, function(post) {
+        this.ui.post(this.collectionId, post.id, function(error) {
             // TODO: error handling
             this.ui.popScreen();
         }.bind(this));
@@ -395,9 +421,9 @@ ns.DoPostHandler = function(ui) {
     this.icon = null;
 };
 
-ns.DoPostHandler.prototype = {
-    post: function() {}
-};
+ns.DoPostHandler.prototype = Object.create(Object.prototype, {
+    post: {value: function(collectionId) {}}
+});
 
 /* ==== ScreenDoPostHandler ==== */
 
@@ -409,8 +435,10 @@ ns.ScreenDoPostHandler = function(screenType, title, icon, ui) {
 };
 
 ns.ScreenDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
-    post: {value: function() {
-        this.ui.showScreen(new this.screenType(this.ui));
+    post: {value: function(collectionId) {
+        var screen = new this.screenType(this.ui);
+        screen.collectionId = collectionId;
+        this.ui.showScreen(screen);
     }}
 });
 
@@ -424,8 +452,8 @@ ns.SingleDoPostHandler = function(postType, title, icon, ui) {
 };
 
 ns.SingleDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
-    post: {value: function() {
-        this.ui.postNew(this.postType, {}, function(post) {});
+    post: {value: function(collectionId) {
+        this.ui.postNew(collectionId, this.postType, {}, function(post) {});
     }}
 });
 
