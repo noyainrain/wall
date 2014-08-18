@@ -384,6 +384,10 @@ class WallApp(Object, EventTarget, Collection, Application):
             'post': event.args['post'].json()
         }))
 
+    def __str__(self):
+        return '<{}>'.format(self.__class__.__name__)
+    __repr__ = __str__
+
 class Socket(WebSocketHandler):
     def initialize(self):
         self.app = self.application
