@@ -51,6 +51,48 @@ Example:
 }
 ```
 
+Calls
+-----
+
+```
+get_history
+```
+
+```
+collection_get_items: collection_id
+```
+
+```
+collection_post: collection_id, post_id
+```
+
+```
+collection_post_new: collection_id, type, …
+```
+
+```
+collection_remove_item: collection_id, index
+```
+
+Events
+------
+
+```
+collection_posted: collection_id, post
+```
+
+```
+collection_item_removed: collection_id, index, post
+```
+
+```
+collection_item_activated: collection_id, index, post
+```
+
+```
+collection_item_deactivated: collection_id, index, post
+```
+
 Post Types
 ----------
 
