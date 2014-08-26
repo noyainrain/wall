@@ -304,6 +304,14 @@ class WallApp(Object, EventTarget, Collection, Application):
         return self
 
     # TODO: validate input in message handlers
+    def get_history_msg(self, msg):
+        return Message('get_history',
+            [p.json('common') for p in self.get_history()])
+
+    def collection_get_items_msg(self, msg):
+        collection = self.get_collection(msg.data['collection_id'])
+        return Message('collection_get_items',
+            [p.json() for p in collection.items])
 
     def collection_post_msg(self, msg):
         collection = self.get_collection(msg.data['collection_id'])
@@ -325,15 +333,6 @@ class WallApp(Object, EventTarget, Collection, Application):
         index = int(msg.data['index'])
         post = collection.remove_item(index)
         return Message('collection_remove_item', post.json())
-
-    def collection_get_items_msg(self, msg):
-        collection = self.get_collection(msg.data['collection_id'])
-        return Message('collection_get_items',
-            [p.json() for p in collection.items])
-
-    def get_history_msg(self, msg):
-        return Message('get_history',
-            [p.json('common') for p in self.get_history()])
 
     def get_history(self):
         return sorted(self.posts.values(), key=lambda p: p.posted, reverse=True)
