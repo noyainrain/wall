@@ -186,6 +186,8 @@ class WallApp(Object, EventTarget, Collection, Application):
 
         self.add_post_type(TextPost)
         self.add_post_type(ImagePost)
+        self.add_post_type(GridPost)
+
         self.msg_handlers = {
             'get_history': self.get_history_msg,
             'collection_get_items': self.collection_get_items_msg,
@@ -301,7 +303,12 @@ class WallApp(Object, EventTarget, Collection, Application):
         return post
 
     def get_collection(self, id):
-        return self
+        # TODO: document
+        if id == 'wall':
+            return self
+        else:
+            # TODO: check for Collection
+            return self.posts[id]
 
     # TODO: validate input in message handlers
     def get_history_msg(self, msg):
@@ -590,6 +597,47 @@ class ImagePost(Post):
         super(ImagePost, self).__init__(app, id, title, posted, **kwargs)
         self.url = url
 
+class GridPost(Post, Collection):
+    @classmethod
+    def create(cls, app, **args):
+        post = GridPost(app, 'grid_post:' + randstr(), 'Grid', None)
+        app.db.hmset(post.id, post.json())
+        return post
+
+    def __init__(self, app, id, title, posted, **kwargs):
+        super(GridPost, self).__init__(app, id, title, posted, **kwargs)
+        Collection.__init__(self)
+        self._items_key = self.id + '.items'
+
+    @property
+    def items(self):
+        return self.app.db.omget(self.app.db.lrange(self._items_key, 0, -1))
+
+    def activate(self):
+        for i in range(self.app.db.llen(self._items_key)):
+            self.activate_item(i)
+
+    def deactivate(self):
+        for i in range(self.app.db.llen(self._items_key)):
+            self.deactivate_item(i)
+
+    def get_item(self, index):
+        id = self.app.db.lindex(self._items_key, index)
+        if not id:
+            raise ValueError('index_out_of_range')
+        return self.app.posts[id]
+
+    def do_post(self, post):
+        index = self.app.db.rpush(self._items_key, post.id) - 1
+        self.activate_item(index)
+
+    def do_remove_item(self, index):
+        self.deactivate_item(index)
+        post = self.get_item(index)
+        self.app.db.lset(self._items_key, index, '__removed__')
+        self.app.db.lrem(self._items_key, 0, '__removed__')
+        return post
+
 class Error(Exception):
     def json(self):
         return {'args': self.args, '__type__': type(self).__name__}
@@ -671,3 +719,13 @@ class ImagePostTest(TestCase, CommonPostTest):
         CommonPostTest.setUp(self)
         self.post_type = ImagePost
         self.create_args = {'url': 'https://welcome.b5/logo.png'}
+
+class GridPostTest(TestCase, CommonPostTest, CommonCollectionTest):
+    def setUp(self):
+        super(GridPostTest, self).setUp()
+        CommonPostTest.setUp(self)
+        CommonCollectionTest.setUp(self)
+        self.post = self.app.post_new('GridPost')
+        self.post_type = GridPost
+        self.create_args = {}
+        self.collection = self.post
