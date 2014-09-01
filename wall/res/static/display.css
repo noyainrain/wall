@@ -29,6 +29,10 @@ body
     border: none;
 }
 
+.display-post {
+    background: transparent;
+}
+
 .post-content {
     height: 100vh;
 }
@@ -58,12 +62,12 @@ body
 
 /* ==== Page ==== */
 
-.display {
+.display > body {
     display: flex;
     flex-flow: column nowrap;
 }
 
-.display > .post-space {
+.display > body > .post-space {
     order: 0;
     flex: auto;
 }
