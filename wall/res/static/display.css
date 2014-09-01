@@ -60,6 +60,22 @@ body
     background: center / contain no-repeat;
 }
 
+/* ==== GridPostElement ==== */
+
+.grid-post-content {
+    display: flex;
+    flex-flow: row wrap;
+    align-content: center;
+    padding: 0.125rem;
+    background: #333;
+}
+
+.grid-post-content > .post-space {
+    flex: none;
+    margin: 0.125rem;
+    background: #444;
+}
+
 /* ==== Page ==== */
 
 .display > body {
