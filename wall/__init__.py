@@ -693,8 +693,7 @@ class WallTest(TestCase, CommonCollectionTest):
 
     def test_post(self):
         CommonCollectionTest.test_post(self)
-        post = TestPost.create(self.app)
-        self.app.post(post)
+        post = self.app.post_new('TestPost')
         self.assertEqual(self.app.current_post, post)
         self.assertTrue(post.activate_called)
         self.app.post(post)
