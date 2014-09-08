@@ -69,19 +69,20 @@ $.extend(ns.ClientBrick.prototype, wall.Brick.prototype, {
 
 ns.RemoteUrlPostElement = function(post, ui) {
     wall.PostElement.call(this, post, ui);
-    this.element = $('<p class="post url-post"></p>').text(post.url);
+    this.element = document.createElement("p");
+    this.element.classList.add("post");
+    this.element.classList.add("url-post");
+    this.element.textContent = post.url;
 };
 
-ns.RemoteUrlPostElement.prototype = $.extend(
-    Object.create(wall.PostElement.prototype),
-{
-    postType: "UrlPost"
+ns.RemoteUrlPostElement.prototype = Object.create(wall.PostElement.prototype, {
+    postType: {value: "UrlPost"}
 });
 
 /* ==== PostUrlScreen ==== */
 
 ns.PostUrlScreen = function(ui) {
-    wall.remote.Screen.call(this, ui);
+    wall.remote.DoPostScreen.call(this, ui);
     this.title = "Post URL";
 
     $(this.content).append($(
@@ -121,8 +122,7 @@ ns.PostUrlScreen = function(ui) {
 ns.PostUrlScreen.prototype = Object.create(wall.remote.Screen.prototype, {
     _postSubmitted: {value: function(event) {
         event.preventDefault();
-        this.ui.postNew(
-            "UrlPost",
+        this.ui.postNew(this.collectionId, "UrlPost",
             {"url": $(".url-url", this.content).val()},
             function(post) {
                 if (post.__type__ == "ValueError" && post.args[0] == "url") {
@@ -130,8 +130,7 @@ ns.PostUrlScreen.prototype = Object.create(wall.remote.Screen.prototype, {
                     return;
                 }
                 this.ui.popScreen();
-            }.bind(this)
-        );
+            }.bind(this));
     }},
 
     _searchSubmitted: {value: function(event) {
@@ -160,9 +159,10 @@ ns.PostUrlScreen.prototype = Object.create(wall.remote.Screen.prototype, {
 
     _resultClicked: {value: function(event) {
         var result = $(event.currentTarget).data("result");
-        this.ui.postNew("UrlPost", {"url": result.url}, function(post) {
-            this.ui.popScreen();
-        }.bind(this));
+        this.ui.postNew(this.collectionId, "UrlPost", {"url": result.url},
+            function(post) {
+                this.ui.popScreen();
+            }.bind(this));
     }}
 });
 

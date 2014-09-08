@@ -85,6 +85,11 @@ class Event(object):
         self.target = None
         self.args = dict(args.items() + kwargs.items())
 
+    def __str__(self):
+        return '<{} {} from {}>'.format(self.__class__.__name__, self.type,
+            self.target)
+    __repr__ = __str__
+
 class ObjectRedis(object):
     """
     Extended Redis client, which additionally provides object-oriented

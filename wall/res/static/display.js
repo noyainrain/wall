@@ -13,7 +13,12 @@ ns.DisplayUi = function(bricks) {
 
     this.addPostElementType(ns.TextPostElement);
     this.addPostElementType(ns.ImagePostElement);
-    this.addEventListener("posted", this._posted.bind(this));
+    this.addPostElementType(ns.GridPostElement);
+
+    this.addEventListener("collection_item_activated",
+        this._itemActivated.bind(this));
+    this.addEventListener("collection_item_deactivated",
+        this._itemDeactivated.bind(this));
 
     this.loadBricks(bricks, "DisplayBrick");
 
@@ -23,8 +28,18 @@ ns.DisplayUi = function(bricks) {
 };
 
 ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
-    _posted: {value: function(event) {
+    _itemActivated: {value: function(event) {
+        if (event.args.collection_id !== "wall") {
+            return;
+        }
         this._postSpace.post = event.args.post;
+    }},
+
+    _itemDeactivated: {value: function(event) {
+        if (event.args.collection_id !== "wall") {
+            return;
+        }
+        this._postSpace.post = null;
     }}
 });
 
@@ -45,7 +60,7 @@ ns.PostElement = function(post, ui) {
         this.element.contentDocument.body.appendChild(this.content);
         this.contentAttachedCallback();
     }.bind(this));
-    this.element.src = "/display/post";
+    this.element.src = "/display/post?id=" + this.post.id;
 };
 
 ns.PostElement.prototype = Object.create(wall.PostElement.prototype, {
@@ -84,6 +99,71 @@ ns.ImagePostElement = function(post, ui) {
 
 ns.ImagePostElement.prototype = Object.create(ns.PostElement.prototype, {
     postType: {value: "ImagePost"}
+});
+
+/* ==== GridPostElement ==== */
+
+ns.GridPostElement = function(post, ui) {
+    ns.PostElement.call(this, post, ui);
+};
+
+ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
+    postType: {value: "GridPost"},
+
+    contentAttachedCallback: {value: function() {
+        this.ui.call("collection_get_items", {collection_id: this.post.id},
+            function(items) {
+                this.ui.addEventListener("collection_item_activated",
+                    this._itemActivated.bind(this));
+                this.ui.addEventListener("collection_item_deactivated",
+                    this._itemDeactivated.bind(this));
+                for (var i = 0; i < items.length; i++) {
+                    this._activateItem(i, items[i]);
+                }
+            }.bind(this));
+    }},
+
+    _activateItem: {value: function(index, post) {
+        var postSpace = new ns.PostSpace(this.ui);
+        this.content.appendChild(postSpace.element);
+        postSpace.attachedCallback();
+        postSpace.element.object = postSpace;
+        this._layout();
+        postSpace.post = post;
+    }},
+
+    _deactivateItem: {value: function(index, post) {
+        var postSpace = this.content.children[index].object;
+        this.content.removeChild(postSpace.element);
+        postSpace.detachedCallback();
+        this._layout();
+    }},
+
+    _layout: {value: function() {
+        // NOTE: improvement: insert CSS rule instead of applying the style to
+        // each element
+        // NOTE: improvement: query / compute margin size from CSS
+        var size = 100 / Math.ceil(Math.sqrt(this.content.children.length));
+        for (var i = 0; i < this.content.children.length; i++) {
+            var element = this.content.children[i];
+            element.style.width = "calc(" + size + "% - 0.25rem)";
+            element.style.height = "calc(" + size + "% - 0.25rem)";
+        }
+    }},
+
+    _itemActivated: {value: function(event) {
+        if (event.args.collection_id !== this.post.id) {
+            return;
+        }
+        this._activateItem(event.args.index, event.args.post);
+    }},
+
+    _itemDeactivated: {value: function(event) {
+        if (event.args.collection_id !== this.post.id) {
+            return;
+        }
+        this._deactivateItem(event.args.index, event.args.post);
+    }}
 });
 
 /* ==== PostSpace ==== */
