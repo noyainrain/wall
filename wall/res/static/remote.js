@@ -247,7 +247,7 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
                     this._postElement = null;
                 }
                 this.title = "Empty Wall";
-                if (!this._post.is_collection) {
+                if (this._post.is_collection) {
                     this._postMenu.removeTarget(this._postMenu.targets[1]);
                 }
                 this._post = null;
