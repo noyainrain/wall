@@ -58,6 +58,7 @@ button {
     padding: 0.25rem;
     border: 1px solid #555;
     border-radius: 0.25rem;
+    background: transparent;
     color: inherit;
     text-align: center;
     text-shadow: inherit;
@@ -73,7 +74,6 @@ button.incognito {
     padding: 0;
     border: none;
     border-radius: 0;
-    background: transparent;
 }
 
 p.buttons {
