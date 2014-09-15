@@ -226,7 +226,7 @@ ns.PostScreen = function(ui, post) {
     this.content.appendChild(postSpace);
 
     this._postMenu = new ns.PostMenu(this.ui);
-    this._postMenu.addTarget({collectionId: "wall", label: "Wall"});
+    this._postMenu.addTarget("wall", "Wall");
     this.content.appendChild(this._postMenu.element);
     this._postMenu.attachedCallback();
 
@@ -248,7 +248,7 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
                 }
                 this.title = "Empty Wall";
                 if (this._post.is_collection) {
-                    this._postMenu.removeTarget(this._postMenu.targets[1]);
+                    this._postMenu.removeTarget(this._post.id);
                 }
                 this._post = null;
             }
@@ -267,9 +267,8 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
             }
             this.title = this._post.title;
             if (this._post.is_collection) {
-                this._postMenu.addTarget(
-                    {collectionId: this._post.id, label: "this collection"});
-                this._postMenu.target = this._postMenu.targets[1];
+                this._postMenu.addTarget(this._post.id, this._post.title);
+                this._postMenu.selectTarget(this._post.id);
             }
         },
         get: function() {
@@ -413,14 +412,13 @@ ns.PostHistoryScreen.prototype = Object.create(ns.Screen.prototype, {
 ns.PostMenu = function(ui) {
     wall.Element.call(this, ui);
     this.targets = [];
-    this._target = null;
+    this.target = null;
 
     this.element = wall.util.cloneChildNodes(
         document.querySelector(".post-menu-template")).firstElementChild;
 
-    this._targetButton = this.element.querySelector(".post-menu-target");
-    this._targetButton.addEventListener("click",
-        this._targetClicked.bind(this));
+    this._targetToggle = this.element.querySelector(".post-menu-target");
+    this._targetToggle.addEventListener("click", this._targetClicked.bind(this));
 
     var actionsDiv = this.element.querySelector(".post-menu-actions");
     for (var i = 0; i < this.ui.doPostHandlers.length; i++) {
@@ -436,42 +434,102 @@ ns.PostMenu = function(ui) {
     }
 };
 
+/**
+ * Menu for posting.
+ *
+ * The control posts to a `target` collection. A selection of `targets` can be added to
+ * the control via `addTarget()`. If more than one target is available, a toggle is
+ * presented to the user.
+ *
+ * Attributes:
+ *
+ *  - `targets`: selection of targets.
+ *  - `target`: selected target.
+ */
 ns.PostMenu.prototype = Object.create(wall.Element.prototype, {
-    target: {
-        set: function(value) {
-            this._target = value;
-            this._targetButton.textContent = this._target.label;
-        },
-        get: function() {
-            return this._target;
-        }
-    },
+    /**
+     * Return the target with the given `collectionId`. If the target does not exist,
+     * `undefined` is returned.
+     */
+    getTarget: {value: function(collectionId) {
+        return this.targets[this._getTargetIndex(collectionId)];
+    }},
 
-    addTarget: {value: function(postTarget) {
-        this.targets.push(postTarget);
-        if (this.targets.length === 1) {
-            this.target = postTarget;
-        } else if (this.targets.length === 2) {
-            this._targetButton.classList.remove("incognito");
-            this._targetButton.disabled = false;
+    /**
+     * Add a target to the selection. `collectionId` is the ID of the collection to post
+     * to and `label` is the UI label for the target. If the target already exists, it is
+     * updated.
+     */
+    addTarget: {value: function(collectionId, label) {
+        var target = {collectionId: collectionId, label: label};
+        var index = this._getTargetIndex(collectionId);
+        if (index === -1) {
+            this.targets.push(target);
+            if (this.targets.length === 1) {
+                this.selectTarget(collectionId);
+            } else if (this.targets.length === 2) {
+                this._targetToggle.classList.remove("incognito");
+                this._targetToggle.disabled = false;
+            }
+        } else {
+            this.targets[index] = target;
+            // update toggle
+            if (this.target.collectionId === collectionId) {
+                this.selectTarget(collectionId);
+            }
         }
     }},
 
-    removeTarget: {value: function(postTarget) {
-        if (this.target === postTarget) {
+    /**
+     * Remove the target with the given `collectionId` from the selection. If the target
+     * does not exist, nothing will happen.
+     */
+    removeTarget: {value: function(collectionId) {
+        var index = this._getTargetIndex(collectionId);
+        if (index === -1) {
+            return;
+        }
+        // update toggle
+        if (this.target.collectionId === collectionId) {
             this.toggleTarget();
         }
-        this.targets.splice(this.targets.indexOf(postTarget), 1);
+        this.targets.splice(index, 1);
         if (this.targets.length === 1) {
-            this._targetButton.classList.add("incognito");
-            this._targetButton.disabled = true;
+            this._targetToggle.classList.add("incognito");
+            this._targetToggle.disabled = true;
         }
     }},
 
+    /**
+     * Select the target with the given `collectionId`. If the target does not exist,
+     * nothing will happen.
+     */
+    selectTarget: {value: function(collectionId) {
+        var target = this.getTarget(collectionId);
+        if (!target) {
+            return;
+        }
+        this.target = target;
+        this._targetToggle.textContent = this.target.label;
+    }},
+
+    /**
+     * Toggle the selected target, i.e. select the next one from the selection.
+     */
     toggleTarget: {value: function() {
         var next =
-            (this.targets.indexOf(this.target) + 1) % this.targets.length;
-        this.target = this.targets[next];
+            (this._getTargetIndex(this.target.collectionId) + 1) % this.targets.length;
+        this.selectTarget(this.targets[next].collectionId);
+    }},
+
+    _getTargetIndex: {value: function(collectionId) {
+        for (var i = 0; i < this.targets.length; i++) {
+            var target = this.targets[i];
+            if (target.collectionId === collectionId) {
+                return i;
+            }
+        }
+        return -1;
     }},
 
     _targetClicked: {value: function(event) { this.toggleTarget(); }},
