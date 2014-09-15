@@ -56,10 +56,9 @@ label small
 button {
     display: inline-block;
     padding: 0.25rem;
-    color: inherit;
-    background: #444;
-    border: 1px solid #666;
+    border: 1px solid #555;
     border-radius: 0.25rem;
+    color: inherit;
     text-align: center;
     text-shadow: inherit;
 }
@@ -67,13 +66,14 @@ button {
 button > img {
     vertical-align: top;
     height: 1rem;
-    margin: 0.25rem;
+    margin: 0.25rem 0.25rem 0.25rem 0;
 }
 
 button.incognito {
     padding: 0;
-    background: transparent;
     border: none;
+    border-radius: 0;
+    background: transparent;
 }
 
 p.buttons {
@@ -257,16 +257,18 @@ ul.overlay-menu li
 
 .post-menu-actions {
     display: flex;
+    padding: 0.125rem;
     flex-flow: row wrap;
     justify-content: center;
 }
 
 .post-menu-actions > button {
     flex: none;
-    width: 12ch;
-    margin: 1px;
-    background: #555;
+    width: 11ch; /* 8ch text + ~3ch icon */
+    margin: 0.125rem;
     border: none;
+    border-radius: 0;
+    background: #555;
     text-align: left;
 }
 
