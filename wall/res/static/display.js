@@ -80,13 +80,25 @@ ns.TextPostElement.prototype = Object.create(ns.PostElement.prototype, {
     postType: {value: "TextPost"},
 
     contentAttachedCallback: {value: function() {
+        this.element.contentWindow.addEventListener("resize",
+            this._resized.bind(this));
+        this._layout();
+    }},
+
+    _layout: {value: function() {
         // First layout the text by rendering it (with a fixed font size) into
         // an element with a fixed maximum width. Then fit this element to the
         // post element (scaling the text accordingly).
         var pre = this.content.querySelector("pre");
+        pre.style.width = "";
+        pre.style.height = "";
         pre.style.fontSize = "16px";
         pre.style.maxWidth = "70ch";
         $(pre).fitToParent({maxFontSize: (20 / 1.5) + "vh"});
+    }},
+
+    _resized: {value: function(event) {
+        this._layout();
     }}
 });
 
