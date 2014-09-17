@@ -71,8 +71,13 @@ class Collection(object):
     def post(self, post):
         """
         Post the given `post` to the collection.
+
+        If `post` itself is a `Collection`, it may not be posted to any
+        collection but `Wall` (error: `post_collection`).
         """
 
+        if isinstance(post, Collection) and self != self.app:
+            raise ValueError('post_collection')
         self.do_post(post)
         self.app.dispatch_event(
             Event('collection_posted', collection=self, post=post))
