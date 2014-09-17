@@ -125,17 +125,17 @@ ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
     contentAttachedCallback: {value: function() {
         this.ui.call("collection_get_items", {collection_id: this.post.id},
             function(items) {
-                this.ui.addEventListener("collection_item_activated",
-                    this._itemActivated.bind(this));
-                this.ui.addEventListener("collection_item_deactivated",
-                    this._itemDeactivated.bind(this));
+                this.ui.addEventListener("collection_posted",
+                    this._posted.bind(this));
+                this.ui.addEventListener("collection_item_removed",
+                    this._itemRemoved.bind(this));
                 for (var i = 0; i < items.length; i++) {
-                    this._activateItem(i, items[i]);
+                    this._addItem(i, items[i]);
                 }
             }.bind(this));
     }},
 
-    _activateItem: {value: function(index, post) {
+    _addItem: {value: function(index, post) {
         var postSpace = new ns.PostSpace(this.ui);
         this.content.appendChild(postSpace.element);
         postSpace.attachedCallback();
@@ -144,7 +144,7 @@ ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
         postSpace.post = post;
     }},
 
-    _deactivateItem: {value: function(index, post) {
+    _removeItem: {value: function(index, post) {
         var postSpace = this.content.children[index].object;
         this.content.removeChild(postSpace.element);
         postSpace.detachedCallback();
@@ -164,18 +164,18 @@ ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
         }
     }},
 
-    _itemActivated: {value: function(event) {
+    _posted: {value: function(event) {
         if (event.args.collection_id !== this.post.id) {
             return;
         }
-        this._activateItem(event.args.index, event.args.post);
+        this._addItem(event.args.index, event.args.post);
     }},
 
-    _itemDeactivated: {value: function(event) {
+    _itemRemoved: {value: function(event) {
         if (event.args.collection_id !== this.post.id) {
             return;
         }
-        this._deactivateItem(event.args.index, event.args.post);
+        this._removeItem(event.args.index, event.args.post);
     }}
 });
 
