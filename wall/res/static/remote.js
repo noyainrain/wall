@@ -35,7 +35,12 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
         case "note":
             this.addDoPostHandler(
                 new ns.ScreenDoPostHandler(ns.PostNoteScreen, "Note",
-                    "static/images/note.svg", this));
+                    "/static/images/note.svg", this));
+            break;
+        case "grid":
+            this.addDoPostHandler(
+                new ns.SingleDoPostHandler("GridPost", "Grid",
+                    "/static/images/grid.svg", this));
             break;
         case "history":
             this.addDoPostHandler(
