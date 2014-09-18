@@ -80,13 +80,25 @@ ns.TextPostElement.prototype = Object.create(ns.PostElement.prototype, {
     postType: {value: "TextPost"},
 
     contentAttachedCallback: {value: function() {
+        this.element.contentWindow.addEventListener("resize",
+            this._resized.bind(this));
+        this._layout();
+    }},
+
+    _layout: {value: function() {
         // First layout the text by rendering it (with a fixed font size) into
         // an element with a fixed maximum width. Then fit this element to the
         // post element (scaling the text accordingly).
         var pre = this.content.querySelector("pre");
+        pre.style.width = "";
+        pre.style.height = "";
         pre.style.fontSize = "16px";
         pre.style.maxWidth = "70ch";
         $(pre).fitToParent({maxFontSize: (20 / 1.5) + "vh"});
+    }},
+
+    _resized: {value: function(event) {
+        this._layout();
     }}
 });
 
@@ -113,17 +125,17 @@ ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
     contentAttachedCallback: {value: function() {
         this.ui.call("collection_get_items", {collection_id: this.post.id},
             function(items) {
-                this.ui.addEventListener("collection_item_activated",
-                    this._itemActivated.bind(this));
-                this.ui.addEventListener("collection_item_deactivated",
-                    this._itemDeactivated.bind(this));
+                this.ui.addEventListener("collection_posted",
+                    this._posted.bind(this));
+                this.ui.addEventListener("collection_item_removed",
+                    this._itemRemoved.bind(this));
                 for (var i = 0; i < items.length; i++) {
-                    this._activateItem(i, items[i]);
+                    this._addItem(i, items[i]);
                 }
             }.bind(this));
     }},
 
-    _activateItem: {value: function(index, post) {
+    _addItem: {value: function(index, post) {
         var postSpace = new ns.PostSpace(this.ui);
         this.content.appendChild(postSpace.element);
         postSpace.attachedCallback();
@@ -132,7 +144,7 @@ ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
         postSpace.post = post;
     }},
 
-    _deactivateItem: {value: function(index, post) {
+    _removeItem: {value: function(index, post) {
         var postSpace = this.content.children[index].object;
         this.content.removeChild(postSpace.element);
         postSpace.detachedCallback();
@@ -146,23 +158,24 @@ ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
         var size = 100 / Math.ceil(Math.sqrt(this.content.children.length));
         for (var i = 0; i < this.content.children.length; i++) {
             var element = this.content.children[i];
-            element.style.width = "calc(" + size + "% - 0.25rem)";
+            // - 1px to prevent overflow due to rounding errors
+            element.style.width = "calc(" + size + "% - 0.25rem - 1px)";
             element.style.height = "calc(" + size + "% - 0.25rem)";
         }
     }},
 
-    _itemActivated: {value: function(event) {
+    _posted: {value: function(event) {
         if (event.args.collection_id !== this.post.id) {
             return;
         }
-        this._activateItem(event.args.index, event.args.post);
+        this._addItem(event.args.index, event.args.post);
     }},
 
-    _itemDeactivated: {value: function(event) {
+    _itemRemoved: {value: function(event) {
         if (event.args.collection_id !== this.post.id) {
             return;
         }
-        this._deactivateItem(event.args.index, event.args.post);
+        this._removeItem(event.args.index, event.args.post);
     }}
 });
 
