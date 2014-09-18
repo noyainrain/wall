@@ -83,6 +83,7 @@ ns.RemoteUrlPostElement.prototype = Object.create(wall.PostElement.prototype, {
 
 ns.PostUrlScreen = function(ui) {
     wall.remote.DoPostScreen.call(this, ui);
+    this._resultList = null;
     this.title = "Post URL";
 
     $(this.content).append($(
@@ -103,11 +104,16 @@ ns.PostUrlScreen = function(ui) {
         '            </button>                                           ' +
         '        </p>                                                    ' +
         '    </form>                                                     ' +
-        '    <ul class="select url-results"></ul>                        ' +
         '</section>                                                      '
     ));
     $(".url-post", this.content).submit(this._postSubmitted.bind(this));
     $(".url-search", this.content).submit(this._searchSubmitted.bind(this));
+
+    this._resultList = new wall.remote.ListElement(this.ui);
+    this._resultList.element.addEventListener("select",
+        this._resultSelected.bind(this));
+    this.content.querySelector("section").appendChild(this._resultList.element);
+    this._resultList.attachedCallback();
 
     this.ui.call(
         "url.get_search_handlers",
@@ -135,30 +141,33 @@ ns.PostUrlScreen.prototype = Object.create(wall.remote.Screen.prototype, {
 
     _searchSubmitted: {value: function(event) {
         event.preventDefault();
+        var query = this.content.querySelector(".url-query").value;
+
         this.ui.notify("Searching...");
-        this.ui.call(
-            "url.search",
-            {"query": $(".url-query", this.content).val()},
+        this.ui.call("url.search", {"query": query},
             function(results) {
                 this.ui.closeNotification();
-                $(".url-results", this.content).empty();
+                this._resultList.element.innerHTML = ""; // clear
                 for (var i = 0; i < results.length; i++) {
                     var result = results[i];
-                    var li = $("<li>")
-                        .data("result", result)
-                        .click(this._resultClicked.bind(this))
-                        .appendTo($(".url-results", this.content));
+                    var li = document.createElement("li");
+                    li._result = result;
                     if (result.thumbnail) {
-                        $("<img>").attr("src", result.thumbnail).appendTo(li);
+                        var img = document.createElement("img");
+                        img.src = result.thumbnail;
+                        li.appendChild(img);
                     }
-                    $("<p>").text(result.title).appendTo(li);
+                    var p = document.createElement("p");
+                    p.textContent = result.title;
+                    li.appendChild(p);
+                    this._resultList.element.appendChild(li);
                 }
             }.bind(this)
         );
     }},
 
-    _resultClicked: {value: function(event) {
-        var result = $(event.currentTarget).data("result");
+    _resultSelected: {value: function(event) {
+        var result = event.detail.li._result;
         this.ui.postNew(this.collectionId, "UrlPost", {"url": result.url},
             function(post) {
                 this.ui.popScreen();
