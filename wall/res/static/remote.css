@@ -67,7 +67,7 @@ button {
 button > img {
     vertical-align: top;
     height: 1rem;
-    margin: 0.25rem 0.25rem 0.25rem 0;
+    margin: 0.25rem;
 }
 
 button.incognito {
@@ -164,7 +164,6 @@ header.bar > button {
     order: 1;
     flex: none;
     padding: 0.5rem;
-    background: transparent;
     border: solid #444;
     border-width: 0 0 0 1px;
     border-radius: 0;
@@ -173,35 +172,6 @@ header.bar > button {
 header.bar > button.bar-secondary {
     order: -1;
     border-width: 0 1px 0 0;
-}
-
-/* ==== Selectable List ==== */
-
-ul.select li {
-    cursor: pointer;
-    border-bottom: 1px solid #555;
-    display: block;
-    margin: 0;
-    padding: 0.25rem
-}
-ul.select li:first-child {
-    border-top: 1px solid #555;
-}
-ul.select li::after {
-    content: " ";
-    display: block;
-    clear: both;
-}
-ul.select img {
-    display: block;
-    float: left;
-    margin-right: 1rem;
-    height: 3rem;
-}
-ul.select p {
-    margin: 0;
-    max-height: 3rem;
-    overflow: hidden;
 }
 
 /* ==== Overlay Menu ==== */
@@ -237,6 +207,45 @@ ul.overlay-menu li
 .connection-screen-detail
 {
     font-size: 0.9rem;
+}
+
+/* ==== ListElement ==== */
+
+.list:empty {
+    display: none;
+}
+
+.list > li {
+    display: flex;
+    border: solid #555;
+    border-width: 1px 0 0 0;
+    align-items: flex-start;
+    cursor: pointer;
+}
+
+.list > li:last-child {
+    border-width: 1px 0;
+}
+
+.list > li > img {
+    order: -1;
+    flex: none;
+    height: 3rem;
+    margin: 0.25rem 1rem 0.25rem 0.25rem;
+}
+
+.list > li > p {
+    flex: auto;
+    max-height: 3.5rem;
+    padding: 0.25rem;
+    margin: 0;
+}
+
+.list > li > button {
+    order: 1;
+    flex: none;
+    border: none;
+    border-radius: 0;
 }
 
 /* ==== Post Space ==== */
