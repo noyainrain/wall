@@ -14,7 +14,6 @@ from wall.util import Event
 class PyngBrick(Brick):
     id = 'pyng'
     maintainer = 'Sven James <sven.jms AT gmail.com>'
-    js_module = 'wall.bricks.pyng'
 
     def __init__(self, app):
         super(PyngBrick, self).__init__(app)

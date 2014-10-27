@@ -8,21 +8,107 @@ wall.bricks = wall.bricks || {};
 
 /* ==== Ui ==== */
 
-ns.Ui = function(bricks) {
+/**
+ * Base for Wall user interfaces.
+ *
+ * Attributes:
+ *
+ * - `config`: TODO
+ * - `socket`: TODO
+ * - `connectionState`: TODO
+ * - `postElementTypes`: TODO
+ * - `msgHandlers`: TODO
+ * - `bricks`: TODO
+ * - `baseUrl`: TODO Must be set by subclass.
+ * - `brickType`: TODO Must be set by subclass.
+ *
+ * Subclasses must set `baseUrl` and `brickType` and implement `init`.
+ */
+ns.Ui = function() {
     wall.util.EventTarget.call(this);
 
-    this.bricks = {};
-    this.postElementTypes = {};
-    this.msgHandlers = {};
+    this.config = null;
     this.socket = null;
     this.connectionState = "closed";
+    this.postElementTypes = {};
+    this.msgHandlers = {};
+    this.bricks = {};
 
-    this.msgHandlers["posted"] = this.eventMessage.bind(this);
+    this.baseUrl = "/static/remote/";
+    this.brickType = null;
 };
 
 ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
-    run: {value: function() {
-        this._connect();
+    /**
+     * Initialize the `Ui`. Returns a promise that is resolved when the
+     * initialization is complete.
+     *
+     * Subclasses that implement this method must invoke the initialization
+     * steps `loadConfig`, `initCommon`, `loadBricks` and `connect` (in this
+     * order).
+     */
+    init: {value: function() {
+        throw new TypeError();
+    }},
+
+    /**
+     * TODO: document
+     */
+    initCommon: {value: function() {
+        this.msgHandlers["posted"] = this.eventMessage.bind(this);
+    }},
+
+    /**
+     * Load the configuration. This is an initialization step and may only be
+     * called by subclasses from within `init`.
+     */
+    loadConfig: {value: function() {
+        var requestQueue = [];
+
+        var defaultsRequest = new XMLHttpRequest();
+        defaultsRequest.open("GET", this.baseUrl + "config.default.json", true);
+        defaultsRequest.responseType = "json";
+        requestQueue.push(wall.util.send(defaultsRequest));
+
+        var configRequest = new XMLHttpRequest();
+        configRequest.open("GET", this.baseUrl + "config.json", true);
+        configRequest.responseType = "json";
+        requestQueue.push(wall.util.send(configRequest));
+
+        return Promise.all(requestQueue).then(function() {
+            this.config = defaultsRequest.response;
+            for (var key in configRequest.response) {
+                this.config[key] = configRequest.response[key];
+            }
+        }.bind(this));
+    }},
+
+    /**
+     * Load the bricks as given by the configuration. This is an initialization
+     * step and may only be called by subclasses from within `init`.
+     */
+    loadBricks: {value: function() {
+        if (!wall.util.isArray(this.config.bricks, "string")) {
+            throw new ConfigurationError("bricks_invalid_type");
+        }
+        var bricks = wall.util.createSet(this.config.bricks);
+
+        // initialize bricks (inspired by server's wall.WallApp.__init__)
+        bricks.forEach(function(name) {
+            var module = name.split(".").reduce(
+                function(o, n) { return o[n]; }, window);
+            var brick = new module[this.brickType](this);
+            this.bricks[brick.id] = brick;
+        }, this);
+    }},
+
+    connect: {value: function() {
+        console.log("connecting...");
+        this.socket = new WebSocket("ws://" + location.host + "/api/socket");
+        this.socket.addEventListener("open", this._opened.bind(this));
+        this.socket.addEventListener("close", this._closed.bind(this));
+        this.socket.addEventListener("message", this._received.bind(this));
+        this.connectionState = "connecting";
     }},
 
     send: {value: function(msg) {
@@ -40,17 +126,6 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
         this.send({"type": method, "data": args});
     }},
 
-    loadBricks: {value: function(bricks, type) {
-        // initialize bricks (inspired by server's wall.WallApp.__init__)
-        for (var i = 0; i < bricks.length; i++) {
-            var name = bricks[i];
-            var module = name.split(".").reduce(
-                function(o, n) { return o[n]; }, window);
-            var brick = new module[type](this);
-            this.bricks[brick.id] = brick;
-        }
-    }},
-
     /**
      * Extension API: register a new post element type. `postElementType` is a
      * class (constructor) that extends `PostElement`.
@@ -62,15 +137,6 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
 
     eventMessage: {value: function(msg) {
         this.dispatchEvent(new wall.util.Event(msg.type, msg.data));
-    }},
-
-    _connect: {value: function() {
-        console.log("connecting...");
-        this.socket = new WebSocket("ws://" + location.host + "/api/socket");
-        this.socket.addEventListener("open",    $.proxy(this._opened,   this));
-        this.socket.addEventListener("close",   $.proxy(this._closed,   this));
-        this.socket.addEventListener("message", $.proxy(this._received, this));
-        this.connectionState = "connecting";
     }},
 
     _opened: {value: function(event) {
@@ -88,7 +154,7 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
             // unreachable
             throw new Error();
         }
-        setTimeout(this._connect.bind(this), 5000);
+        setTimeout(this.connect.bind(this), 5000);
     }},
 
     _received: {value: function(event) {

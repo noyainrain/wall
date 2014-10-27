@@ -1,0 +1,4 @@
+{
+    "#bricks": "list of bricks to load (given by JavaScript namespace)",
+    "bricks": ["wall.bricks.url", "wall.bricks.photo", "wall.bricks.pyng"]
+}

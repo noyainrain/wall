@@ -15,6 +15,8 @@ via websockets.
 Setup
 -----
 
+TODO: split section and explain config files
+
 Wall requires:
 
  * Python   >= 2.6
@@ -40,6 +42,7 @@ Browser Support
 Built With
 ----------
 
+ * TODO: jQuery & ES6-Promise
  * Python (2.6) by Python Software Foundation - https://python.org/
  * Tornado (2.3) by Facebook - http://www.tornadoweb.org/en/stable/
  * Redis (2.4) by Salvatore Sanfilippo - http://redis.io/

@@ -9,7 +9,9 @@
             <link href="/static/{{ stylesheet }}" rel="stylesheet" />
         {% end %}
 
-        <script src="/static/jquery.js"></script>
+        <script src="/static/lib/es6-promise-2.0.0.min.js"></script>
+        <script src="/static/lib/jquery-2.1.1.min.js"></script>
+
         <script src="/static/util.js"></script>
         <script src="/static/wall.js"></script>
         <script src="/static/display.js"></script>
@@ -19,9 +21,14 @@
         {% end %}
 
         <script>
-            $(function() {
-                new wall.display.DisplayUi({{ json_encode(app.js_modules) }})
-                    .run();
+            // TODO
+            ES6Promise.r();
+
+            document.addEventListener("DOMContentLoaded", function(event) {
+                ui = new wall.display.DisplayUi();
+                ui.init().catch(function(error) {
+                    console.log(error);
+                });
             });
         </script>
     </head>

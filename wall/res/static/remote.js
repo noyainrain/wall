@@ -7,56 +7,82 @@ wall.remote = {};
 
 /* ==== RemoteUi ==== */
 
-ns.RemoteUi = function(bricks, doPostHandlers) {
-    if(!this.isBrowserSupported()){
-        $('#main').html('<div id="browser_not_supported">Your browser is outdated. Please use a decent browser like <a href="https://play.google.com/store/apps/details?id=org.mozilla.firefox">Firefox</a> or <a href="https://play.google.com/store/apps/details?id=com.android.chrome">Chrome</a>.</div>').show();
-        return;
-    }
-
+/**
+ * Wall remote user interface.
+ *
+ * Attributes:
+ *
+ * - `screenStack`: TODO
+ * - `mainScreen`: TODO
+ * - `doPostHandlers`: TODO
+ */
+ns.RemoteUi = function() {
     wall.Ui.call(this);
-    this.doPostHandlers = [];
+
     this.screenStack = [];
     this.mainScreen = null;
+    this.doPostHandlers = [];
 
-    window.onerror = $.proxy(this._erred, this);
-    this.addEventListener("posted", this._posted.bind(this));
-
-    this.loadBricks(bricks, "ClientBrick");
-
-    // setup enabled do post handlers
-    for (var i = 0; i < doPostHandlers.length; i++) {
-        var handler = doPostHandlers[i];
-        switch (handler) {
-        case "note":
-            this.addDoPostHandler(
-                new ns.ScreenDoPostHandler(ns.PostNoteScreen, "Note",
-                    "static/images/note.svg", this));
-            break;
-        case "history":
-            this.addDoPostHandler(
-                new ns.ScreenDoPostHandler(ns.PostHistoryScreen, "History",
-                    "/static/images/history.svg", this));
-            break;
-        }
-    }
-
-    this.mainScreen = new ns.PostScreen(this);
-    this.mainScreen.hasGoBack = false;
+    this.baseUrl = "/static/remote/";
+    this.brickType = "ClientBrick";
 };
 
 ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
-    run: {value: function() {
-        this.showScreen(this.mainScreen);
-        this.showScreen(new ns.ConnectionScreen(this));
-        wall.Ui.prototype.run.call(this);
-    }},
+    init: {value: function() {
+        if (!this.isBrowserSupported()) {
+            document.body.innerHTML =
+                'Your browser is outdated. Please use a decent browser like <a href="https://play.google.com/store/apps/details?id=org.mozilla.firefox">Firefox</a> or <a href="https://play.google.com/store/apps/details?id=com.android.chrome">Chrome</a>.';
+            return Promise.resolve();
+        }
+        window.onerror = this._erred.bind(this);
 
-    isBrowserSupported: {value: function(){
-        return 'WebSocket' in window;
+        return this.loadConfig().then(function() {
+            this.initCommon();
+
+            this.addEventListener("posted", this._posted.bind(this));
+
+            if (!wall.util.isArray(this.config.do_post_handlers, "string")) {
+                throw new wall.util.ConfigurationError(
+                    "do_post_handlers_invalid_type");
+            }
+            var handlers = wall.util.createSet(this.config.do_post_handlers);
+
+            handlers.forEach(function(handler) {
+                if (["note", "history"].indexOf(handler) === -1) {
+                    throw new wall.util.ConfigurationError(
+                        "do_post_handlers_unknown_item");
+                }
+                switch (handler) {
+                case "note":
+                    this.addDoPostHandler(
+                        new ns.ScreenDoPostHandler(ns.PostNoteScreen, "Note",
+                            "static/images/note.svg", this));
+                    break;
+                case "history":
+                    this.addDoPostHandler(
+                        new ns.ScreenDoPostHandler(ns.PostHistoryScreen,
+                            "History", "/static/images/history.svg", this));
+                    break;
+                }
+            }, this);
+
+            this.loadBricks();
+
+            this.mainScreen = new ns.PostScreen(this);
+            this.mainScreen.hasGoBack = false;
+            this.showScreen(this.mainScreen);
+            this.showScreen(new ns.ConnectionScreen(this));
+
+            this.connect();
+        }.bind(this));
     }},
 
     notify: {value: function(msg) {
         $("#notification").text(msg).show();
+    }},
+
+    notifyError: {value: function(error) {
+        this.notify("Fatal error: " + error.message);
     }},
 
     closeNotification: {value: function() {
@@ -113,6 +139,13 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         this.doPostHandlers.push(handler);
     }},
 
+    /**
+     * TODO: document
+     */
+    isBrowserSupported: {value: function() {
+        return "WebSocket" in window;
+    }},
+
     _connect: {value: function() {
         wall.Ui.prototype._connect.call(this);
         this.screenStack[this.screenStack.length - 1].setState(
@@ -133,8 +166,8 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
             this.connectionState);
     }},
 
-    _erred: {value: function(msg, url, line) {
-        this.notify("fatal error: " + msg);
+    _erred: {value: function(message, url, line, column, error) {
+        this.notifyError(error);
     }},
 
     _posted: {value: function(event) {
