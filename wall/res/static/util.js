@@ -57,6 +57,14 @@ ns.Event = function(type, args) {
     this.args = args;
 };
 
+/* ==== ConfigurationError ==== */
+
+ns.ConfigurationError = function(message) {
+    this.message = message || null;
+};
+
+ns.ConfigurationError.prototype = Object.create(Error.prototype);
+
 /* ==== */
 
 ns.cloneChildNodes = function(node) {
@@ -65,6 +73,35 @@ ns.cloneChildNodes = function(node) {
         fragment.appendChild(node.childNodes[i].cloneNode(true));
     }
     return fragment;
+};
+
+/**
+ * TODO: document
+ */
+ns.send = function(request, data) {
+    var data = data || null;
+    return new Promise(function(resolve, reject) {
+        request.onload = function() {
+            resolve(request);
+        };
+        request.onerror = function() {
+            reject(request);
+        }
+        request.send(data);
+    });
+};
+
+ns.isArray = function(value, itemType) {
+    return value instanceof Array &&
+        value.every(function(i) { return typeof i === itemType });
+};
+
+ns.createSet = function(array) {
+    var set = new Set();
+    for (var i = 0; i < array.length; i++) {
+        set.add(array[i]);
+    }
+    return set;
 };
 
 }(wall.util));
