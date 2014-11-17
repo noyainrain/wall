@@ -91,6 +91,19 @@ ns.send = function(request, data) {
     });
 };
 
+// TODO: document
+ns.load = function(link, href) {
+    return new Promise(function(resolve, reject) {
+        link.onload = function() {
+            resolve(link);
+        }
+        link.onerror = function(event) {
+            reject(link);
+        }
+        link.href = href;
+    });
+}
+
 ns.isArray = function(value, itemType) {
     return value instanceof Array &&
         value.every(function(i) { return typeof i === itemType });
