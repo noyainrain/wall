@@ -7,22 +7,34 @@ wall.display = {};
 
 /* ==== DisplayUi ==== */
 
-ns.DisplayUi = function(bricks) {
-    wall.Ui.call(this, bricks);
+/**
+ * Wall display user interface.
+ */
+ns.DisplayUi = function() {
+    wall.Ui.call(this);
     this._postSpace = null;
-
-    this.addPostElementType(ns.TextPostElement);
-    this.addPostElementType(ns.ImagePostElement);
-    this.addEventListener("posted", this._posted.bind(this));
-
-    this.loadBricks(bricks, "DisplayBrick");
-
-    this._postSpace = new ns.PostSpace(this);
-    document.body.appendChild(this._postSpace.element);
-    this._postSpace.attachedCallback();
+    this.baseUrl = "/static/display/";
+    this.brickType = "DisplayBrick";
 };
 
 ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
+    init: {value: function() {
+        return this.loadConfig().then(function() {
+            this.initCommon();
+
+            this.addEventListener("posted", this._posted.bind(this));
+            this.addPostElementType(ns.TextPostElement);
+            this.addPostElementType(ns.ImagePostElement);
+
+            this._postSpace = new ns.PostSpace(this);
+            document.body.appendChild(this._postSpace.element);
+            this._postSpace.attachedCallback();
+
+            this.loadBricks();
+            this.connect();
+        }.bind(this));
+    }},
+
     _posted: {value: function(event) {
         this._postSpace.post = event.args.post;
     }}

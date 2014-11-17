@@ -80,16 +80,6 @@ class WallApp(Application, EventTarget):
             brick = module.Brick(self)
             self.bricks[brick.id] = brick
 
-        self.do_post_handlers = []
-        for handler in self.config['do_post_handlers'].split():
-            if handler not in ['note', 'history']:
-                self.logger.warning('configuration: invalid item in do_post_handlers: "{}" unknown'.format(handler));
-                continue
-            if handler in self.do_post_handlers:
-                self.logger.warning('configuration: invalid item in do_post_handlers: "{}" non-unique'.format(handler))
-                continue
-            self.do_post_handlers.append(handler)
-
         if self.config['debug'] == 'True':
             self.settings['debug'] = True
             tornado.autoreload.watch(os.path.join(res_path, 'default.cfg'))
@@ -351,8 +341,6 @@ class Brick(object):
 
      * id: unique brick identifier. Must be set by subclass.
      * maintainer: brick maintainer. Must be set by subclass.
-     * js_module: corresponding JavaScript module (i.e. namespace). Defaults to
-       the name of the Python module.
      * static_path: path to static resources. Defaults to '<module_dir>/static'.
      * scripts: corresponding JavaScript scripts. Defaults to ['<id>.js'].
      * stylesheets: corresponding stylesheets. Defaults to ['<id>.css'] if
@@ -364,7 +352,6 @@ class Brick(object):
     """
     id = None
     maintainer = None
-    js_module = None
     static_path = None
     scripts = None
     stylesheets = None
@@ -375,7 +362,6 @@ class Brick(object):
         self.logger = getLogger('wall.' + self.id)
 
         # set defaults
-        self.js_module = self.js_module or type(self).__module__
         self.static_path = self.static_path or os.path.join(
             os.path.dirname(sys.modules[self.__module__].__file__), 'static')
         self.scripts = self.scripts or [self.id + '.js']
