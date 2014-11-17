@@ -9,12 +9,6 @@ wall.remote = {};
 
 /**
  * Wall remote user interface.
- *
- * Attributes:
- *
- * - `screenStack`: TODO
- * - `mainScreen`: TODO
- * - `doPostHandlers`: TODO
  */
 ns.RemoteUi = function() {
     wall.Ui.call(this);
@@ -22,12 +16,12 @@ ns.RemoteUi = function() {
     this.screenStack = [];
     this.mainScreen = null;
     this.doPostHandlers = [];
-
     this.baseUrl = "/static/remote/";
     this.brickType = "ClientBrick";
 };
 
 ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
+    // TODO: document
     init: {value: function() {
         if (!this.isBrowserSupported()) {
             document.body.innerHTML =
@@ -56,7 +50,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                 case "note":
                     this.addDoPostHandler(
                         new ns.ScreenDoPostHandler(ns.PostNoteScreen, "Note",
-                            "static/images/note.svg", this));
+                            "/static/images/note.svg", this));
                     break;
                 case "history":
                     this.addDoPostHandler(
@@ -81,6 +75,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         $("#notification").text(msg).show();
     }},
 
+    // TODO: document
     notifyError: {value: function(error) {
         this.notify("Fatal error: " + error.message);
     }},
@@ -139,9 +134,6 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         this.doPostHandlers.push(handler);
     }},
 
-    /**
-     * TODO: document
-     */
     isBrowserSupported: {value: function() {
         return "WebSocket" in window;
     }},

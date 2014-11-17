@@ -10,19 +10,6 @@ wall.bricks = wall.bricks || {};
 
 /**
  * Base for Wall user interfaces.
- *
- * Attributes:
- *
- * - `config`: TODO
- * - `socket`: TODO
- * - `connectionState`: TODO
- * - `postElementTypes`: TODO
- * - `msgHandlers`: TODO
- * - `bricks`: TODO
- * - `baseUrl`: TODO Must be set by subclass.
- * - `brickType`: TODO Must be set by subclass.
- *
- * Subclasses must set `baseUrl` and `brickType` and implement `init`.
  */
 ns.Ui = function() {
     wall.util.EventTarget.call(this);
@@ -33,34 +20,38 @@ ns.Ui = function() {
     this.postElementTypes = {};
     this.msgHandlers = {};
     this.bricks = {};
-
-    this.baseUrl = "/static/remote/";
+    this.baseUrl = null;
     this.brickType = null;
 };
 
 ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
+    // TODO: document `ConfigurationError`
     /**
      * Initialize the `Ui`. Returns a promise that is resolved when the
      * initialization is complete.
      *
-     * Subclasses that implement this method must invoke the initialization
-     * steps `loadConfig`, `initCommon`, `loadBricks` and `connect` (in this
-     * order).
+     * Subclass API: subclasses must implement this method and must invoke the
+     * initialization steps `loadConfig`, `initCommon`, `loadBricks` and
+     * `connect` (in this order).
      */
     init: {value: function() {
         throw new TypeError();
     }},
 
     /**
-     * TODO: document
+     * Subclass API: initialize common `Ui` functionality.
+     *
+     * This is an initialization step and may only be called from within `init`.
      */
     initCommon: {value: function() {
         this.msgHandlers["posted"] = this.eventMessage.bind(this);
     }},
 
     /**
-     * Load the configuration. This is an initialization step and may only be
-     * called by subclasses from within `init`.
+     * Subclass API: load the configuration. Returns a promise that is resolved
+     * when the configuration is loaded.
+     *
+     * This is an initialization step and may only be called from within `init`.
      */
     loadConfig: {value: function() {
         var requestQueue = [];
@@ -102,6 +93,7 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
         }, this);
     }},
 
+    // TODO: document
     connect: {value: function() {
         console.log("connecting...");
         this.socket = new WebSocket("ws://" + location.host + "/api/socket");
