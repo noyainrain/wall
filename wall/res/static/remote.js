@@ -60,8 +60,8 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                 }
             }, this);
 
-            this.loadBricks();
-
+            return this.loadBricks();
+        }.bind(this)).then(function() {
             this.mainScreen = new ns.PostScreen(this);
             this.mainScreen.hasGoBack = false;
             this.showScreen(this.mainScreen);

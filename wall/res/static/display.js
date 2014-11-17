@@ -30,7 +30,8 @@ ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
             document.body.appendChild(this._postSpace.element);
             this._postSpace.attachedCallback();
 
-            this.loadBricks();
+            return this.loadBricks();
+        }.bind(this)).then(function() {
             this.connect();
         }.bind(this));
     }},

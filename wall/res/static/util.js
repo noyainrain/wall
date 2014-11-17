@@ -89,6 +89,19 @@ ns.send = function(request, data) {
     });
 };
 
+// TODO: document
+ns.load = function(link, href) {
+    return new Promise(function(resolve, reject) {
+        link.onload = function() {
+            resolve(link);
+        }
+        link.onerror = function(event) {
+            reject(link);
+        }
+        link.href = href;
+    });
+}
+
 /**
  * Test if `object` is an `Array` with all items matching the specified
  * `itemType`. Item tests are performed with the `typeof` operator.

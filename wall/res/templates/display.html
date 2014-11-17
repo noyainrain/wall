@@ -4,21 +4,16 @@
         <meta charset="utf-8" />
 
         <title>Wall Display</title>
-        <link href="/static/display.css" rel="stylesheet" />
-        {% for stylesheet in app.stylesheets %}
-            <link href="/static/{{ stylesheet }}" rel="stylesheet" />
-        {% end %}
+        <link href="/static/display.css" rel="stylesheet"/>
 
         <script src="/static/lib/es6-promise-2.0.0.min.js"></script>
+        <script src="/static/lib/HTMLImports.min.js"></script>
         <script src="/static/lib/jquery-2.1.1.min.js"></script>
 
         <script src="/static/util.js"></script>
         <script src="/static/wall.js"></script>
         <script src="/static/display.js"></script>
         <script src="/static/remote.js"></script>
-        {% for script in app.scripts %}
-            <script src="/static/{{ script }}"></script>
-        {% end %}
 
         <script>
             ES6Promise.r();

@@ -46,6 +46,8 @@ Built With
  * redis-py (2.4) by Andy McCurdy - https://github.com/andymccurdy/redis-py
  * ES6-Promise (2.0) by Yehuda Katz, Tom Dale, Stefan Penner and contributors -
    https://github.com/jakearchibald/es6-promise
+ * HTML Imports (0.5) by The Polymer Project Authors -
+   https://www.polymer-project.org/platform/html-imports.html
  * jQuery (2.1) by jQuery Foundation and other contributors -
    https://jquery.com/
  * Open Sans (2014-28-01) by Google - http://opensans.com/

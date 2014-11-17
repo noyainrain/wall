@@ -8,13 +8,13 @@ wall.bricks.url = {};
 
 /* ==== DisplayBrick ==== */
 
-ns.DisplayBrick = function(ui) {
-    wall.Brick.call(this, ui);
+ns.DisplayBrick = function(ui, html) {
+    wall.Brick.call(this, ui, html);
     this.ui.addPostElementType(ns.DisplayUrlPostElement);
 };
 
-$.extend(ns.DisplayBrick.prototype, wall.Brick.prototype, {
-    id: "url"
+ns.DisplayBrick.prototype = Object.create(wall.Brick.prototype, {
+    id: {value: "url"}
 });
 
 /* ==== DisplayUrlPostElement ==== */
@@ -54,15 +54,15 @@ ns.DisplayUrlPostElement.prototype =
 
 /* ==== ClientBrick ==== */
 
-ns.ClientBrick = function(ui) {
-    wall.Brick.call(this, ui);
+ns.ClientBrick = function(ui, html) {
+    wall.Brick.call(this, ui, html);
     this.ui.addPostElementType(ns.RemoteUrlPostElement);
     this.ui.addDoPostHandler(new wall.remote.ScreenDoPostHandler(
-        ns.PostUrlScreen, "URL", "static/url/url.svg", this.ui));
+        ns.PostUrlScreen, "URL", "/static/bricks/url/url.svg", this.ui));
 };
 
-$.extend(ns.ClientBrick.prototype, wall.Brick.prototype, {
-    id: "url"
+ns.ClientBrick.prototype = Object.create(wall.Brick.prototype, {
+    id: {value: "url"}
 });
 
 /* ==== RemoteUrlPostElement ==== */
@@ -84,27 +84,9 @@ ns.PostUrlScreen = function(ui) {
     wall.remote.Screen.call(this, ui);
     this.title = "Post URL";
 
-    $(this.content).append($(
-        '<form class="url-post" novalidate="novalidate">                 ' +
-        '    <input class="url-url" type="url">                          ' +
-        '    <p class="buttons">                                         ' +
-        '        <button><img src="static/images/post.svg"/>Post</button>' +
-        '    </p>                                                        ' +
-        '</form>                                                         ' +
-        '<section>                                                       ' +
-        '    <h2 style="display: inline;">Search</h2>                    ' +
-        '    <small class="url-handlers"></small>                        ' +
-        '    <form class="url-search" novalidate="novalidate">           ' +
-        '        <input class="url-query" type="search">                 ' +
-        '        <p class="buttons">                                     ' +
-        '            <button>                                            ' +
-        '                <img src="static/images/search.svg"/>Search     ' +
-        '            </button>                                           ' +
-        '        </p>                                                    ' +
-        '    </form>                                                     ' +
-        '    <ul class="select url-results"></ul>                        ' +
-        '</section>                                                      '
-    ));
+    var template = ui.bricks["url"].html.querySelector(
+        ".url-post-url-screen-content-template");
+    this.content.appendChild(wall.util.cloneChildNodes(template));
     $(".url-post", this.content).submit(this._postSubmitted.bind(this));
     $(".url-search", this.content).submit(this._searchSubmitted.bind(this));
 
