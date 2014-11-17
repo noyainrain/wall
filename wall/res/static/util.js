@@ -59,6 +59,7 @@ ns.Event = function(type, args) {
 
 /* ==== ConfigurationError ==== */
 
+// TODO: document
 ns.ConfigurationError = function(message) {
     this.message = message || null;
 };
@@ -75,11 +76,8 @@ ns.cloneChildNodes = function(node) {
     return fragment;
 };
 
-/**
- * TODO: document
- */
+// TODO: document
 ns.send = function(request, data) {
-    var data = data || null;
     return new Promise(function(resolve, reject) {
         request.onload = function() {
             resolve(request);
@@ -104,11 +102,16 @@ ns.load = function(link, href) {
     });
 }
 
-ns.isArray = function(value, itemType) {
-    return value instanceof Array &&
-        value.every(function(i) { return typeof i === itemType });
+/**
+ * Test if `object` is an `Array` with all items matching the specified
+ * `itemType`. Item tests are performed with the `typeof` operator.
+ */
+ns.isArray = function(object, itemType) {
+    return object instanceof Array &&
+        object.every(function(i) { return typeof i === itemType });
 };
 
+// TODO: document
 ns.createSet = function(array) {
     var set = new Set();
     for (var i = 0; i < array.length; i++) {

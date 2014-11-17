@@ -8,12 +8,11 @@ wall.display = {};
 /* ==== DisplayUi ==== */
 
 /**
- * TODO: document
+ * Wall display user interface.
  */
 ns.DisplayUi = function() {
     wall.Ui.call(this);
     this._postSpace = null;
-
     this.baseUrl = "/static/display/";
     this.brickType = "DisplayBrick";
 };
