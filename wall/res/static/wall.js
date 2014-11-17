@@ -84,8 +84,10 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
     }},
 
     /**
-     * Load the bricks as given by the configuration. This is an initialization
-     * step and may only be called by subclasses from within `init`.
+     * Subclass API: Load the bricks as given by the configuration. Returns a
+     * promise that is resolved when all bricks are loaded.
+     *
+     * This is an initialization step and may only be called from within `init`.
      */
     loadBricks: {value: function() {
         if (!wall.util.isArray(this.config.bricks, "string")) {
@@ -93,13 +95,34 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
         }
         var bricks = wall.util.createSet(this.config.bricks);
 
-        // initialize bricks (inspired by server's wall.WallApp.__init__)
-        bricks.forEach(function(name) {
-            var module = name.split(".").reduce(
-                function(o, n) { return o[n]; }, window);
-            var brick = new module[this.brickType](this);
-            this.bricks[brick.id] = brick;
+        var loadQueue = [];
+        bricks.forEach(function(brick) {
+            console.log('loading brick "' + brick + '"…');
+            var link = document.createElement("link");
+            loadQueue.push(wall.util.load(link, brick));
+            link.rel = "import";
+            document.head.appendChild(link);
         }, this);
+
+        return Promise.all(loadQueue).then(function (links) {
+            for (var i = 0; i < links.length; i++) {
+                var link = links[i];
+                // TODO: error if module is not given, module does not exist,
+                // brick constructor does not exist, brick constructor fails or
+                // brick's `id` is not set
+                var module = link.import.querySelector('meta[name="module"]')
+                    .content;
+
+                // initialize brick (inspired by server's wall.WallApp.__init__)
+                var module = module.split(".").reduce(
+                    function(o, n) { return o[n]; }, window);
+                var brick = new module[this.brickType](this, link.import);
+                this.bricks[brick.id] = brick;
+            }
+        }.bind(this), function(link) {
+            // TODO: better error type
+            throw new Error('load_brick_failed("' + link.href + '")');
+        });
     }},
 
     connect: {value: function() {
@@ -195,13 +218,25 @@ ns.PostElement.prototype = Object.create(ns.Element.prototype, {
 
 /* ==== Brick ==== */
 
-ns.Brick = function(ui) {
+/**
+ * An extension (plugin) for Wall.
+ *
+ * Static attributes:
+ *
+ *  - `id`: unqiue brick identifier. Must be set by subclass.
+ *
+ * Attributes:
+ *
+ *  - `html`: HTML component document.
+ */
+ns.Brick = function(ui, html) {
     this.ui = ui;
+    this.html = html;
 };
 
-ns.Brick.prototype = {
-    id: null
-};
+ns.Brick.prototype = Object.create(Object.prototype, {
+    id: {value: null}
+});
 
 /* ==== */
 
