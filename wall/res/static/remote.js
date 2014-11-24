@@ -38,9 +38,7 @@ ns.RemoteUi = function(bricks, doPostHandlers) {
                     "/static/images/note.svg", this));
             break;
         case "grid":
-            this.addDoPostHandler(
-                new ns.SingleDoPostHandler("GridPost", "Grid",
-                    "/static/images/grid.svg", this));
+            this.addDoPostHandler(new ns.GridDoPostHandler(this));
             break;
         case "history":
             this.addDoPostHandler(
@@ -427,11 +425,16 @@ ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
 
     _selected: {value: function(event) {
         var post = event.detail.li._post;
-        this.ui.post(this.collectionId, post.id,
-            function(error) {
-                // TODO: error handling
-                this.ui.popScreen();
-            }.bind(this));
+        this.ui.post(this.collectionId, post.id, function(error) {
+            if (error && error.__type__ === "ValueError"
+                && error.args[0] === "post_collection_not_wall")
+            {
+                // "The selected post is a collection, but the target is not Wall."
+                this.ui.notify("Only Wall can hold collections.");
+                return;
+            }
+            this.ui.popScreen();
+        }.bind(this));
     }}
 });
 
@@ -729,6 +732,28 @@ ns.SingleDoPostHandler = function(postType, title, icon, ui) {
 ns.SingleDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
     post: {value: function(collectionId) {
         this.ui.postNew(collectionId, this.postType, {}, function(post) {});
+    }}
+});
+
+/* ==== GridDoPostHandler ==== */
+
+ns.GridDoPostHandler = function(ui) {
+    ns.DoPostHandler.call(this, ui);
+    this.title = "Grid";
+    this.icon = "/static/images/grid.svg";
+};
+
+ns.GridDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
+    post: {value: function(collectionId) {
+        this.ui.postNew(collectionId, "GridPost", {}, function(post) {
+            if (post.__type__ === "ValueError"
+                && post.args[0] === "type_collection_not_wall")
+            {
+                // see PostHistoryScreen._selected
+                this.ui.notify("Only Wall can hold collections.");
+                return;
+            }
+        }.bind(this));
     }}
 });
 
