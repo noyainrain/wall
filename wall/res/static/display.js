@@ -117,6 +117,8 @@ ns.ImagePostElement.prototype = Object.create(ns.PostElement.prototype, {
 
 ns.GridPostElement = function(post, ui) {
     ns.PostElement.call(this, post, ui);
+    this._postedHandler = this._posted.bind(this);
+    this._itemRemovedHandler = this._itemRemoved.bind(this);
 };
 
 ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
@@ -126,13 +128,19 @@ ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
         this.ui.call("collection_get_items", {collection_id: this.post.id},
             function(items) {
                 this.ui.addEventListener("collection_posted",
-                    this._posted.bind(this));
+                    this._postedHandler);
                 this.ui.addEventListener("collection_item_removed",
-                    this._itemRemoved.bind(this));
+                    this._itemRemovedHandler);
                 for (var i = 0; i < items.length; i++) {
                     this._addItem(i, items[i]);
                 }
             }.bind(this));
+    }},
+
+    detachedCallback: {value: function() {
+        this.ui.removeEventListener("collection_posted", this._postedHandler);
+        this.ui.removeEventListener("collection_item_removed",
+            this._itemRemovedHandler);
     }},
 
     _addItem: {value: function(index, post) {
