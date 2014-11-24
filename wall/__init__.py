@@ -72,12 +72,13 @@ class Collection(object):
         """
         Post the given `post` to the collection.
 
-        If `post` itself is a `Collection`, it may not be posted to any
-        collection but `Wall` (error: `post_collection`).
+        Note that only `Wall` can hold `Collection`s. Thus, if the collection is
+        not `Wall`, but `post` is a `Collection`, a
+        `ValueError('post_collection_not_wall')` is raised.
         """
 
         if isinstance(post, Collection) and self != self.app:
-            raise ValueError('post_collection')
+            raise ValueError('post_collection_not_wall')
         self.do_post(post)
         self.app.dispatch_event(
             Event('collection_posted', collection=self, post=post))
@@ -93,10 +94,26 @@ class Collection(object):
         raise NotImplementedError()
 
     def post_new(self, type, **args):
+        """
+        Create a new post and subsequently post it to the collection. `type` is
+        the name of the post type (e.g. 'text_post'). Additional arguments may
+        be passed as `args`. Refer to the documentation of `create` of the
+        specific post type to learn about the accepted arguments.
+
+        If the post `type` does not exist, a `ValueError('type_unknown')` is
+        raised.
+
+        Note that only `Wall` can hold `Collection`s. Thus, if the collection is
+        not `Wall`, but `type` refers to a `Collection`, a
+        `ValueError('type_collection_not_wall')` is raised.
+        """
+
         try:
             post_type = self.app.post_types[type]
         except KeyError:
             raise ValueError('type_unknown')
+        if issubclass(post_type, Collection) and self != self.app:
+            raise ValueError('type_collection_not_wall')
 
         post = post_type.create(self.app, **args)
         self.app.db.sadd('posts', post.id)
