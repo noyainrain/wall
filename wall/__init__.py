@@ -80,18 +80,12 @@ class WallApp(Application, EventTarget):
             brick = module.Brick(self)
             self.bricks[brick.id] = brick
 
-        self.do_post_handlers = []
-        for handler in self.config['do_post_handlers'].split():
-            if handler not in ['note', 'history']:
-                self.logger.warning('configuration: invalid item in do_post_handlers: "{}" unknown'.format(handler));
-                continue
-            if handler in self.do_post_handlers:
-                self.logger.warning('configuration: invalid item in do_post_handlers: "{}" non-unique'.format(handler))
-                continue
-            self.do_post_handlers.append(handler)
-
         if self.config['debug'] == 'True':
             self.settings['debug'] = True
+            self.settings['autoreload'] = True
+            self.settings['compiled_template_cache'] = False
+            self.settings['static_hash_cache'] = False
+            self.settings['serve_traceback'] = True
             tornado.autoreload.watch(os.path.join(res_path, 'default.cfg'))
             tornado.autoreload.start()
 
@@ -103,28 +97,10 @@ class WallApp(Application, EventTarget):
             ('/api/socket$', Socket),
         ]
         for brick in self.bricks.values():
-            urls.append(('/static/{0}/(.+)$'.format(brick.id),
+            urls.append(('/static/bricks/{0}/(.+)$'.format(brick.id),
                 StaticFileHandler, {'path': brick.static_path}))
         urls.append(('/static/(.+)$', StaticFileHandler, {'path': static_path}))
         self.add_handlers('.*$', urls)
-
-    @property
-    def js_modules(self):
-        return [b.js_module for b in self.bricks.values()]
-
-    @property
-    def scripts(self):
-        scripts = []
-        for brick in self.bricks.values():
-            scripts.extend(brick.id + '/' + s for s in brick.scripts)
-        return scripts
-
-    @property
-    def stylesheets(self):
-        stylesheets = []
-        for brick in self.bricks.values():
-            stylesheets.extend(brick.id + '/' + s for s in brick.stylesheets)
-        return stylesheets
 
     def run(self):
         if not self._init:
@@ -350,24 +326,14 @@ class Brick(object):
     Static attributes:
 
      * id: unique brick identifier. Must be set by subclass.
-     * maintainer: brick maintainer. Must be set by subclass.
-     * js_module: corresponding JavaScript module (i.e. namespace). Defaults to
-       the name of the Python module.
      * static_path: path to static resources. Defaults to '<module_dir>/static'.
-     * scripts: corresponding JavaScript scripts. Defaults to ['<id>.js'].
-     * stylesheets: corresponding stylesheets. Defaults to ['<id>.css'] if
-       existant, else [].
 
     Attributes:
 
      * app: Wall application.
     """
     id = None
-    maintainer = None
-    js_module = None
     static_path = None
-    scripts = None
-    stylesheets = None
 
     def __init__(self, app):
         self.app = app
@@ -375,15 +341,8 @@ class Brick(object):
         self.logger = getLogger('wall.' + self.id)
 
         # set defaults
-        self.js_module = self.js_module or type(self).__module__
         self.static_path = self.static_path or os.path.join(
             os.path.dirname(sys.modules[self.__module__].__file__), 'static')
-        self.scripts = self.scripts or [self.id + '.js']
-        if not self.stylesheets:
-            if os.path.isfile(os.path.join(self.static_path, self.id + '.css')):
-                self.stylesheets = [self.id + '.css']
-            else:
-                self.stylesheets = []
 
 class TextPost(Post):
     @classmethod
