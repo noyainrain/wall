@@ -50,8 +50,8 @@ class Collection(object):
 
      * `items`: list of posts in collection.
 
-    `Collection` is a Mixin for `Object`s. Hosts must implement `get_item`,
-    `do_post`, `do_remove_item` and the `items` property.
+    Subclass API: `Collection` is a mixin for `Object`s. Hosts must implement
+    `get_item`, `do_post`, `do_remove_item` and the `items` property.
     """
 
     def __init__(self):
@@ -63,9 +63,10 @@ class Collection(object):
 
     def get_item(self, index):
         """
-        Return the post at the given `index`. May raise an `index_out_of_range`
-        `ValueError`.
+        Return the post at the given `index`. May raise a
+        `ValueError('index_out_of_range')`.
         """
+
         raise NotImplementedError()
 
     def post(self, post):
@@ -79,7 +80,7 @@ class Collection(object):
 
     def do_post(self, post):
         """
-        Post the given `post` to the collection.
+        Subclass API: Post the given `post` to the collection.
 
         Hosts must override the method and implement the specific behaviour.
         Called by `post`, which takes care of common tasks.
@@ -101,7 +102,7 @@ class Collection(object):
     def remove_item(self, index):
         """
         Remove the post at the given `index` from the collection. The removed
-        post is returned. May raise an `index_out_of_range` `ValueError`.
+        post is returned. May raise a `ValueError('index_out_of_range')`.
         """
 
         post = self.do_remove_item(index)
@@ -111,7 +112,7 @@ class Collection(object):
 
     def do_remove_item(self, index):
         """
-        Remove the post at the given `index` from the collection.
+        Subclass API: Remove the post at the given `index` from the collection.
 
         Hosts must override the method and implement the specific behaviour.
         Called by `remove_item`, which takes care of common tasks.
@@ -139,10 +140,6 @@ class WallApp(Object, EventTarget, Collection, Application):
 
     Events:
 
-     * `collection_posted`
-     * `collection_item_removed`
-     * `collection_item_activated`
-     * `collection_item_deactivated`
      * `connected`
      * `disconnected`
     """

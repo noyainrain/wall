@@ -386,7 +386,7 @@ ns.PostNoteScreen = function(ui) {
     this.title = "Post Note";
 };
 
-ns.PostNoteScreen.prototype = Object.create(ns.Screen.prototype, {
+ns.PostNoteScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
     _postSubmitted: {value: function(event) {
         event.preventDefault();
 
@@ -428,7 +428,7 @@ ns.PostHistoryScreen = function(ui) {
     }.bind(this));
 };
 
-ns.PostHistoryScreen.prototype = Object.create(ns.Screen.prototype, {
+ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
     _postClicked: {value: function(event) {
         var post = $(event.currentTarget).data("post");
         this.ui.post(this.collectionId, post.id, function(error) {

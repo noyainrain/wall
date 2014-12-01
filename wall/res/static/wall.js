@@ -45,7 +45,8 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
      */
     initCommon: {value: function() {
         this.msgHandlers["collection_posted"] = this.eventMessage.bind(this);
-        this.msgHandlers["collection_item_removed"] = this.eventMessage.bind(this);
+        this.msgHandlers["collection_item_removed"] =
+            this.eventMessage.bind(this);
         this.msgHandlers["collection_item_activated"] =
             this.eventMessage.bind(this);
         this.msgHandlers["collection_item_deactivated"] =
