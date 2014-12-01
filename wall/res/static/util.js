@@ -57,6 +57,15 @@ ns.Event = function(type, args) {
     this.args = args;
 };
 
+/* ==== ConfigurationError ==== */
+
+// TODO: document
+ns.ConfigurationError = function(message) {
+    this.message = message || null;
+};
+
+ns.ConfigurationError.prototype = Object.create(Error.prototype);
+
 /* ==== */
 
 ns.cloneChildNodes = function(node) {
@@ -65,6 +74,50 @@ ns.cloneChildNodes = function(node) {
         fragment.appendChild(node.childNodes[i].cloneNode(true));
     }
     return fragment;
+};
+
+// TODO: document
+ns.send = function(request, data) {
+    return new Promise(function(resolve, reject) {
+        request.onload = function() {
+            resolve(request);
+        };
+        request.onerror = function() {
+            reject(request);
+        }
+        request.send(data);
+    });
+};
+
+// TODO: document
+ns.load = function(link, href) {
+    return new Promise(function(resolve, reject) {
+        link.onload = function() {
+            resolve(link);
+        }
+        link.onerror = function(event) {
+            reject(link);
+        }
+        link.href = href;
+    });
+}
+
+/**
+ * Test if `object` is an `Array` with all items matching the specified
+ * `itemType`. Item tests are performed with the `typeof` operator.
+ */
+ns.isArray = function(object, itemType) {
+    return object instanceof Array &&
+        object.every(function(i) { return typeof i === itemType });
+};
+
+// TODO: document
+ns.createSet = function(array) {
+    var set = new Set();
+    for (var i = 0; i < array.length; i++) {
+        set.add(array[i]);
+    }
+    return set;
 };
 
 }(wall.util));

@@ -7,27 +7,39 @@ wall.display = {};
 
 /* ==== DisplayUi ==== */
 
-ns.DisplayUi = function(bricks) {
-    wall.Ui.call(this, bricks);
+/**
+ * Wall display user interface.
+ */
+ns.DisplayUi = function() {
+    wall.Ui.call(this);
     this._postSpace = null;
-
-    this.addPostElementType(ns.TextPostElement);
-    this.addPostElementType(ns.ImagePostElement);
-    this.addPostElementType(ns.GridPostElement);
-
-    this.addEventListener("collection_item_activated",
-        this._itemActivated.bind(this));
-    this.addEventListener("collection_item_deactivated",
-        this._itemDeactivated.bind(this));
-
-    this.loadBricks(bricks, "DisplayBrick");
-
-    this._postSpace = new ns.PostSpace(this);
-    document.body.appendChild(this._postSpace.element);
-    this._postSpace.attachedCallback();
+    this.baseUrl = "/static/display/";
+    this.brickType = "DisplayBrick";
 };
 
 ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
+    init: {value: function() {
+        return this.loadConfig().then(function() {
+            this.initCommon();
+
+            this.addEventListener("collection_item_activated",
+                this._itemActivated.bind(this));
+            this.addEventListener("collection_item_deactivated",
+                this._itemDeactivated.bind(this));
+            this.addPostElementType(ns.TextPostElement);
+            this.addPostElementType(ns.ImagePostElement);
+            this.addPostElementType(ns.GridPostElement);
+
+            this._postSpace = new ns.PostSpace(this);
+            document.body.appendChild(this._postSpace.element);
+            this._postSpace.attachedCallback();
+
+            return this.loadBricks();
+        }.bind(this)).then(function() {
+            this.connect();
+        }.bind(this));
+    }},
+
     _itemActivated: {value: function(event) {
         if (event.args.collection_id !== "wall") {
             return;

@@ -37,8 +37,8 @@ class TestCase(AsyncTestCase):
 
 class CommonCollectionTest(object):
     """
-    Mixin for `Collection` tests. Provides common tests for the `Collection`
-    API.
+    Subclass API: Mixin for `Collection` tests. Provides common tests for the
+    `Collection` API.
 
     Attributes:
 
@@ -64,7 +64,8 @@ class CommonCollectionTest(object):
 
 class CommonPostTest(object):
     """
-    Mixin for `Post` tests. Provides common tests of the `Post` API.
+    Subclass API: Mixin for `Post` tests. Provides common tests of the `Post`
+    API.
 
     Attributes:
 

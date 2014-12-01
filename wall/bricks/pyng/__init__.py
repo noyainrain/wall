@@ -11,10 +11,11 @@ from tornado.ioloop import PeriodicCallback
 from wall import Brick, Post, Message, ValueError, randstr
 from wall.util import Event
 
+# TODO: adjust Pyng to new brick architecture (HTML components)
+
 class PyngBrick(Brick):
     id = 'pyng'
     maintainer = 'Sven James <sven.jms AT gmail.com>'
-    js_module = 'wall.bricks.pyng'
 
     def __init__(self, app):
         super(PyngBrick, self).__init__(app)
