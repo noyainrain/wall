@@ -6,20 +6,10 @@ wall.bricks = wall.bricks || {};
 wall.bricks.photo = {};
 (function(ns) {
 
-/* ==== DisplayPhotoBrick ==== */
-
-ns.DisplayPhotoBrick = function(ui) {
-    wall.Brick.call(this, ui);
-};
-
-$.extend(ns.DisplayPhotoBrick.prototype, wall.Brick.prototype, {
-    id: "photo"
-});
-
 /* ==== ClientPhotoBrick ==== */
 
-ns.ClientPhotoBrick = function(ui) {
-    wall.Brick.call(this, ui);
+ns.ClientPhotoBrick = function(ui, html) {
+    wall.Brick.call(this, ui, html);
     this.ui.addDoPostHandler(new ns.DoPostPhotoHandler(this.ui));
 
     navigator.getUserMedia = navigator.getUserMedia ||
@@ -27,8 +17,8 @@ ns.ClientPhotoBrick = function(ui) {
     URL = window.URL || window.webkitURL;
 }
 
-$.extend(ns.ClientPhotoBrick.prototype, wall.Brick.prototype, {
-    id: "photo"
+ns.ClientPhotoBrick.prototype = Object.create(wall.Brick.prototype, {
+    id: {value: "photo"}
 });
 
 /* ==== DoPostPhotoHandler ==== */
@@ -36,7 +26,8 @@ $.extend(ns.ClientPhotoBrick.prototype, wall.Brick.prototype, {
 ns.DoPostPhotoHandler = function(ui) {
     wall.remote.DoPostHandler.call(this, ui);
     this.title = "Photo";
-    this.icon = "/static/photo/photo.svg";
+    this.icon = "/static/bricks/photo/photo.svg";
+    this.collectionId = null;
     this._stream = null;
 };
 
@@ -152,7 +143,6 @@ ns._html =
     '    </ul>                                                                  ' +
     '</div>                                                                     ';
 
-ns.DisplayBrick = ns.DisplayPhotoBrick;
 ns.ClientBrick = ns.ClientPhotoBrick;
 
 }(wall.bricks.photo));

@@ -2,12 +2,26 @@
 <html class="display-post" lang="en">
     <head>
         <meta charset="utf-8" />
-
         <title>Wall Display</title>
-        <link href="/static/display.css" rel="stylesheet" />
-        {% for stylesheet in app.stylesheets %}
-            <link href="/static/{{ stylesheet }}" rel="stylesheet" />
-        {% end %}
+
+        <script>
+            // collect stylesheets of parent
+            var sheets = [];
+            Array.prototype.push.apply(sheets, parent.document.styleSheets);
+            // TODO: recurse imports
+            var links = parent.document.querySelectorAll('link[rel="import"]');
+            for (var i = 0; i < links.length; i++) {
+                Array.prototype.push.apply(sheets, links[i].import.styleSheets);
+            }
+
+            // apply stylesheets
+            for (var i = 0; i < sheets.length; i++) {
+                var link = document.createElement("link");
+                link.rel = "stylesheet";
+                link.href = sheets[i].href;
+                document.head.appendChild(link);
+            }
+        </script>
     </head>
 
     <body></body>

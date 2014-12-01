@@ -1,0 +1,7 @@
+{
+    "#do_post_handlers": "list of enabled do post handlers",
+    "do_post_handlers": ["note", "grid", "history"],
+
+    "#bricks": "list of bricks to load (given by URL to the HTML component)",
+    "bricks": ["/static/bricks/url/url.html", "/static/bricks/photo/photo.html"]
+}

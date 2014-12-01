@@ -12,10 +12,10 @@ from urllib import urlencode
 from tornado.httpclient import AsyncHTTPClient
 from functools import partial
 
+maintainer = 'Sven James <sven.jms AT gmail.com>'
+
 class UrlBrick(Brick):
     id = 'url'
-    maintainer = 'Sven James <sven.jms AT gmail.com>'
-    js_module = 'wall.bricks.url'
 
     def __init__(self, app):
         super(Brick, self).__init__(app)
