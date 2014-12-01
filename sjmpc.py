@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python2
 
 # Wall
 
@@ -18,7 +18,7 @@ class SjmpClient():
         parser = ArgumentParser()
         parser.add_argument('url')
         parser.add_argument('type')
-        parser.add_argument('arg', type=named_arg, nargs='*')
+        parser.add_argument('arg', type=namedarg, nargs='*')
         args = parser.parse_args()
 
         try:
@@ -27,7 +27,7 @@ class SjmpClient():
             parser.error(
                 "argument url: invalid url value: '{}'".format(args.url))
         except (IOError, WebSocketException) as e:
-            print('error: connection failed (details: {})'.format(e),
+            print('error: failed to connect (details: {})'.format(e),
                 file=sys.stderr)
             sys.exit(1)
 
@@ -36,7 +36,7 @@ class SjmpClient():
             connection.send(str(call_msg))
             while True:
                 result_msg = Message.parse(connection.recv())
-                if (result_msg.type == call_msg.type):
+                if result_msg.type == call_msg.type:
                     break
             connection.close()
         except WebSocketException as e:
@@ -46,10 +46,10 @@ class SjmpClient():
 
         print(json.dumps(result_msg.data, indent=4))
 
-def named_arg(value):
+def namedarg(value):
     tokens = value.split('=', 1)
-    if len(tokens) < 2:
-        raise ValueError('value_missing_equals_sign')
+    if len(tokens) != 2 or not tokens[0]:
+        raise ValueError('value_bad_format')
     # TODO: convert value to specific type (string, number, true, false, null)
     return tuple(tokens)
 
