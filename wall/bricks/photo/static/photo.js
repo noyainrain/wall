@@ -27,21 +27,23 @@ ns.DoPostPhotoHandler = function(ui) {
     wall.remote.DoPostHandler.call(this, ui);
     this.title = "Photo";
     this.icon = "/static/bricks/photo/photo.svg";
+    this.collectionId = null;
     this._stream = null;
 };
 
 $.extend(ns.DoPostPhotoHandler.prototype, wall.remote.DoPostHandler.prototype, {
-    post: function() {
+    post: function(collectionId) {
         if (!navigator.getUserMedia || !window.URL) {
             this.ui.showScreen(
                 new wall.remote.NotSupportedScreen("camera access", this.ui));
             return;
         }
-        this._init();
+        this._init(collectionId);
     },
 
-    _init: function() {
+    _init: function(collectionId) {
         this.ui.showScreen($(ns._html));
+        this.collectionId = collectionId;
         $("#photo-take").click($.proxy(this._takeClicked, this));
         $("#photo-video-back").click($.proxy(this._videoBackClicked, this));
         $("#photo-post").click($.proxy(this._postClicked, this));
@@ -108,13 +110,12 @@ $.extend(ns.DoPostPhotoHandler.prototype, wall.remote.DoPostHandler.prototype, {
 
     _postClicked: function(event) {
         this.ui.notify("Posting...");
-        this.ui.postNew(
-            "ImagePost",
+        this.ui.postNew(this.collectionId, "ImagePost",
             {"url": $("#photo-screen canvas").get(0).toDataURL()},
-            $.proxy(function (post) {
+            function (post) {
                 this.ui.closeNotification();
                 this._cleanup();
-            }, this)
+            }.bind(this)
         );
     },
 

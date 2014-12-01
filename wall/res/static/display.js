@@ -22,7 +22,10 @@ ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
         return this.loadConfig().then(function() {
             this.initCommon();
 
-            this.addEventListener("posted", this._posted.bind(this));
+            this.addEventListener("collection_item_activated",
+                this._itemActivated.bind(this));
+            this.addEventListener("collection_item_deactivated",
+                this._itemDeactivated.bind(this));
             this.addPostElementType(ns.TextPostElement);
             this.addPostElementType(ns.ImagePostElement);
 
@@ -36,8 +39,18 @@ ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
         }.bind(this));
     }},
 
-    _posted: {value: function(event) {
+    _itemActivated: {value: function(event) {
+        if (event.args.collection_id !== "wall") {
+            return;
+        }
         this._postSpace.post = event.args.post;
+    }},
+
+    _itemDeactivated: {value: function(event) {
+        if (event.args.collection_id !== "wall") {
+            return;
+        }
+        this._postSpace.post = null;
     }}
 });
 

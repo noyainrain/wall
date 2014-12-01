@@ -28,10 +28,127 @@ res_path = os.path.join(os.path.dirname(__file__), 'res')
 static_path = os.path.join(res_path, 'static')
 template_path = os.path.join(res_path, 'templates')
 
-class WallApp(Application, EventTarget):
+class Object(object):
+    """
+    Object in the Wall universe.
+
+    Attributes:
+
+     * `id`: unique ID.
+     * `app`: Wall application.
+    """
+
+    def __init__(self, id, app):
+        self.id = id
+        self.app = app
+
+class Collection(object):
+    """
+    Collection of posts.
+
+    Attributes:
+
+     * `items`: list of posts in collection.
+
+    Subclass API: `Collection` is a mixin for `Object`s. Hosts must implement
+    `get_item`, `do_post`, `do_remove_item` and the `items` property.
+    """
+
+    def __init__(self):
+        self.is_collection = True
+
+    @property
+    def items(self):
+        raise NotImplementedError()
+
+    def get_item(self, index):
+        """
+        Return the post at the given `index`. May raise a
+        `ValueError('index_out_of_range')`.
+        """
+
+        raise NotImplementedError()
+
+    def post(self, post):
+        """
+        Post the given `post` to the collection.
+        """
+
+        self.do_post(post)
+        self.app.dispatch_event(
+            Event('collection_posted', collection=self, post=post))
+
+    def do_post(self, post):
+        """
+        Subclass API: Post the given `post` to the collection.
+
+        Hosts must override the method and implement the specific behaviour.
+        Called by `post`, which takes care of common tasks.
+        """
+
+        raise NotImplementedError()
+
+    def post_new(self, type, **args):
+        try:
+            post_type = self.app.post_types[type]
+        except KeyError:
+            raise ValueError('type_unknown')
+
+        post = post_type.create(self.app, **args)
+        self.app.db.sadd('posts', post.id)
+        self.post(post)
+        return post
+
+    def remove_item(self, index):
+        """
+        Remove the post at the given `index` from the collection. The removed
+        post is returned. May raise a `ValueError('index_out_of_range')`.
+        """
+
+        post = self.do_remove_item(index)
+        self.app.dispatch_event(Event('collection_item_removed',
+            collection=self, index=index, post=post))
+        return post
+
+    def do_remove_item(self, index):
+        """
+        Subclass API: Remove the post at the given `index` from the collection.
+
+        Hosts must override the method and implement the specific behaviour.
+        Called by `remove_item`, which takes care of common tasks.
+        """
+
+        raise NotImplementedError()
+
+    def activate_item(self, index):
+        post = self.get_item(index)
+        post.activate()
+        post.posted = datetime.utcnow().isoformat()
+        self.app.db.hset(post.id, 'posted', post.posted)
+        self.app.dispatch_event(Event('collection_item_activated',
+            collection=self, index=index, post=post))
+
+    def deactivate_item(self, index):
+        post = self.get_item(index)
+        post.deactivate()
+        self.app.dispatch_event(Event('collection_item_deactivated',
+            collection=self, index=index, post=post))
+
+class WallApp(Object, EventTarget, Collection, Application):
+    """
+    Wall application.
+
+    Events:
+
+     * `connected`
+     * `disconnected`
+    """
+
     def __init__(self, config={}, config_path=None):
-        Application.__init__(self, template_path=template_path, autoescape=None)
+        super(WallApp, self).__init__('wall', self)
         EventTarget.__init__(self)
+        Collection.__init__(self)
+        Application.__init__(self, template_path=template_path, autoescape=None)
 
         self.logger = getLogger('wall')
         self.bricks = {}
@@ -67,11 +184,20 @@ class WallApp(Application, EventTarget):
         self.add_post_type(TextPost)
         self.add_post_type(ImagePost)
         self.msg_handlers = {
-            'post': self.post_msg,
-            'post_new': self.post_new_msg,
-            'get_history': self.get_history_msg
+            'get_history': self.get_history_msg,
+            'collection_get_items': self.collection_get_items_msg,
+            'collection_post': self.collection_post_msg,
+            'collection_post_new': self.collection_post_new_msg,
+            'collection_remove_item': self.collection_remove_item_msg
         }
-        self.add_event_listener('posted', self._posted)
+
+        self.add_event_listener('collection_posted', self._collection_posted)
+        self.add_event_listener('collection_item_removed',
+            self._collection_item_removed)
+        self.add_event_listener('collection_item_activated',
+            self._collection_item_activated)
+        self.add_event_listener('collection_item_deactivated',
+            self._collection_item_deactivated)
 
         # initialize bricks
         bricks = self.config['bricks'].split()
@@ -102,6 +228,10 @@ class WallApp(Application, EventTarget):
         urls.append(('/static/(.+)$', StaticFileHandler, {'path': static_path}))
         self.add_handlers('.*$', urls)
 
+    @property
+    def items(self):
+        return [self.current_post] if self.current_post else []
+
     def run(self):
         if not self._init:
             return
@@ -125,49 +255,57 @@ class WallApp(Application, EventTarget):
         for client in self.clients:
             client.send(msg)
 
-    def post_msg(self, msg):
-        # TODO: error handling
-        post = self.post(msg.data['id'])
-        return Message('post', post.json())
+    def get_item(self, index):
+        if self.current_post and index == 0:
+            return self.current_post
+        else:
+            raise ValueError('index_out_of_range')
 
-    def post_new_msg(self, msg):
-        # wake display
-        Popen('DISPLAY=:0.0 xset dpms force on', shell=True)
+    def do_post(self, post):
+        if self.current_post:
+            self.remove_item(0)
+        self.current_post = post
+        self.activate_item(0)
 
-        post_type = msg.data.pop('type')
-        post = self.post_new(post_type, **msg.data)
-        return Message('post_new', post.json())
+    def do_remove_item(self, index):
+        self.deactivate_item(index)
+        post = self.current_post
+        self.current_post = None
+        return post
 
+    def get_collection(self, id):
+        return self
+
+    # TODO: validate input in message handlers
     def get_history_msg(self, msg):
         return Message('get_history',
             [p.json('common') for p in self.get_history()])
 
-    def post(self, id):
-        try:
-            post = self.posts[id]
-        except KeyError:
-            raise ValueError('id_nonexistent')
+    def collection_get_items_msg(self, msg):
+        collection = self.get_collection(msg.data['collection_id'])
+        return Message('collection_get_items',
+            [p.json() for p in collection.items])
 
-        if self.current_post:
-            self.current_post.deactivate()
+    def collection_post_msg(self, msg):
+        collection = self.get_collection(msg.data['collection_id'])
+        post = self.posts[msg.data['post_id']]
+        collection.post(post)
+        return Message('collection_post')
 
-        self.current_post = post
-        post.posted = datetime.utcnow().isoformat()
-        self.db.hset(post.id, 'posted', post.posted)
-        post.activate()
+    def collection_post_new_msg(self, msg):
+        # wake display
+        Popen('DISPLAY=:0.0 xset dpms force on', shell=True)
 
-        self.dispatch_event(Event('posted', post=post))
-        return post
+        collection = self.get_collection(msg.data.pop('collection_id'))
+        post_type = msg.data.pop('type')
+        post = collection.post_new(post_type, **msg.data)
+        return Message('collection_post_new', post.json())
 
-    def post_new(self, type, **args):
-        try:
-            post_type = self.post_types[type]
-        except KeyError:
-            raise ValueError('type_nonexistent')
-
-        post = post_type.create(self, **args)
-        self.db.sadd('posts', post.id)
-        return self.post(post.id)
+    def collection_remove_item_msg(self, msg):
+        collection = self.get_collection(msg.data['collection_id'])
+        index = int(msg.data['index'])
+        post = collection.remove_item(index)
+        return Message('collection_remove_item', post.json())
 
     def get_history(self):
         return sorted(self.posts.values(), key=lambda p: p.posted, reverse=True)
@@ -191,8 +329,36 @@ class WallApp(Application, EventTarget):
             Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s'))
         logger.addHandler(handler)
 
-    def _posted(self, event):
-        self.sendall(Message('posted', {'post': event.args['post'].json()}))
+    def _collection_posted(self, event):
+        self.sendall(Message('collection_posted', {
+            'collection_id': event.args['collection'].id,
+            'post': event.args['post'].json()
+        }))
+
+    def _collection_item_removed(self, event):
+        self.sendall(Message('collection_item_removed', {
+            'collection_id': event.args['collection'].id,
+            'index': event.args['index'],
+            'post': event.args['post'].json()
+        }))
+
+    def _collection_item_activated(self, event):
+        self.sendall(Message('collection_item_activated', {
+            'collection_id': event.args['collection'].id,
+            'index': event.args['index'],
+            'post': event.args['post'].json()
+        }))
+
+    def _collection_item_deactivated(self, event):
+        self.sendall(Message('collection_item_deactivated', {
+            'collection_id': event.args['collection'].id,
+            'index': event.args['index'],
+            'post': event.args['post'].json()
+        }))
+
+    def __str__(self):
+        return '<{}>'.format(self.__class__.__name__)
+    __repr__ = __str__
 
 class Socket(WebSocketHandler):
     def initialize(self):
@@ -200,8 +366,8 @@ class Socket(WebSocketHandler):
 
     def send(self, msg):
         self.write_message(str(msg))
-        self.app.logger.debug('sent message %s to %s', truncate(str(msg)),
-            self.request.remote_ip)
+        self.app.logger.debug('sent message %s to %s',
+            truncate(str(msg), ellipsis='\u2026}'), self.request.remote_ip)
 
     def open(self):
         self.app.clients.append(self)
@@ -210,7 +376,11 @@ class Socket(WebSocketHandler):
 
         # TODO: announce current post as response to hello message
         if self.app.current_post:
-            self.send(Message('posted', {'post': self.app.current_post.json()}))
+            self.send(Message('collection_item_activated', {
+                'collection_id': 'wall',
+                'index': 0,
+                'post': self.app.current_post.json()
+            }))
 
     def on_close(self):
         self.app.clients.remove(self)
@@ -219,8 +389,8 @@ class Socket(WebSocketHandler):
 
     def on_message(self, msgstr):
         msg = Message.parse(msgstr, self)
-        self.app.logger.debug('received message %s from %s', truncate(str(msg)),
-            self.request.remote_ip)
+        self.app.logger.debug('received message %s from %s',
+            truncate(str(msg), ellipsis='\u2026}'), self.request.remote_ip)
 
         handle = self.app.msg_handlers[msg.type]
         try:
@@ -262,7 +432,7 @@ class DisplayPostPage(RequestHandler):
     def get(self):
         self.render('display-post.html', app=self.application)
 
-class Post(object):
+class Post(Object):
     @classmethod
     def create(cls, app, **args):
         """
@@ -276,8 +446,7 @@ class Post(object):
         raise NotImplementedError()
 
     def __init__(self, app, id, title, posted, **kwargs):
-        self.app = app
-        self.id = id
+        super(Post, self).__init__(id, app)
         self.title = title
         self.posted = posted
 
@@ -388,10 +557,29 @@ def randstr(length=8, charset=ascii_lowercase):
 
 # ==== Tests ====
 
-from wall.test import TestCase, CommonPostTest
+from wall.test import TestCase, CommonPostTest, CommonCollectionTest, TestPost
 from tempfile import NamedTemporaryFile
 
-class WallTest(TestCase):
+class CollectionTest(TestCase):
+    def setUp(self):
+        super(CollectionTest, self).setUp()
+        self.collection = self.app
+
+    def test_post_new(self):
+        post = self.collection.post_new('TestPost')
+        self.assertIsInstance(post, TestPost)
+        self.assertIn(post, self.collection.items)
+
+    def test_post_new_unknown_type(self):
+        with self.assertRaises(ValueError):
+            self.collection.post_new('foo')
+
+class WallTest(TestCase, CommonCollectionTest):
+    def setUp(self):
+        super(WallTest, self).setUp()
+        CommonCollectionTest.setUp(self)
+        self.collection = self.app
+
     def test_init(self):
         # without config file
         app = WallApp()
@@ -412,20 +600,13 @@ class WallTest(TestCase):
         self.assertFalse(app._init)
 
     def test_post(self):
-        post = self.app.post_new('TestPost')
-        self.assertIn(post.id, self.app.posts)
+        CommonCollectionTest.test_post(self)
+        post = TestPost.create(self.app)
+        self.app.post(post)
         self.assertEqual(self.app.current_post, post)
         self.assertTrue(post.activate_called)
-        self.app.post(post.id)
+        self.app.post(post)
         self.assertTrue(post.deactivate_called)
-
-    def test_post_new(self):
-        post = self.app.post_new('TestPost')
-        self.assertIn(post.id, self.app.posts)
-
-    def test_post_new_unknown_type(self):
-        with self.assertRaises(ValueError):
-            self.app.post_new('foo')
 
     def test_get_history(self):
         posts = []

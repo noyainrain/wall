@@ -35,16 +35,45 @@ class TestCase(AsyncTestCase):
     def get_new_ioloop(self):
         return IOLoop.instance()
 
+class CommonCollectionTest(object):
+    """
+    Subclass API: Mixin for `Collection` tests. Provides common tests for the
+    `Collection` API.
+
+    Attributes:
+
+     * `collection`: collection to test. Must be set by host during `setUp`.
+    """
+
+    def setUp(self):
+        self.collection = None
+
+    def test_post(self):
+        post = TestPost.create(self.app)
+        self.collection.post(post)
+        self.assertIn(post, self.collection.items)
+
+    def test_remove_item(self):
+        post = TestPost.create(self.app)
+        self.collection.post(post)
+        removed_post = self.collection.remove_item(0)
+        self.assertEqual(removed_post, post)
+        self.assertNotIn(post, self.collection.items)
+
+    def test_remove_item_out_of_range_index(self):
+        with self.assertRaises(ValueError):
+            self.collection.remove_item(42)
+
 class CommonPostTest(object):
     """
-    Extension API: Mixin for `Post` tests. Provides common tests of the `Post`
+    Subclass API: Mixin for `Post` tests. Provides common tests of the `Post`
     API.
 
     Attributes:
 
-     * `post_type`: Post type to test. Must be set by subclass during `setUp`.
+     * `post_type`: Post type to test. Must be set by host during `setUp`.
      * `create_args`: Valid `args` for `post_type`'s `create` method. Must
-           be set by subclass during `setUp`.
+           be set by host during `setUp`.
     """
 
     def setUp(self):

@@ -44,7 +44,13 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
      * This is an initialization step and may only be called from within `init`.
      */
     initCommon: {value: function() {
-        this.msgHandlers["posted"] = this.eventMessage.bind(this);
+        this.msgHandlers["collection_posted"] = this.eventMessage.bind(this);
+        this.msgHandlers["collection_item_removed"] =
+            this.eventMessage.bind(this);
+        this.msgHandlers["collection_item_activated"] =
+            this.eventMessage.bind(this);
+        this.msgHandlers["collection_item_deactivated"] =
+            this.eventMessage.bind(this);
     }},
 
     /**
