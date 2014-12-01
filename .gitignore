@@ -1,3 +1,5 @@
 *.pyc
 /wall.cfg
+/wall/res/static/display/config.json
+/wall/res/static/remote/config.json
 /url-test-token.txt
