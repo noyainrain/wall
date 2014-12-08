@@ -72,8 +72,14 @@ class Collection(object):
     def post(self, post):
         """
         Post the given `post` to the collection.
+
+        Note that only `Wall` can hold `Collection`s. Thus, if the collection is
+        not `Wall`, but `post` is a `Collection`, a
+        `ValueError('post_collection_not_wall')` is raised.
         """
 
+        if isinstance(post, Collection) and self != self.app:
+            raise ValueError('post_collection_not_wall')
         self.do_post(post)
         self.app.dispatch_event(
             Event('collection_posted', collection=self, post=post))
@@ -89,10 +95,26 @@ class Collection(object):
         raise NotImplementedError()
 
     def post_new(self, type, **args):
+        """
+        Create a new post and subsequently post it to the collection. `type` is
+        the name of the post type (e.g. 'text_post'). Additional arguments may
+        be passed as `args`. Refer to the documentation of `create` of the
+        specific post type to learn about the accepted arguments.
+
+        If the post `type` does not exist, a `ValueError('type_unknown')` is
+        raised.
+
+        Note that only `Wall` can hold `Collection`s. Thus, if the collection is
+        not `Wall`, but `type` refers to a `Collection`, a
+        `ValueError('type_collection_not_wall')` is raised.
+        """
+
         try:
             post_type = self.app.post_types[type]
         except KeyError:
             raise ValueError('type_unknown')
+        if issubclass(post_type, Collection) and self != self.app:
+            raise ValueError('type_collection_not_wall')
 
         post = post_type.create(self.app, **args)
         self.app.db.sadd('posts', post.id)
@@ -183,6 +205,8 @@ class WallApp(Object, EventTarget, Collection, Application):
 
         self.add_post_type(TextPost)
         self.add_post_type(ImagePost)
+        self.add_post_type(GridPost)
+
         self.msg_handlers = {
             'get_history': self.get_history_msg,
             'collection_get_items': self.collection_get_items_msg,
@@ -274,7 +298,14 @@ class WallApp(Object, EventTarget, Collection, Application):
         return post
 
     def get_collection(self, id):
-        return self
+        if id == 'wall':
+            return self
+        else:
+            post = self.posts.get(id)
+            # also captures None
+            if not isinstance(post, Collection):
+                raise KeyError()
+            return post
 
     # TODO: validate input in message handlers
     def get_history_msg(self, msg):
@@ -546,6 +577,47 @@ class ImagePost(Post):
         super(ImagePost, self).__init__(app, id, title, posted, **kwargs)
         self.url = url
 
+class GridPost(Post, Collection):
+    @classmethod
+    def create(cls, app, **args):
+        post = GridPost(app, 'grid_post:' + randstr(), 'Grid', None)
+        app.db.hmset(post.id, post.json())
+        return post
+
+    def __init__(self, app, id, title, posted, **kwargs):
+        super(GridPost, self).__init__(app, id, title, posted, **kwargs)
+        Collection.__init__(self)
+        self._items_key = self.id + '.items'
+
+    @property
+    def items(self):
+        return self.app.db.omget(self.app.db.lrange(self._items_key, 0, -1))
+
+    def activate(self):
+        for i in range(self.app.db.llen(self._items_key)):
+            self.activate_item(i)
+
+    def deactivate(self):
+        for i in range(self.app.db.llen(self._items_key)):
+            self.deactivate_item(i)
+
+    def get_item(self, index):
+        id = self.app.db.lindex(self._items_key, index)
+        if not id:
+            raise ValueError('index_out_of_range')
+        return self.app.posts[id]
+
+    def do_post(self, post):
+        index = self.app.db.rpush(self._items_key, post.id) - 1
+        self.activate_item(index)
+
+    def do_remove_item(self, index):
+        self.deactivate_item(index)
+        post = self.get_item(index)
+        self.app.db.lset(self._items_key, index, '__removed__')
+        self.app.db.lrem(self._items_key, 0, '__removed__')
+        return post
+
 class Error(Exception):
     def json(self):
         return {'args': self.args, '__type__': type(self).__name__}
@@ -601,8 +673,7 @@ class WallTest(TestCase, CommonCollectionTest):
 
     def test_post(self):
         CommonCollectionTest.test_post(self)
-        post = TestPost.create(self.app)
-        self.app.post(post)
+        post = self.app.post_new('TestPost')
         self.assertEqual(self.app.current_post, post)
         self.assertTrue(post.activate_called)
         self.app.post(post)
@@ -627,3 +698,13 @@ class ImagePostTest(TestCase, CommonPostTest):
         CommonPostTest.setUp(self)
         self.post_type = ImagePost
         self.create_args = {'url': 'https://welcome.b5/logo.png'}
+
+class GridPostTest(TestCase, CommonPostTest, CommonCollectionTest):
+    def setUp(self):
+        super(GridPostTest, self).setUp()
+        CommonPostTest.setUp(self)
+        CommonCollectionTest.setUp(self)
+        self.post = self.app.post_new('GridPost')
+        self.post_type = GridPost
+        self.create_args = {}
+        self.collection = self.post

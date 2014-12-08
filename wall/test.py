@@ -49,13 +49,11 @@ class CommonCollectionTest(object):
         self.collection = None
 
     def test_post(self):
-        post = TestPost.create(self.app)
-        self.collection.post(post)
+        post = self.collection.post_new('TestPost')
         self.assertIn(post, self.collection.items)
 
     def test_remove_item(self):
-        post = TestPost.create(self.app)
-        self.collection.post(post)
+        post = self.collection.post_new('TestPost')
         removed_post = self.collection.remove_item(0)
         self.assertEqual(removed_post, post)
         self.assertNotIn(post, self.collection.items)

@@ -29,6 +29,10 @@ body
     border: none;
 }
 
+.display-post {
+    background: transparent;
+}
+
 .post-content {
     height: 100vh;
 }
@@ -56,14 +60,31 @@ body
     background: center / contain no-repeat;
 }
 
+/* ==== GridPostElement ==== */
+
+.grid-post-content {
+    display: flex;
+    padding: 0.125rem;
+    background: #333;
+    flex-flow: row wrap;
+    align-items: center;
+    align-content: center;
+}
+
+.grid-post-content > .post-space {
+    flex: none;
+    margin: 0.125rem;
+    background: #444;
+}
+
 /* ==== Page ==== */
 
-.display {
+.display body {
     display: flex;
     flex-flow: column nowrap;
 }
 
-.display > .post-space {
+.display body > .post-space {
     order: 0;
     flex: auto;
 }
