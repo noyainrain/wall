@@ -298,12 +298,14 @@ class WallApp(Object, EventTarget, Collection, Application):
         return post
 
     def get_collection(self, id):
-        # TODO: document
         if id == 'wall':
             return self
         else:
-            # TODO: check for Collection
-            return self.posts[id]
+            post = self.posts.get(id)
+            # also captures None
+            if not isinstance(post, Collection):
+                raise KeyError()
+            return post
 
     # TODO: validate input in message handlers
     def get_history_msg(self, msg):
