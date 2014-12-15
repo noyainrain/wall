@@ -9,12 +9,18 @@ wall.remote = {};
 
 /**
  * Wall remote user interface.
+ *
+ * Attributes:
+ *
+ * - `mainScreen`: main post screen.
+ * - `connectionScreen`: connection screen.
  */
 ns.RemoteUi = function() {
     wall.Ui.call(this);
 
     this.screenStack = [];
     this.mainScreen = null;
+    this.connectionScreen = null;
     this.doPostHandlers = [];
     this.baseUrl = "/static/remote/";
     this.brickType = "ClientBrick";
@@ -71,8 +77,9 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         }.bind(this)).then(function() {
             this.mainScreen = new ns.PostScreen(this);
             this.mainScreen.hasGoBack = false;
+            this.connectionScreen = new ns.ConnectionScreen();
             this.showScreen(this.mainScreen);
-            this.showScreen(new ns.ConnectionScreen(this));
+            this.showScreen(this.connectionScreen);
 
             this.connect();
         }.bind(this));
@@ -91,6 +98,11 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                 this.showScreen(new ns.LoginScreen());
             }
         }.bind(this));
+    }},
+
+    connect: {value: function() {
+        wall.Ui.prototype.connect.call(this);
+        this.connectionScreen.setState(this.connectionState);
     }},
 
     notify: {value: function(msg) {
@@ -163,19 +175,12 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         return "WebSocket" in window;
     }},
 
-    _connect: {value: function() {
-        wall.Ui.prototype._connect.call(this);
-        this.screenStack[this.screenStack.length - 1].setState(
-            this.connectionState);
-    }},
-
     _closed: {value: function(event) {
         wall.Ui.prototype._closed.call(this, event);
-        if (this.connectionState == "disconnected") {
-            this.showScreen(new ns.ConnectionScreen(this));
+        if (this.connectionState === "disconnected") {
+            this.showScreen(this.connectionScreen);
         }
-        this.screenStack[this.screenStack.length - 1].setState(
-            this.connectionState);
+        this.connectionScreen.setState(this.connectionState);
     }},
 
     _erred: {value: function(message, url, line, column, error) {
@@ -334,8 +339,11 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
 
 /* ==== ConnectionScreen ==== */
 
-ns.ConnectionScreen = function(ui) {
-    ns.Screen.call(this, ui);
+/**
+ * Connection screen.
+ */
+ns.ConnectionScreen = function() {
+    ns.Screen.call(this);
     this.element.classList.add("connection-screen");
     this.content.appendChild(wall.util.cloneChildNodes(
         document.querySelector(".connection-screen-template")));
