@@ -39,6 +39,12 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
     }},
 
     /**
+     * Subclass API: Initialize the connection after it has been established.
+     * May return a promise. The default implementation does nothing.
+     */
+    initConnection: {value: function() {}},
+
+    /**
      * Subclass API: initialize common `Ui` functionality.
      *
      * This is an initialization step and may only be called from within `init`.
@@ -132,19 +138,33 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
         this.connectionState = "connecting";
     }},
 
+    /**
+     * Send a message to the server via *SJMP*. `msg` is the message to sent.
+     */
     send: {value: function(msg) {
         this.socket.send(JSON.stringify(msg));
     }},
 
+    /**
+     * Call a Wall Web API method. `method` is the name of the method to call.
+     * Arguments are passed as object `args`. A promise is returned that is
+     * resolved to the result when the call is complete.
+     *
+     * See *api.md* for detailed documentation on the Wall Web API.
+     */
     call: {value: function(method, args, callback) {
-        callback = callback || null;
-        this.msgHandlers[method] = function(msg) {
-            delete this.msgHandlers[method];
-            if (callback) {
-                callback(msg.data);
-            }
-        }.bind(this);
-        this.send({"type": method, "data": args});
+        // TODO: remove callback
+        return new Promise(function(resolve, reject) {
+            this.msgHandlers[method] = function(msg) {
+                delete this.msgHandlers[method];
+                resolve(msg.data);
+                // backward compatibility
+                if (callback) {
+                    callback(msg.data);
+                }
+            }.bind(this);
+            this.send({type: method, data: args});
+        }.bind(this));
     }},
 
     /**
@@ -161,8 +181,10 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
     }},
 
     _opened: {value: function(event) {
-        console.log("connected");
-        this.connectionState = "open";
+        Promise.resolve(this.initConnection()).then(function() {
+            console.log("connected");
+            this.connectionState = "open";
+        });
     }},
 
     _closed: {value: function(event) {
