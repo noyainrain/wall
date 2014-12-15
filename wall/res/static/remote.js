@@ -78,6 +78,21 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         }.bind(this));
     }},
 
+    initConnection: {value: function() {
+        var p;
+        if (localStorage.session) {
+            p = this.call("authenticate", {token: localStorage.session});
+        } else {
+            p = Promise.resolve(false);
+        }
+        return p.then(function(authenticated) {
+            this.popScreen(); // ConnectionScreen
+            if (!authenticated) {
+                this.showScreen(new ns.LoginScreen());
+            }
+        }.bind(this));
+    }},
+
     notify: {value: function(msg) {
         $("#notification").text(msg).show();
     }},
@@ -154,11 +169,6 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
             this.connectionState);
     }},
 
-    _opened: {value: function(event) {
-        wall.Ui.prototype._opened.call(this, event);
-        this.popScreen();
-    }},
-
     _closed: {value: function(event) {
         wall.Ui.prototype._closed.call(this, event);
         if (this.connectionState == "disconnected") {
@@ -189,7 +199,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
 
 /* ==== Screen ==== */
 
-ns.Screen = function(ui) {
+ns.Screen = function() {
     wall.Element.call(this, ui);
     this._title = null;
     this._hasGoBack = true;
@@ -352,6 +362,48 @@ ns.ConnectionScreen.prototype = Object.create(ns.Screen.prototype, {
             detailP.textContent = "Trying to reconnect shortly.";
             break;
         }
+    }}
+});
+
+/* ==== LoginScreen ==== */
+
+/**
+ * Login screen.
+ */
+ns.LoginScreen = function() {
+    ns.Screen.call(this);
+};
+
+ns.LoginScreen.prototype = Object.create(ns.Screen.prototype, {
+    attachedCallback: {value: function() {
+        ns.Screen.prototype.attachedCallback.call(this);
+        this.title = "Log in";
+        this.hasGoBack = false;
+        this._loginSubmittedHandler = this._loginSubmitted.bind(this);
+
+        var template = document.querySelector(".login-screen-template");
+        this.content.appendChild(wall.util.cloneChildNodes(template));
+        this.content.querySelector(".login-screen-login")
+            .addEventListener("submit", this._loginSubmittedHandler);
+    }},
+
+    _loginSubmitted: {value: function(event) {
+        event.preventDefault();
+        var name = this.content
+            .querySelector('.login-screen-login input[name="name"]').value;
+        ui.notify("Logging in...")
+        ui.call("login", {name: name}).then(function(user) {
+            ui.closeNotification();
+            if (user.__type__ === "ValueError") {
+                this.ui.notify({
+                    "name_empty": "Name is missing.",
+                    "user_name_exists": "Name is already taken by another user."
+                }[user.args[0]]);
+                return;
+            }
+            localStorage.session = user.session;
+            ui.popScreen(); // LoginScreen
+        }.bind(this));
     }}
 });
 
