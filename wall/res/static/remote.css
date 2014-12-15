@@ -2,6 +2,7 @@
  * Wall
  *
  * Spacing:
+ *  - small font size:  0.90rem
  *  - standard padding: 1.00rem
  *  - small padding:    0.25rem
  */
@@ -9,49 +10,6 @@
 @import url("client.css");
 
 /* ==== General ==== */
-
-form
-{
-    overflow: visible;
-}
-
-input,
-textarea,
-label
-{
-    display: block;
-    margin: 1.5rem 0;
-}
-
-input,
-textarea
-{
-    color: #333;
-    background: #fff;
-    border: 1px solid white;
-    border-radius: 0.25rem;
-    box-shadow: inset 1px 1px 1px 0 rgba(0, 0, 0, 0.5);
-    width: 100%;
-    padding: 0.25rem;
-}
-
-textarea
-{
-    height: calc(15.5rem + 2px);
-}
-
-label input,
-label textarea
-{
-    margin: 0;
-}
-
-label small
-{
-    font-size: 0.8rem;
-    text-align: right;
-    display: block;
-}
 
 button {
     display: inline-block;
@@ -97,6 +55,45 @@ p.buttons > button:first-child {
 
 .templates {
     display: none;
+}
+
+/* ==== Form ==== */
+
+form {
+    overflow: visible;
+}
+
+input,
+textarea,
+label {
+    display: block;
+    margin: 1.5rem 0;
+}
+
+input,
+textarea {
+    width: 100%;
+    padding: 0.25rem;
+    border: 1px solid #fff;
+    border-radius: 0.25rem;
+    box-shadow: inset 1px 1px 1px 0 rgba(0, 0, 0, 0.5);
+    color: #333;
+    background: #fff;
+}
+
+textarea {
+    height: calc(15.5rem + 2px);
+}
+
+label input,
+label textarea {
+    margin: 0;
+}
+
+label small {
+    display: block;
+    font-size: 0.9rem;
+    text-align: right;
 }
 
 /* ==== Screen ==== */
