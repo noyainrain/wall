@@ -109,23 +109,28 @@ ns.RemotePyngPostElement = function(post, ui) {
     this._clock = null;
 
     this.element = $('<p class="post pyng-post">...</p>');
+    this.element = document.createElement("p");
+    this.element.classList.add("post");
+    this.element.classList.add("pyng-post");
+    this.element.textContent = "…";
 
-    this._clock = setInterval($.proxy(this._tick, this), 1000 / this.tps);
+    this._clock = setInterval(this._tick.bind(this), 1000 / this.tps);
 
     // TODO: stop when post is removed from the wall
     window.addEventListener("deviceorientation",
-        $.proxy(this._deviceOrientationUpdated, this));
+        this._deviceOrientationUpdated.bind(this));
     //// simulate device orientation events
     //ns.addDeviceOrientationListener(
     //    $.proxy(this._orientationUpdated, this));
 
     this.ui.call("pyng.join", {}, function(error) {
         if (error && error.__type__ == "ValueError"
-            && error.args[0] == "mode") {
-            this.element.text("Ongoing match, please wait.");
+            && error.args[0] == "mode")
+        {
+            this.element.textContent = "Ongoing match, please wait.";
             return;
         }
-        this.element.text("Joined match.");
+        this.element.textContent = "Joined match.";
     }.bind(this));
 };
 
@@ -216,7 +221,7 @@ ns.Ball.prototype = {
 
 ns.addDeviceOrientationListener = function(listener) {
     var t0 = Date.now() / 1000;
-    setInterval($.proxy(function() {
+    setInterval(function() {
         var t = (Date.now() / 1000) - t0;
         listener({
             "absolute": false,
@@ -224,7 +229,7 @@ ns.addDeviceOrientationListener = function(listener) {
             "beta": ns.constRotation(t),
             "gamma": 0
         });
-    }, this), 40);
+    }.bind(this), 40);
 };
 
 ns.constRotation = function(t) {

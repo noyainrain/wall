@@ -245,22 +245,15 @@ ns.PostScreen = function(ui, post) {
     this._post = null;
     this._postElement = null;
 
-    $(this.element).addClass("post-screen");
-    $(this.content).append($(
-        '<div class="post-space"></div>' +
-        '<div class="post-menu"></div> '
-    ));
+    this.element.classList.add("post-screen");
+    var postSpace = document.createElement("div");
+    postSpace.classList.add("post-space");
+    this.content.appendChild(postSpace);
 
-    // build post menu
-    for (var i = 0; i < this.ui.doPostHandlers.length; i++) {
-        var handler = this.ui.doPostHandlers[i];
-         $("<button>")
-             .text(handler.title)
-             .css("background-image", "url(" + handler.icon + ")")
-             .data("handler", handler)
-             .click(this._postMenuItemClicked.bind(this))
-            .appendTo($(".post-menu", this.content));
-    }
+    this._postMenu = new ns.PostMenu();
+    this._postMenu.addTarget("wall", "Wall");
+    this.content.appendChild(this._postMenu.element);
+    this._postMenu.attachedCallback();
 
     this.title = "Empty Wall";
     this.post = post;
@@ -270,15 +263,19 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
     post: {
         set: function(value) {
             // TODO: implement (remote) PostElement
+            var postSpace = this.element.querySelector(".post-space");
 
             if (this._post) {
-                this._post = null;
                 if (this._postElement) {
-                    $(".post-space", this.content).empty();
+                    postSpace.removeChild(this._postElement.element);
                     this._postElement.detachedCallback();
                     this._postElement = null;
                 }
                 this.title = "Empty Wall";
+                if (this._post.is_collection) {
+                    this._postMenu.removeTarget(this._post.id);
+                }
+                this._post = null;
             }
 
             this._post = value;
@@ -286,16 +283,18 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
                 return;
             }
 
-            var postElementType =
-                this.ui.postElementTypes[this._post.__type__];
+            var postElementType = this.ui.postElementTypes[this._post.__type__];
             if (postElementType) {
                 this._postElement =
                     new postElementType(this._post, this.ui);
-                $(".post-space", this.content).append(
-                    this._postElement.element);
+                postSpace.appendChild(this._postElement.element);
                 this._postElement.attachedCallback();
             }
             this.title = this._post.title;
+            if (this._post.is_collection) {
+                this._postMenu.addTarget(this._post.id, this._post.title);
+                this._postMenu.selectTarget(this._post.id);
+            }
         },
         get: function() {
             return this._post;
@@ -304,12 +303,7 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
 
     detachedCallback: {value: function() {
         this.post = null;
-    }},
-
-    _postMenuItemClicked: {value: function(event) {
-        var handler = $(event.currentTarget).data("handler");
-        handler.post("wall");
-     }}
+    }}
 });
 
 /* ==== ConnectionScreen ==== */
@@ -435,6 +429,140 @@ ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
             // TODO: error handling
             this.ui.popScreen();
         }.bind(this));
+    }}
+});
+
+/* ==== PostMenu ==== */
+
+/**
+ * Menu for posting.
+ *
+ * The control posts to a `target` collection. A selection of `targets` can be
+ * added to the control via `addTarget()`. If more than one target is available,
+ * a toggle is presented.
+ *
+ * Attributes:
+ *
+ *  - `targets`: selection of targets.
+ *  - `target`: selected target.
+ */
+ns.PostMenu = function() {
+    wall.Element.call(this, ui);
+    this.targets = [];
+    this.target = null;
+
+    var template = document.querySelector(".post-menu-template");
+    this.element = wall.util.cloneChildNodes(template).firstElementChild;
+
+    this._targetToggle = this.element.querySelector(".post-menu-target");
+    this._targetToggle.addEventListener("click",
+        this._targetClicked.bind(this));
+
+    var actionsDiv = this.element.querySelector(".post-menu-actions");
+    for (var i = 0; i < this.ui.doPostHandlers.length; i++) {
+        var handler = this.ui.doPostHandlers[i];
+        var icon = document.createElement("img");
+        icon.setAttribute("src", handler.icon);
+        var button = document.createElement("button");
+        button._handler = handler;
+        button.appendChild(icon);
+        button.appendChild(document.createTextNode(handler.title));
+        button.addEventListener("click", this._actionClicked.bind(this));
+        actionsDiv.appendChild(button);
+    }
+};
+
+ns.PostMenu.prototype = Object.create(wall.Element.prototype, {
+    /**
+     * Return the target with the given `collectionId`. If the target does not
+     * exist, `undefined` is returned.
+     */
+    getTarget: {value: function(collectionId) {
+        return this.targets[this._getTargetIndex(collectionId)];
+    }},
+
+    /**
+     * Add a target to the selection. `collectionId` is the ID of the collection
+     * to post to and `label` is the UI label for the target. If the target
+     * already exists, it is updated.
+     */
+    addTarget: {value: function(collectionId, label) {
+        var target = {collectionId: collectionId, label: label};
+        var index = this._getTargetIndex(collectionId);
+        if (index === -1) {
+            this.targets.push(target);
+            if (this.targets.length === 1) {
+                this.selectTarget(collectionId);
+            } else if (this.targets.length === 2) {
+                this._targetToggle.classList.remove("incognito");
+                this._targetToggle.disabled = false;
+            }
+        } else {
+            this.targets[index] = target;
+            // update toggle
+            if (this.target.collectionId === collectionId) {
+                this.selectTarget(collectionId);
+            }
+        }
+    }},
+
+    /**
+     * Remove the target with the given `collectionId` from the selection. If
+     * the target does not exist, nothing will happen.
+     */
+    removeTarget: {value: function(collectionId) {
+        var index = this._getTargetIndex(collectionId);
+        if (index === -1) {
+            return;
+        }
+        // update toggle
+        if (this.target.collectionId === collectionId) {
+            this.toggleTarget();
+        }
+        this.targets.splice(index, 1);
+        if (this.targets.length === 1) {
+            this._targetToggle.classList.add("incognito");
+            this._targetToggle.disabled = true;
+        }
+    }},
+
+    /**
+     * Select the target with the given `collectionId`. If the target does not
+     * exist, nothing will happen.
+     */
+    selectTarget: {value: function(collectionId) {
+        var target = this.getTarget(collectionId);
+        if (!target) {
+            return;
+        }
+        this.target = target;
+        this._targetToggle.textContent = this.target.label;
+    }},
+
+    /**
+     * Toggle the selected target, i.e. select the next one from the selection.
+     */
+    toggleTarget: {value: function() {
+        var next = (this._getTargetIndex(this.target.collectionId) + 1) %
+            this.targets.length;
+        this.selectTarget(this.targets[next].collectionId);
+    }},
+
+    _getTargetIndex: {value: function(collectionId) {
+        for (var i = 0; i < this.targets.length; i++) {
+            if (this.targets[i].collectionId === collectionId) {
+                return i;
+            }
+        }
+        return -1;
+    }},
+
+    _targetClicked: {value: function(event) {
+        this.toggleTarget();
+    }},
+
+    _actionClicked: {value: function(event) {
+        event.currentTarget._handler.post(this.target.collectionId);
     }}
 });
 
