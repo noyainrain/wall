@@ -184,14 +184,14 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
         Promise.resolve(this.initConnection()).then(function() {
             console.log("connected");
             this.connectionState = "open";
-        });
+        }.bind(this));
     }},
 
     _closed: {value: function(event) {
         console.log("disconnected");
-        if (this.connectionState == "connecting") {
+        if (this.connectionState === "connecting") {
             this.connectionState = "failed";
-        } else if (this.connectionState == "open") {
+        } else if (this.connectionState === "open") {
             this.connectionState = "disconnected";
         } else {
             // unreachable
