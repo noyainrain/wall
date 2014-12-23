@@ -133,6 +133,7 @@ class Collection(object):
 
         post = post_type.create(self.app, **args)
         self.app.db.sadd('posts', post.id)
+        post = self.app.posts[post.id] # cache
         self.post(post)
         return post
 
@@ -295,8 +296,9 @@ class WallApp(Object, EventTarget, Collection, Application):
             raise ValueError('user_name_exists')
 
         user = User('user:' + randstr(), name, randstr(), ap, self)
-        self.db.hmset(user.id, user.json())
+        self.db.hmset(user.id, user.json(include_private=True))
         self.db.sadd('users', user.id)
+        user = self.users[user.id] # cache
         self.db.hset('session_map', user.session, user.id)
         return user
 
@@ -352,12 +354,12 @@ class WallApp(Object, EventTarget, Collection, Application):
     # TODO: validate input in message handlers
     def get_history_msg(self, msg):
         return Message('get_history',
-            [p.json('common') for p in self.get_history()])
+            [p.json('common', include_poster=True) for p in self.get_history()])
 
     def collection_get_items_msg(self, msg):
         collection = self.get_collection(msg.data['collection_id'])
         return Message('collection_get_items',
-            [p.json() for p in collection.items])
+            [p.json(include_poster=True) for p in collection.items])
 
     def collection_post_msg(self, msg):
         collection = self.get_collection(msg.data['collection_id'])
@@ -378,12 +380,12 @@ class WallApp(Object, EventTarget, Collection, Application):
         collection = self.get_collection(msg.data['collection_id'])
         index = int(msg.data['index'])
         post = collection.remove_item(index)
-        return Message('collection_remove_item', post.json())
+        return Message('collection_remove_item', post.json(include_poster=True))
 
     def login_msg(self, msg):
         user = self.login(msg.data['name'], msg.frm.request.remote_ip)
         msg.frm.user = user
-        return Message('login', user.json())
+        return Message('login', user.json(include_private=True))
 
     def authenticate_msg(self, msg):
         user = self.users.get(self.db.hget('session_map', msg.data['token']))
@@ -418,28 +420,28 @@ class WallApp(Object, EventTarget, Collection, Application):
     def _collection_posted(self, event):
         self.sendall(Message('collection_posted', {
             'collection_id': event.args['collection'].id,
-            'post': event.args['post'].json()
+            'post': event.args['post'].json(include_poster=True)
         }))
 
     def _collection_item_removed(self, event):
         self.sendall(Message('collection_item_removed', {
             'collection_id': event.args['collection'].id,
             'index': event.args['index'],
-            'post': event.args['post'].json()
+            'post': event.args['post'].json(include_poster=True)
         }))
 
     def _collection_item_activated(self, event):
         self.sendall(Message('collection_item_activated', {
             'collection_id': event.args['collection'].id,
             'index': event.args['index'],
-            'post': event.args['post'].json()
+            'post': event.args['post'].json(include_poster=True)
         }))
 
     def _collection_item_deactivated(self, event):
         self.sendall(Message('collection_item_deactivated', {
             'collection_id': event.args['collection'].id,
             'index': event.args['index'],
-            'post': event.args['post'].json()
+            'post': event.args['post'].json(include_poster=True)
         }))
 
     def __str__(self):
@@ -477,7 +479,7 @@ class Socket(WebSocketHandler):
             self.send(Message('collection_item_activated', {
                 'collection_id': 'wall',
                 'index': 0,
-                'post': self.app.current_post.json()
+                'post': self.app.current_post.json(include_poster=True)
             }))
 
     def on_close(self):
@@ -535,7 +537,7 @@ class DisplayPostPage(RequestHandler):
 
 class User(Object):
     """
-    See *api.md*.
+    Wall user. See *api.md*.
     """
 
     def __init__(self, id, name, session, ap, app):
@@ -544,7 +546,25 @@ class User(Object):
         self.session = session
         self.ap = ap
 
+    def json(self, include_private=False):
+        """
+        Return a JSON representation of the user. See `Object.json()`.
+
+        If `include_private` is `True` (default `False`), non-public attributes
+        (`session`, `ap`) are included.
+        """
+
+        json = super(User, self).json()
+        if not include_private:
+            json = dict((k, v) for k, v in json.items()
+                if k not in ['session', 'ap'])
+        return json
+
 class Post(Object):
+    """
+    Post. See *api.md*.
+    """
+
     @classmethod
     def create(cls, app, **args):
         """
@@ -557,10 +577,15 @@ class Post(Object):
         """
         raise NotImplementedError()
 
-    def __init__(self, app, id, title, posted, **kwargs):
-        super(Post, self).__init__(id, app)
+    def __init__(self, title, poster_id, posted, **args):
+        super(Post, self).__init__(**args)
         self.title = title
+        self.poster_id = poster_id
         self.posted = posted
+
+    @property
+    def poster(self):
+        return self.app.users[self.poster_id]
 
     def activate(self):
         """
@@ -580,20 +605,24 @@ class Post(Object):
         """
         pass
 
-    def json(self, view=None):
+    def json(self, view=None, include_poster=False):
+        """
+        Return a JSON representation of the post. See `Object.json()`.
+
+        If `include_poster` is `True` (default `False`), `poster` is included as
+        JSON object.
+        """
+
         if view not in [None, 'common']:
             raise ValueError('view_unknown')
 
         json = super(Post, self).json()
         if view == 'common':
             json = dict((k, v) for k, v in json.items()
-                if k in ['id', 'title', 'posted', '__type__'])
+                if k in ['id', 'title', 'poster_id', 'posted', '__type__'])
+        if include_poster:
+            json['poster'] = self.poster.json()
         return json
-
-    def __eq__(self, other):
-        # TODO: replace this by identity mapping / caching (see
-        # https://docs.python.org/2/library/weakref.html )
-        return self.id == other.id
 
     def __str__(self):
         return '<{} {}>'.format(self.__class__.__name__, self.id)
@@ -626,9 +655,9 @@ class Brick(object):
 
 class TextPost(Post):
     @classmethod
-    def create(cls, app, **kwargs):
+    def create(cls, app, **args):
         try:
-            content = kwargs['content'].strip()
+            content = args['content'].strip()
         except KeyError:
             raise ValueError('content_missing')
         if not content:
@@ -636,36 +665,39 @@ class TextPost(Post):
 
         title = truncate(content.splitlines()[0])
 
-        post = TextPost(app, 'text_post:' + randstr(), title, None, content)
+        post = TextPost(id='text_post:' + randstr(), app=app, title=title,
+            poster_id=app.user.id, posted=None, content=content)
         app.db.hmset(post.id, post.json())
         return post
 
-    def __init__(self, app, id, title, posted, content, **kwargs):
-        super(TextPost, self).__init__(app, id, title, posted, **kwargs)
+    def __init__(self, content, **args):
+        super(TextPost, self).__init__(**args)
         self.content = content
 
 class ImagePost(Post):
     @classmethod
-    def create(cls, app, **kwargs):
+    def create(cls, app, **args):
         # TODO: check args
-        url = kwargs['url']
-        post = ImagePost(app, 'image_post:' + randstr(), 'Image', None, url)
+        url = args['url']
+        post = ImagePost(id='image_post:' + randstr(), app=app, title='Image',
+            poster_id=app.user.id, posted=None, url=url)
         app.db.hmset(post.id, post.json())
         return post
 
-    def __init__(self, app, id, title, posted, url, **kwargs):
-        super(ImagePost, self).__init__(app, id, title, posted, **kwargs)
+    def __init__(self, url, **args):
+        super(ImagePost, self).__init__(**args)
         self.url = url
 
 class GridPost(Post, Collection):
     @classmethod
     def create(cls, app, **args):
-        post = GridPost(app, 'grid_post:' + randstr(), 'Grid', None)
+        post = GridPost(id='grid_post:' + randstr(), app=app, title='Grid',
+            poster_id=app.user.id, posted=None, is_collection=True)
         app.db.hmset(post.id, post.json())
         return post
 
-    def __init__(self, app, id, title, posted, **kwargs):
-        super(GridPost, self).__init__(app, id, title, posted, **kwargs)
+    def __init__(self, is_collection, **args):
+        super(GridPost, self).__init__(**args)
         Collection.__init__(self)
         self._items_key = self.id + '.items'
 
@@ -715,7 +747,7 @@ from tempfile import NamedTemporaryFile
 class ObjectTest(TestCase):
     def setUp(self):
         super(ObjectTest, self).setUp()
-        self.object = self.app.login('Ivanova', 'test')
+        self.object = self.user
 
     def test_json(self):
         json = self.object.json()
@@ -777,13 +809,26 @@ class WallTest(TestCase, CommonCollectionTest):
         self.assertEqual(posts, self.app.get_history()[0:2])
 
     def test_login(self):
-        user = self.app.login('Ivanova', 'test')
+        user = self.app.login('Talia', 'test')
         self.assertIn(user.id, self.app.users)
 
     def test_login_user_name_exists(self):
-        user = self.app.login('Ivanova', 'test')
         with self.assertRaises(ValueError):
             self.app.login('Ivanova', 'test')
+
+class UserTest(TestCase):
+    def setUp(self):
+        super(UserTest, self).setUp()
+
+    def test_json(self):
+        json = self.user.json()
+        self.assertNotIn('session', json)
+        self.assertNotIn('ap', json)
+
+    def test_json_include_private(self):
+        json = self.user.json(include_private=True)
+        self.assertIn('session', json)
+        self.assertIn('ap', json)
 
 class TextPostTest(TestCase, CommonPostTest):
     def setUp(self):
@@ -791,6 +836,7 @@ class TextPostTest(TestCase, CommonPostTest):
         CommonPostTest.setUp(self)
         self.post_type = TextPost
         self.create_args = {'content': 'Babylon 5'}
+        self.post = self.app.post_new('TextPost', **self.create_args)
 
 class ImagePostTest(TestCase, CommonPostTest):
     def setUp(self):
@@ -798,13 +844,14 @@ class ImagePostTest(TestCase, CommonPostTest):
         CommonPostTest.setUp(self)
         self.post_type = ImagePost
         self.create_args = {'url': 'https://welcome.b5/logo.png'}
+        self.post = self.app.post_new('ImagePost', **self.create_args)
 
 class GridPostTest(TestCase, CommonPostTest, CommonCollectionTest):
     def setUp(self):
         super(GridPostTest, self).setUp()
         CommonPostTest.setUp(self)
         CommonCollectionTest.setUp(self)
-        self.post = self.app.post_new('GridPost')
         self.post_type = GridPost
         self.create_args = {}
+        self.post = self.app.post_new('GridPost')
         self.collection = self.post
