@@ -75,3 +75,7 @@ h2
 {
     font-size: 1.33rem;
 }
+
+.templates {
+    display: none;
+}
