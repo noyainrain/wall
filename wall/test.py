@@ -58,6 +58,17 @@ class CommonCollectionTest(object):
         post = self.collection.post_new('TestPost')
         self.assertIn(post, self.collection.items)
 
+    def test_post_limit_reached(self):
+        # XXX use edit method
+        self.collection.limit = 2
+        self.app.user = self.trusted_user
+        first = self.collection.post_new('TestPost')
+        self.collection.post_new('TestPost')
+
+        self.app.user = self.user
+        self.collection.post_new('TestPost')
+        self.assertNotIn(first, self.collection.items)
+
     def test_remove_item(self):
         post = self.collection.post_new('TestPost')
         removed_post = self.collection.remove_item(0)
