@@ -280,7 +280,10 @@ ns.PostScreen = function(ui, post) {
     this.content.appendChild(postSpace);
 
     this._postMenu = new ns.PostMenu(this.ui);
-    this._postMenu.addTarget("wall", "Wall");
+    // TODO: if (settings.allow_post_for_untrusted || ...
+    if (ui.user.trusted) {
+        this._postMenu.addTarget("wall", "Wall");
+    }
     this.content.appendChild(this._postMenu.element);
     this._postMenu.attachedCallback();
 
@@ -321,8 +324,10 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
             }
             this.title = this._post.title;
             if (this._post.is_collection) {
-                this._postMenu.addTarget(this._post.id, this._post.title);
-                this._postMenu.selectTarget(this._post.id);
+                // TODO: if (this._post.allow_post_for_untrusted || ui.user.trusted) {
+                    this._postMenu.addTarget(this._post.id, this._post.title);
+                    this._postMenu.selectTarget(this._post.id);
+                //}
             }
         },
         get: function() {
