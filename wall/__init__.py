@@ -69,13 +69,15 @@ class Collection(object):
 
      * `limit`: TODO
      * `items`: list of posts in collection.
+     * `allow_post_for_untrusted`: TODO
 
     Subclass API: `Collection` is a mixin for `Object`s. Hosts must implement
     `get_item`, `do_post`, `do_remove_item` and the `items` property.
     """
 
-    def __init__(self, limit):
+    def __init__(self, limit, allow_post_for_untrusted):
         self.limit = int(limit)
+        self.allow_post_for_untrusted = allow_post_for_untrusted == 'True'
         self.is_collection = True
 
     @property
@@ -99,7 +101,8 @@ class Collection(object):
         `ValueError('post_collection_not_wall')` is raised.
         """
 
-        if not self.app.user:
+        if not (self.app.user and
+            (self.allow_post_for_untrusted or self.app.user.trusted)):
             raise PermissionError()
         if isinstance(post, Collection) and self != self.app:
             raise ValueError('post_collection_not_wall')
@@ -136,7 +139,8 @@ class Collection(object):
         `ValueError('type_collection_not_wall')` is raised.
         """
 
-        if not self.app.user:
+        if not (self.app.user and
+            (self.allow_post_for_untrusted or self.app.user.trusted)):
             raise PermissionError()
         try:
             post_type = self.app.post_types[type]
@@ -211,7 +215,7 @@ class WallApp(Object, EventTarget, Collection, Application):
     def __init__(self, config={}, config_path=None):
         super(WallApp, self).__init__('wall', self)
         EventTarget.__init__(self)
-        Collection.__init__(self, 1)
+        Collection.__init__(self, str(1), str(True))
         Application.__init__(self, template_path=template_path, autoescape=None)
 
         self.user = None
@@ -329,6 +333,8 @@ class WallApp(Object, EventTarget, Collection, Application):
     def run(self):
         if not self._init:
             return
+        # XXX do not hardcode
+        self.allow_post_for_untrusted = False
         self.listen(8080)
         self.logger.info('server started')
         IOLoop.instance().start()
@@ -719,13 +725,13 @@ class GridPost(Post, Collection):
     def create(cls, app, **args):
         post = GridPost(id='grid_post:' + randstr(), app=app, title='Grid',
             poster_id=app.user.id, posted=None, limit=str(9),
-            is_collection=None)
+            allow_post_for_untrusted=str(True), is_collection=None)
         app.db.hmset(post.id, post.json())
         return post
 
-    def __init__(self, limit, is_collection, **args):
+    def __init__(self, limit, allow_post_for_untrusted, is_collection, **args):
         super(GridPost, self).__init__(**args)
-        Collection.__init__(self, limit)
+        Collection.__init__(self, limit, allow_post_for_untrusted)
         self._items_key = self.id + '.items'
 
     @property

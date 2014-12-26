@@ -69,6 +69,12 @@ class CommonCollectionTest(object):
         self.collection.post_new('TestPost')
         self.assertNotIn(first, self.collection.items)
 
+    def test_post_not_allowed_for_untrusted(self):
+        # XXX use edit method
+        self.collection.allow_post_for_untrusted = False
+        with self.assertRaises(PermissionError):
+            self.collection.post_new('TestPost')
+
     def test_remove_item(self):
         post = self.collection.post_new('TestPost')
         removed_post = self.collection.remove_item(0)
