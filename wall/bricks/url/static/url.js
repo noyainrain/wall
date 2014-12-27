@@ -110,6 +110,11 @@ ns.PostUrlScreen = function(ui) {
 };
 
 ns.PostUrlScreen.prototype = Object.create(wall.remote.DoPostScreen.prototype, {
+    attachedCallback: {
+        value: function(){
+            $('.url-url').focus();
+        }
+    },
     _postSubmitted: {value: function(event) {
         event.preventDefault();
         this.ui.postNew(this.collectionId, "UrlPost",
