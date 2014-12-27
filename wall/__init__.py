@@ -67,13 +67,15 @@ class Collection(object):
 
     Attributes:
 
+     * `limit`: TODO
      * `items`: list of posts in collection.
 
     Subclass API: `Collection` is a mixin for `Object`s. Hosts must implement
     `get_item`, `do_post`, `do_remove_item` and the `items` property.
     """
 
-    def __init__(self):
+    def __init__(self, limit):
+        self.limit = int(limit)
         self.is_collection = True
 
     @property
@@ -102,6 +104,9 @@ class Collection(object):
         if isinstance(post, Collection) and self != self.app:
             raise ValueError('post_collection_not_wall')
 
+        # TODO: optimize?
+        if len(self.items) == self.limit:
+            self.remove_item(0, sudo=True)
         self.do_post(post)
         self.app.dispatch_event(
             Event('collection_posted', collection=self, post=post))
@@ -146,16 +151,17 @@ class Collection(object):
         self.post(post)
         return post
 
-    def remove_item(self, index):
+    def remove_item(self, index, sudo=False):
         """
         Remove the post at the given `index` from the collection. The removed
         post is returned. May raise a `ValueError('index_out_of_range')`.
         """
 
         post = self.get_item(index)
-        if not (self.app.user and
-            (self.app.user == post.poster or self.app.user.trusted)):
-            raise PermissionError()
+        if not sudo:
+            if not (self.app.user and
+                (self.app.user == post.poster or self.app.user.trusted)):
+                raise PermissionError()
 
         # TODO: should do_remove_item still return post?
         post = self.do_remove_item(index)
@@ -205,7 +211,7 @@ class WallApp(Object, EventTarget, Collection, Application):
     def __init__(self, config={}, config_path=None):
         super(WallApp, self).__init__('wall', self)
         EventTarget.__init__(self)
-        Collection.__init__(self)
+        Collection.__init__(self, 1)
         Application.__init__(self, template_path=template_path, autoescape=None)
 
         self.user = None
@@ -712,13 +718,14 @@ class GridPost(Post, Collection):
     @classmethod
     def create(cls, app, **args):
         post = GridPost(id='grid_post:' + randstr(), app=app, title='Grid',
-            poster_id=app.user.id, posted=None, is_collection=True)
+            poster_id=app.user.id, posted=None, limit=str(9),
+            is_collection=None)
         app.db.hmset(post.id, post.json())
         return post
 
-    def __init__(self, is_collection, **args):
+    def __init__(self, limit, is_collection, **args):
         super(GridPost, self).__init__(**args)
-        Collection.__init__(self)
+        Collection.__init__(self, limit)
         self._items_key = self.id + '.items'
 
     @property
@@ -823,6 +830,10 @@ class WallTest(TestCase, CommonCollectionTest):
         self.assertTrue(post.activate_called)
         self.app.post(post)
         self.assertTrue(post.deactivate_called)
+
+    def test_post_limit_reached(self):
+        # test is not applicable, because WallApp.limit cannot be changed
+        pass
 
     def test_get_history(self):
         posts = []
