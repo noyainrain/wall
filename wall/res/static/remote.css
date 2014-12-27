@@ -159,6 +159,16 @@ header.bar > h1 {
     text-overflow: ellipsis;
 }
 
+header.bar > .project {
+    order: 1;
+    flex: none;
+    padding: 0.5rem;
+    border: solid #444;
+    border-left: none;
+    border-width: 0 0 0 1px;
+    border-radius: 0;
+}
+
 header.bar > button {
     order: 1;
     flex: none;
