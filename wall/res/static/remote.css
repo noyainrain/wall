@@ -28,6 +28,12 @@ button > img {
     margin: 0.25rem;
 }
 
+button > .icon {
+    vertical-align: middle;
+    height: 1rem;
+    margin: 0.25rem;
+}
+
 button.incognito {
     padding: 0;
     border: none;
