@@ -22,7 +22,8 @@
             document.addEventListener("DOMContentLoaded", function(event) {
                 ui = new wall.remote.RemoteUi();
                 ui.init().catch(function(error) {
-                    ui.notifyError(error);
+                    // TODO: utility function
+                    setTimeout(function() { throw error; }, 1);
                 });
             });
         </script>
