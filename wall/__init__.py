@@ -57,6 +57,10 @@ class Object(object):
         json['__type__'] = type(self).__name__
         return json
 
+    def __str__(self):
+        return '<{} {}>'.format(self.__class__.__name__, self.id)
+    __repr__ = __str__
+
 class Collection(object):
     """
     Collection of posts.
@@ -93,8 +97,11 @@ class Collection(object):
         `ValueError('post_collection_not_wall')` is raised.
         """
 
+        if not self.app.user:
+            raise PermissionError()
         if isinstance(post, Collection) and self != self.app:
             raise ValueError('post_collection_not_wall')
+
         self.do_post(post)
         self.app.dispatch_event(
             Event('collection_posted', collection=self, post=post))
@@ -124,6 +131,8 @@ class Collection(object):
         `ValueError('type_collection_not_wall')` is raised.
         """
 
+        if not self.app.user:
+            raise PermissionError()
         try:
             post_type = self.app.post_types[type]
         except KeyError:
@@ -143,6 +152,12 @@ class Collection(object):
         post is returned. May raise a `ValueError('index_out_of_range')`.
         """
 
+        post = self.get_item(index)
+        if not (self.app.user and
+            (self.app.user == post.poster or self.app.user.trusted)):
+            raise PermissionError()
+
+        # TODO: should do_remove_item still return post?
         post = self.do_remove_item(index)
         self.app.dispatch_event(Event('collection_item_removed',
             collection=self, index=index, post=post))
@@ -295,7 +310,10 @@ class WallApp(Object, EventTarget, Collection, Application):
         if any(u.name == name for u in self.users.values()):
             raise ValueError('user_name_exists')
 
-        user = User('user:' + randstr(), name, randstr(), ap, self)
+        # first user who logs in is trusted
+        trusted = True if len(self.users) == 0 else False
+        user = User('user:' + randstr(), name, str(trusted), randstr(), ap,
+            self)
         self.db.hmset(user.id, user.json(include_private=True))
         self.db.sadd('users', user.id)
         user = self.users[user.id] # cache
@@ -389,9 +407,11 @@ class WallApp(Object, EventTarget, Collection, Application):
 
     def authenticate_msg(self, msg):
         user = self.users.get(self.db.hget('session_map', msg.data['token']))
+        result = None
         if user:
             msg.frm.user = user
-        return Message('authenticate', user is not None)
+            result = user.json(include_private=True)
+        return Message('authenticate', result)
 
     def get_history(self):
         return sorted(self.posts.values(), key=lambda p: p.posted, reverse=True)
@@ -540,9 +560,10 @@ class User(Object):
     Wall user. See *api.md*.
     """
 
-    def __init__(self, id, name, session, ap, app):
+    def __init__(self, id, name, trusted, session, ap, app):
         super(User, self).__init__(id, app)
         self.name = name
+        self.trusted = trusted == 'True'
         self.session = session
         self.ap = ap
 
@@ -559,6 +580,9 @@ class User(Object):
             json = dict((k, v) for k, v in json.items()
                 if k not in ['session', 'ap'])
         return json
+
+    def __str__(self):
+        return "<{} '{}'>".format(type(self).__name__, self.name)
 
 class Post(Object):
     """
@@ -623,10 +647,6 @@ class Post(Object):
         if include_poster:
             json['poster'] = self.poster.json()
         return json
-
-    def __str__(self):
-        return '<{} {}>'.format(self.__class__.__name__, self.id)
-    __repr__ = __str__
 
 class Brick(object):
     """
@@ -736,6 +756,8 @@ class Error(Exception):
 
 class ValueError(Error, exceptions.ValueError): pass
 
+class PermissionError(Error): pass
+
 def randstr(length=8, charset=ascii_lowercase):
     return ''.join(choice(charset) for i in xrange(length))
 
@@ -811,6 +833,7 @@ class WallTest(TestCase, CommonCollectionTest):
     def test_login(self):
         user = self.app.login('Talia', 'test')
         self.assertIn(user.id, self.app.users)
+        self.assertTrue(self.trusted_user.trusted)
 
     def test_login_user_name_exists(self):
         with self.assertRaises(ValueError):

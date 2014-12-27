@@ -6,7 +6,7 @@ from __future__ import (division, absolute_import, print_function,
 
 from wall import Brick as _Brick, randstr
 
-import feedparser
+#import feedparser
 
 # TODO: port to new brick architecture. Use VideoPost, once available.
 

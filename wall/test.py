@@ -9,7 +9,7 @@ from tornado.testing import AsyncTestCase
 from tornado.ioloop import IOLoop
 from logging import getLogger, CRITICAL
 from redis import StrictRedis
-from wall import WallApp, Post, randstr
+from wall import WallApp, Post, PermissionError, randstr
 
 class TestCase(AsyncTestCase):
     """
@@ -21,6 +21,7 @@ class TestCase(AsyncTestCase):
      * `db`: connection to temporary Redis database (`15`)
      * `app`: Wall application. `TestPost` is available as registered post type.
      * `user`: active user.
+     * `trusted_user`: TODO
     """
 
     @classmethod
@@ -33,7 +34,8 @@ class TestCase(AsyncTestCase):
         self.db.flushdb()
         self.app = WallApp(config={'db': 15})
         self.app.add_post_type(TestPost)
-        self.user = self.app.login('Ivanova', 'test')
+        self.trusted_user = self.app.login('Ivanova', 'test')
+        self.user = self.app.login('Lyta', 'test')
         self.app.user = self.user
 
     def get_new_ioloop(self):
@@ -61,6 +63,13 @@ class CommonCollectionTest(object):
         removed_post = self.collection.remove_item(0)
         self.assertEqual(removed_post, post)
         self.assertNotIn(post, self.collection.items)
+
+    def test_remove_item_other_poster(self):
+        self.app.user = self.trusted_user
+        self.collection.post_new('TestPost')
+        self.app.user = self.user
+        with self.assertRaises(PermissionError):
+            self.collection.remove_item(0)
 
     def test_remove_item_out_of_range_index(self):
         with self.assertRaises(ValueError):

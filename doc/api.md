@@ -57,6 +57,7 @@ Example:
 authenticate: token
 ```
 
+TODO: update
 Authenticate an user (device). `token` is a secret authentication token that
 identifies the user (device). `true` is returned if the authentication is
 successful, `false` otherwise.
@@ -76,13 +77,30 @@ collection_get_items: collection_id
 collection_post: collection_id, post_id
 ```
 
+Permission: authenticated user.
+
 ```
 collection_post_new: collection_id, type, …
 ```
 
+Permission: authenticated user.
+
 ```
 collection_remove_item: collection_id, index
 ```
+
+Permission: poster of the item to remove or trusted user.
+
+```
+login: name
+```
+
+Log in an user (device). A new user is created and returned. `name` is the
+requested user name. If it is already taken by someone else, a
+`user_name_exists` error is returned.
+
+The `session` attribute of the new user can be used as authentication token. See
+*Authentication*.
 
 Events
 ------
@@ -103,17 +121,6 @@ collection_item_activated: collection_id, index, post
 collection_item_deactivated: collection_id, index, post
 ```
 
-```
-login: name
-```
-
-Log in an user (device). A new user is created and returned. `name` is the
-requested user name. If it is already taken by someone else, a
-`user_name_exists` error is returned.
-
-The `session` attribute of the new user can be used as authentication token. See
-*Authentication*.
-
 Objects
 -------
 
@@ -124,6 +131,7 @@ Wall user.
 Attributes:
 
  * `name`: name.
+ * `trusted`: TODO
  * `session`: current session id (authentication token).
  * `ap`: current access point (e.g. IP address).
 

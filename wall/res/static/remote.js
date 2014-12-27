@@ -12,12 +12,14 @@ wall.remote = {};
  *
  * Attributes:
  *
+ * - `user`: active user.
  * - `mainScreen`: main post screen.
  * - `connectionScreen`: connection screen.
  */
 ns.RemoteUi = function() {
     wall.Ui.call(this);
 
+    this.user = null;
     this.screenStack = [];
     this.mainScreen = null;
     this.connectionScreen = null;
@@ -38,6 +40,10 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
 
         return this.loadConfig().then(function() {
             this.initCommon();
+
+            if (localStorage.user) {
+                this.user = JSON.parse(localStorage.user);
+            }
 
             this.addEventListener("collection_item_activated",
                 this._itemActivated.bind(this));
@@ -87,14 +93,17 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
 
     initConnection: {value: function() {
         var p;
-        if (localStorage.session) {
-            p = this.call("authenticate", {token: localStorage.session});
+        if (this.user) {
+            p = this.call("authenticate", {token: this.user.session});
         } else {
-            p = Promise.resolve(false);
+            p = Promise.resolve(null);
         }
-        return p.then(function(authenticated) {
+        return p.then(function(user) {
             this.popScreen(); // ConnectionScreen
-            if (!authenticated) {
+            if (user !== null) {
+                this.user = user;
+                localStorage.user = JSON.stringify(this.user);
+            } else {
                 this.showScreen(new ns.LoginScreen());
             }
         }.bind(this));
@@ -409,7 +418,9 @@ ns.LoginScreen.prototype = Object.create(ns.Screen.prototype, {
                 }[user.args[0]]);
                 return;
             }
-            localStorage.session = user.session;
+
+            ui.user = user;
+            localStorage.user = JSON.stringify(ui.user);
             ui.popScreen(); // LoginScreen
         }.bind(this));
     }}
@@ -559,11 +570,15 @@ ns.GridPostElement.prototype = Object.create(wall.PostElement.prototype, {
         var p = document.createElement("p");
         p.textContent = post.title;
         li.appendChild(p);
-        var button = document.createElement("button");
-        var img = document.createElement("img");
-        img.src = "/static/images/remove.svg";
-        button.appendChild(img);
-        li.appendChild(button);
+        // XXX ui.user should always be set. Show mainScreen after login and
+        // retreive current post via collection_get_items
+        if (ui.user && (ui.user.id === post.poster_id || ui.user.trusted)) {
+            var button = document.createElement("button");
+            var img = document.createElement("img");
+            img.src = "/static/images/remove.svg";
+            button.appendChild(img);
+            li.appendChild(button);
+        }
         this._list.element.appendChild(li);
     }},
 
