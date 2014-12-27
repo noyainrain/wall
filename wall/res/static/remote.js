@@ -255,8 +255,7 @@ ns.Screen.prototype = Object.create(wall.Element.prototype, {
     },
 
     _settingsClicked: {value: function(event) {
-        // TODO: implement settings
-        location.reload();
+        ui.showScreen(new ns.MenuScreen());
     }},
 
     _goBackClicked: {value: function(event) {
@@ -350,6 +349,18 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
         this.post = null;
     }}
 });
+
+/* ==== MenuScreen ==== */
+
+ns.MenuScreen = function() {
+    ns.Screen.call(this);
+    this.title = "Menu";
+
+    var template = document.querySelector(".menu-screen-template");
+    this.content.appendChild(wall.util.cloneChildNodes(template));
+};
+
+ns.MenuScreen.prototype = Object.create(ns.Screen.prototype);
 
 /* ==== ConnectionScreen ==== */
 
