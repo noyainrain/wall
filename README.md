@@ -38,6 +38,16 @@ Browser Support
 
 **Note:** The Android stock browser is not supported, because it lacks support of websockets.
 
+Authors
+-------
+
+Copyright (C) 2014 Wall authors
+
+ * Sven James <sven.jms AT gmail.com>
+ * Thomas Karmann <thomas AT krmnn.de>
+ * Philip Taffner <philip.taffner AT bluegfx.de>
+ * Rainer Müller <raimue AT codingfarm.de>
+
 Built With
 ----------
 
