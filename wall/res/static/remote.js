@@ -473,6 +473,11 @@ ns.PostNoteScreen = function(ui) {
 };
 
 ns.PostNoteScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
+    attachedCallback: {
+        value: function(){
+            $('textarea').focus();
+        }
+    },
     _postSubmitted: {value: function(event) {
         event.preventDefault();
 
