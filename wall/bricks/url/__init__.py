@@ -6,6 +6,7 @@ from __future__ import (division, absolute_import, print_function,
 
 import os
 import json
+import re
 from wall import Brick, Post, Message, randstr
 from wall.util import WebAPI, Pool
 from urllib import urlencode
@@ -13,6 +14,8 @@ from tornado.httpclient import AsyncHTTPClient
 from functools import partial
 
 maintainer = 'Sven James <sven.jms AT gmail.com>'
+
+YOUTUBE_URL_SCHEME = 'https://www.youtube.com/embed/{0}?autoplay=1&controls=0&iv_load_policy=3&loop=1&playlist={0}'
 
 class UrlBrick(Brick):
     id = 'url'
@@ -91,6 +94,12 @@ class UrlPost(Post):
             raise ValueError('url')
         if not url.startswith(('http://', 'https://')):
             url = 'http://' + url
+
+        r = re.compile('(?:youtube\.com/watch\?v=([^/&]+)|youtu\.be/([^/]+)/?)')
+        m = r.search(url)
+        if m and "embed" not in url:
+            url = YOUTUBE_URL_SCHEME.format(m.group(2) if m.group(2) else m.group(1))
+
         post = UrlPost(id='url_post:' + randstr(), app=app, title=url,
             poster_id=app.user.id, posted=None, url=url)
         app.db.hmset(post.id, post.json())
@@ -137,7 +146,7 @@ class YoutubeSearchHandler(SearchHandler):
                 meta = entry['media$group']
 
                 # construct video URL (with autoplay enabled)
-                video = 'https://www.youtube.com/embed/{0}?autoplay=1&controls=0&iv_load_policy=3&loop=1&playlist={0}'.format(
+                video = YOUTUBE_URL_SCHEME.format(
                     meta['yt$videoid']['$t'])
 
                 thumbnail = filter(lambda t: t['yt$name'] == 'default',
