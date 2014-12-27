@@ -684,8 +684,16 @@ ns.PostMenu = function(ui) {
     var actionsDiv = this.element.querySelector(".post-menu-actions");
     for (var i = 0; i < this.ui.doPostHandlers.length; i++) {
         var handler = this.ui.doPostHandlers[i];
-        var icon = document.createElement("img");
-        icon.setAttribute("src", handler.icon);
+        /* if icon strings starts with a slash, it's the path to the logo,
+         * otherwise just a CSS class for webfonts */
+        var icon = null;
+        if (handler.icon.match("^/")) {
+            icon = document.createElement("img");
+            icon.setAttribute("src", handler.icon);
+        } else {
+            icon = document.createElement("span");
+            icon.setAttribute("class", "icon " + handler.icon);
+        }
         var button = document.createElement("button");
         button._handler = handler;
         button.appendChild(icon);
