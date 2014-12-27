@@ -76,6 +76,10 @@ h2
     font-size: 1.33rem;
 }
 
+a {
+    color: inherit;
+}
+
 .templates {
     display: none;
 }
