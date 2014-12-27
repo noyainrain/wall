@@ -11,7 +11,6 @@ import exceptions
 from datetime import datetime
 from logging import StreamHandler, Formatter, getLogger, DEBUG
 from ConfigParser import SafeConfigParser, Error as ConfigParserError
-from subprocess import Popen
 from string import ascii_lowercase
 from random import choice
 from collections import OrderedDict
@@ -398,9 +397,6 @@ class WallApp(Object, EventTarget, Collection, Application):
         return Message('collection_post')
 
     def collection_post_new_msg(self, msg):
-        # wake display
-        Popen('DISPLAY=:0.0 xset dpms force on', shell=True)
-
         collection = self.get_collection(msg.data.pop('collection_id'))
         post_type = msg.data.pop('type')
         post = collection.post_new(post_type, **msg.data)
