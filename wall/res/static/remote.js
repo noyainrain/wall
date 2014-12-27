@@ -281,7 +281,7 @@ ns.PostScreen = function(ui, post) {
 
     this._postMenu = new ns.PostMenu(this.ui);
     // TODO: if (settings.allow_post_for_untrusted || ...
-    if (ui.user.trusted) {
+    if (ui.user && ui.user.trusted) {
         this._postMenu.addTarget("wall", "Wall");
     }
     this.content.appendChild(this._postMenu.element);
