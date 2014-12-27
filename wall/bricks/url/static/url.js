@@ -22,6 +22,7 @@ ns.DisplayBrick.prototype = Object.create(wall.Brick.prototype, {
 ns.DisplayUrlPostElement = function(post, ui) {
     wall.display.PostElement.call(this, post, ui);
 
+    // TODO: how to hide scrollbars in HTML5?
     $(
         '<p class="url-post-state">                                   ' +
         '    Loading <span class="url-post-url"></span> ...           ' +
@@ -31,7 +32,7 @@ ns.DisplayUrlPostElement = function(post, ui) {
         '    applications like Wall. If this website fails to load, it' +
         '    might be one of them. Sorry :/ !                         ' +
         '</p>                                                         ' +
-        '<iframe class="url-post-frame" sandbox="allow-same-origin allow-scripts"></iframe>'
+        '<iframe class="url-post-frame" sandbox="allow-same-origin allow-scripts" scrolling="no"></iframe>'
     ).appendTo(this.content);
     $(".url-post-url", this.content).text(post.url);
     $(".url-post-frame", this.content).attr("src", post.url);
