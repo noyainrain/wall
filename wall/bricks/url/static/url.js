@@ -59,7 +59,7 @@ ns.ClientBrick = function(ui, html) {
     wall.Brick.call(this, ui, html);
     this.ui.addPostElementType(ns.RemoteUrlPostElement);
     this.ui.addDoPostHandler(new wall.remote.ScreenDoPostHandler(
-        ns.PostUrlScreen, "URL", "/static/bricks/url/url.svg", this.ui));
+        ns.PostUrlScreen, "URL", "fa fa-globe fa-fw", this.ui));
 };
 
 ns.ClientBrick.prototype = Object.create(wall.Brick.prototype, {

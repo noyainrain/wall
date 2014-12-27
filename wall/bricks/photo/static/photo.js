@@ -26,7 +26,7 @@ ns.ClientPhotoBrick.prototype = Object.create(wall.Brick.prototype, {
 ns.DoPostPhotoHandler = function(ui) {
     wall.remote.DoPostHandler.call(this, ui);
     this.title = "Photo";
-    this.icon = "/static/bricks/photo/photo.svg";
+    this.icon = "fa fa-camera fa-fw";
     this.collectionId = null;
     this._stream = null;
 };

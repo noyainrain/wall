@@ -66,7 +66,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                 case "note":
                     this.addDoPostHandler(
                         new ns.ScreenDoPostHandler(ns.PostNoteScreen, "Note",
-                            "/static/images/note.svg", this));
+                            "fa fa-file-text fa-fw", this));
                     break;
                 case "grid":
                     this.addDoPostHandler(new ns.GridDoPostHandler(this));
@@ -74,7 +74,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                 case "history":
                     this.addDoPostHandler(
                         new ns.ScreenDoPostHandler(ns.PostHistoryScreen,
-                            "History", "/static/images/history.svg", this));
+                            "History", "fa fa-history fa-fw", this));
                     break;
                 }
             }, this);
@@ -473,7 +473,7 @@ ns.PostNoteScreen = function(ui) {
         '<form class="post-note-screen-post">                            ' +
         '    <textarea name="content"></textarea>                        ' +
         '    <p class="buttons">                                         ' +
-        '        <button><img src="static/images/post.svg"/>Post</button>' +
+        '        <button><span class="icon fa fa-plus-circle fa-fw"/>Post</button>' +
         '    </div>                                                      ' +
         '</form>                                                         '
     ));
@@ -595,9 +595,9 @@ ns.GridPostElement.prototype = Object.create(wall.PostElement.prototype, {
         // retreive current post via collection_get_items
         if (ui.user && (ui.user.id === post.poster_id || ui.user.trusted)) {
             var button = document.createElement("button");
-            var img = document.createElement("img");
-            img.src = "/static/images/remove.svg";
-            button.appendChild(img);
+            var icon = document.createElement("span");
+            icon.setAttribute("class", "icon fa fa-times-circle fa-fw");
+            button.appendChild(icon);
             li.appendChild(button);
         }
         this._list.element.appendChild(li);
@@ -695,8 +695,16 @@ ns.PostMenu = function(ui) {
     var actionsDiv = this.element.querySelector(".post-menu-actions");
     for (var i = 0; i < this.ui.doPostHandlers.length; i++) {
         var handler = this.ui.doPostHandlers[i];
-        var icon = document.createElement("img");
-        icon.setAttribute("src", handler.icon);
+        /* if icon strings starts with a slash, it's the path to the logo,
+         * otherwise just a CSS class for webfonts */
+        var icon = null;
+        if (handler.icon.match("^/")) {
+            icon = document.createElement("img");
+            icon.setAttribute("src", handler.icon);
+        } else {
+            icon = document.createElement("span");
+            icon.setAttribute("class", "icon " + handler.icon);
+        }
         var button = document.createElement("button");
         button._handler = handler;
         button.appendChild(icon);
@@ -860,7 +868,7 @@ ns.SingleDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
 ns.GridDoPostHandler = function(ui) {
     ns.DoPostHandler.call(this, ui);
     this.title = "Grid";
-    this.icon = "/static/images/grid.svg";
+    this.icon = "fa fa-th-large fa-fw";
 };
 
 ns.GridDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {

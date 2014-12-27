@@ -17,6 +17,9 @@
 
 /* ==== Fonts ==== */
 
+/* Font Awesome */
+@import url("fonts/font-awesome/css/font-awesome.min.css");
+
 @font-face {
     font-family: "Open Sans";
     src: url("fonts/open-sans-regular.woff");
