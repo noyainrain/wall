@@ -9,12 +9,18 @@ wall.remote = {};
 
 /**
  * Wall remote user interface.
+ *
+ * Attributes:
+ *
+ * - `mainScreen`: main post screen.
+ * - `connectionScreen`: connection screen.
  */
 ns.RemoteUi = function() {
     wall.Ui.call(this);
 
     this.screenStack = [];
     this.mainScreen = null;
+    this.connectionScreen = null;
     this.doPostHandlers = [];
     this.baseUrl = "/static/remote/";
     this.brickType = "ClientBrick";
@@ -37,6 +43,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                 this._itemActivated.bind(this));
             this.addEventListener("collection_item_deactivated",
                 this._itemDeactivated.bind(this));
+            this.addPostElementType(ns.GridPostElement);
 
             if (!wall.util.isArray(this.config.do_post_handlers, "string")) {
                 throw new wall.util.ConfigurationError(
@@ -45,7 +52,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
             var handlers = wall.util.createSet(this.config.do_post_handlers);
 
             handlers.forEach(function(handler) {
-                if (["note", "history"].indexOf(handler) === -1) {
+                if (["note", "grid", "history"].indexOf(handler) === -1) {
                     throw new wall.util.ConfigurationError(
                         "do_post_handlers_unknown_item");
                 }
@@ -54,6 +61,9 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                     this.addDoPostHandler(
                         new ns.ScreenDoPostHandler(ns.PostNoteScreen, "Note",
                             "/static/images/note.svg", this));
+                    break;
+                case "grid":
+                    this.addDoPostHandler(new ns.GridDoPostHandler(this));
                     break;
                 case "history":
                     this.addDoPostHandler(
@@ -67,11 +77,32 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         }.bind(this)).then(function() {
             this.mainScreen = new ns.PostScreen(this);
             this.mainScreen.hasGoBack = false;
+            this.connectionScreen = new ns.ConnectionScreen();
             this.showScreen(this.mainScreen);
-            this.showScreen(new ns.ConnectionScreen(this));
+            this.showScreen(this.connectionScreen);
 
             this.connect();
         }.bind(this));
+    }},
+
+    initConnection: {value: function() {
+        var p;
+        if (localStorage.session) {
+            p = this.call("authenticate", {token: localStorage.session});
+        } else {
+            p = Promise.resolve(false);
+        }
+        return p.then(function(authenticated) {
+            this.popScreen(); // ConnectionScreen
+            if (!authenticated) {
+                this.showScreen(new ns.LoginScreen());
+            }
+        }.bind(this));
+    }},
+
+    connect: {value: function() {
+        wall.Ui.prototype.connect.call(this);
+        this.connectionScreen.setState(this.connectionState);
     }},
 
     notify: {value: function(msg) {
@@ -144,24 +175,12 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         return "WebSocket" in window;
     }},
 
-    _connect: {value: function() {
-        wall.Ui.prototype._connect.call(this);
-        this.screenStack[this.screenStack.length - 1].setState(
-            this.connectionState);
-    }},
-
-    _opened: {value: function(event) {
-        wall.Ui.prototype._opened.call(this, event);
-        this.popScreen();
-    }},
-
     _closed: {value: function(event) {
         wall.Ui.prototype._closed.call(this, event);
-        if (this.connectionState == "disconnected") {
-            this.showScreen(new ns.ConnectionScreen(this));
+        if (this.connectionState === "disconnected") {
+            this.showScreen(this.connectionScreen);
         }
-        this.screenStack[this.screenStack.length - 1].setState(
-            this.connectionState);
+        this.connectionScreen.setState(this.connectionState);
     }},
 
     _erred: {value: function(message, url, line, column, error) {
@@ -185,7 +204,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
 
 /* ==== Screen ==== */
 
-ns.Screen = function(ui) {
+ns.Screen = function() {
     wall.Element.call(this, ui);
     this._title = null;
     this._hasGoBack = true;
@@ -244,6 +263,7 @@ ns.PostScreen = function(ui, post) {
     ns.Screen.call(this, ui);
     this._post = null;
     this._postElement = null;
+    this._hasPostMenu = true;
 
     this.element.classList.add("post-screen");
     var postSpace = document.createElement("div");
@@ -301,6 +321,17 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
         }
     },
 
+    hasPostMenu: {
+        get: function() {
+            return this._hasPostMenu;
+        },
+        set: function(value) {
+            this._hasPostMenu = value;
+            this._postMenu.element.style.display =
+                this._hasPostMenu ? "" : "none";
+        }
+    },
+
     detachedCallback: {value: function() {
         this.post = null;
     }}
@@ -308,8 +339,11 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
 
 /* ==== ConnectionScreen ==== */
 
-ns.ConnectionScreen = function(ui) {
-    ns.Screen.call(this, ui);
+/**
+ * Connection screen.
+ */
+ns.ConnectionScreen = function() {
+    ns.Screen.call(this);
     this.element.classList.add("connection-screen");
     this.content.appendChild(wall.util.cloneChildNodes(
         document.querySelector(".connection-screen-template")));
@@ -336,6 +370,48 @@ ns.ConnectionScreen.prototype = Object.create(ns.Screen.prototype, {
             detailP.textContent = "Trying to reconnect shortly.";
             break;
         }
+    }}
+});
+
+/* ==== LoginScreen ==== */
+
+/**
+ * Login screen.
+ */
+ns.LoginScreen = function() {
+    ns.Screen.call(this);
+};
+
+ns.LoginScreen.prototype = Object.create(ns.Screen.prototype, {
+    attachedCallback: {value: function() {
+        ns.Screen.prototype.attachedCallback.call(this);
+        this.title = "Log in";
+        this.hasGoBack = false;
+        this._loginSubmittedHandler = this._loginSubmitted.bind(this);
+
+        var template = document.querySelector(".login-screen-template");
+        this.content.appendChild(wall.util.cloneChildNodes(template));
+        this.content.querySelector(".login-screen-login")
+            .addEventListener("submit", this._loginSubmittedHandler);
+    }},
+
+    _loginSubmitted: {value: function(event) {
+        event.preventDefault();
+        var name = this.content
+            .querySelector('.login-screen-login input[name="name"]').value;
+        ui.notify("Logging in...")
+        ui.call("login", {name: name}).then(function(user) {
+            ui.closeNotification();
+            if (user.__type__ === "ValueError") {
+                this.ui.notify({
+                    "name_empty": "Name is missing.",
+                    "user_name_exists": "Name is already taken by another user."
+                }[user.args[0]]);
+                return;
+            }
+            localStorage.session = user.session;
+            ui.popScreen(); // LoginScreen
+        }.bind(this));
     }}
 });
 
@@ -406,29 +482,164 @@ ns.PostNoteScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
 
 ns.PostHistoryScreen = function(ui) {
     ns.DoPostScreen.call(this, ui);
+    this._list = null;
+
+    this.element.classList.add("post-history-screen");
+    this._list = new ns.ListElement(this.ui);
+    this._list.element.addEventListener("select", this._selected.bind(this));
+    this.content.appendChild(this._list.element);
+    this._list.attachedCallback();
     this.title = "History";
-
-    $(this.element).addClass("post-history-screen");
-    $(this.content).append($('<ul class="select"></ul>'));
-
-    this.ui.call("get_history", {}, function(posts) {
-        posts.forEach(function(post) {
-            var li = $("<li>")
-                .data("post", post)
-                .click(this._postClicked.bind(this))
-                .appendTo($("ul", this.content));
-            $("<p>").text(post.title).appendTo(li);
-        }, this);
-    }.bind(this));
 };
 
 ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
-    _postClicked: {value: function(event) {
-        var post = $(event.currentTarget).data("post");
+    attachedCallback: {value: function() {
+        this.ui.call("get_history", {}, function(posts) {
+            for (var i = 0; i < posts.length; i++) {
+                var post = posts[i];
+                var li = document.createElement("li");
+                li._post = post;
+                var p = document.createElement("p");
+                p.textContent = post.title;
+                li.appendChild(p);
+                this._list.element.appendChild(li);
+            }
+        }.bind(this));
+    }},
+
+    _selected: {value: function(event) {
+        var post = event.detail.li._post;
         this.ui.post(this.collectionId, post.id, function(error) {
-            // TODO: error handling
+            if (error && error.__type__ === "ValueError"
+                && error.args[0] === "post_collection_not_wall")
+            {
+                // "The selected post is a collection, but the target is not Wall."
+                this.ui.notify("Only Wall can hold collections.");
+                return;
+            }
             this.ui.popScreen();
         }.bind(this));
+    }}
+});
+
+/* ==== GridPostElement ==== */
+
+ns.GridPostElement = function(post, ui) {
+    wall.PostElement.call(this, post, ui);
+    this._list = new ns.ListElement(this.ui);
+    this._list.element.addEventListener("select", this._selected.bind(this));
+    this._list.element.addEventListener("actionclick",
+        this._actionClicked.bind(this));
+    this.element = this._list.element;
+};
+
+/**
+ * View for grid posts.
+ */
+ns.GridPostElement.prototype = Object.create(wall.PostElement.prototype, {
+    postType: {value: "GridPost"},
+
+    attachedCallback: {value: function() {
+        this.ui.call("collection_get_items", {collection_id: this.post.id},
+            function(posts) {
+                this.ui.addEventListener("collection_posted",
+                    this._posted.bind(this));
+                this.ui.addEventListener("collection_item_removed",
+                    this._itemRemoved.bind(this));
+
+                for (var i = 0; i < posts.length; i++) {
+                    this._addItem(posts[i]);
+                }
+            }.bind(this));
+    }},
+
+    _addItem: {value: function(post) {
+        var li = document.createElement("li");
+        li._post = post;
+        var p = document.createElement("p");
+        p.textContent = post.title;
+        li.appendChild(p);
+        var button = document.createElement("button");
+        var img = document.createElement("img");
+        img.src = "/static/images/remove.svg";
+        button.appendChild(img);
+        li.appendChild(button);
+        this._list.element.appendChild(li);
+    }},
+
+    _removeItem: {value: function(index, post) {
+        this._list.element.removeChild(this._list.element.children[index]);
+    }},
+
+    _selected: {value: function(event) {
+        var screen = new ns.PostScreen(this.ui);
+        screen.post = event.detail.li._post;
+        screen.hasPostMenu = false;
+        this.ui.showScreen(screen);
+    }},
+
+    _actionClicked: {value: function(event) {
+        this.ui.call("collection_remove_item",
+            {collection_id: this.post.id, index: event.detail.index});
+    }},
+
+    _posted: {value: function(event) {
+        if (event.args.collection_id !== this.post.id) {
+            return;
+        }
+        this._addItem(event.args.post);
+    }},
+
+    _itemRemoved: {value: function(event) {
+        if (event.args.collection_id !== this.post.id) {
+            return;
+        }
+        this._removeItem(event.args.index, event.args.post);
+    }}
+});
+
+/* ==== ListElement ==== */
+
+ns.ListElement = function(ui) {
+    wall.Element.call(this, ui);
+    this.element = document.createElement("ul");
+    this.element.classList.add("list");
+    this.element.addEventListener("click", this._clicked.bind(this));
+    this.content = this.element;
+};
+
+/**
+ * Interactive list.
+ */
+ns.ListElement.prototype = Object.create(wall.Element.prototype, {
+    _clicked: {value: function(event) {
+        var li = null;
+        var button = null;
+        for (var e = event.target; e != this.element; e = e.parentElement) {
+            if (e instanceof HTMLLIElement) {
+                li = e;
+            }
+            if (e instanceof HTMLButtonElement) {
+                button = e;
+            }
+        }
+
+        var index = 0;
+        for (; index < this.element.children.length; index++) {
+            var child = this.element.children[index];
+            if (child === li) {
+                break;
+            }
+        }
+
+        var event = null;
+        if (button) {
+            event = new CustomEvent("actionclick",
+                {detail: {button: button, li: li, index: index}});
+        } else {
+            event = new CustomEvent("select", {detail: {li: li, index: index}});
+        }
+        this.element.dispatchEvent(event);
     }}
 });
 
@@ -607,6 +818,28 @@ ns.SingleDoPostHandler = function(postType, title, icon, ui) {
 ns.SingleDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
     post: {value: function(collectionId) {
         this.ui.postNew(collectionId, this.postType, {}, function(post) {});
+    }}
+});
+
+/* ==== GridDoPostHandler ==== */
+
+ns.GridDoPostHandler = function(ui) {
+    ns.DoPostHandler.call(this, ui);
+    this.title = "Grid";
+    this.icon = "/static/images/grid.svg";
+};
+
+ns.GridDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
+    post: {value: function(collectionId) {
+        this.ui.postNew(collectionId, "GridPost", {}, function(post) {
+            if (post.__type__ === "ValueError"
+                && post.args[0] === "type_collection_not_wall")
+            {
+                // see PostHistoryScreen._selected
+                this.ui.notify("Only Wall can hold collections.");
+                return;
+            }
+        }.bind(this));
     }}
 });
 

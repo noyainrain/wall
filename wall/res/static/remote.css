@@ -2,6 +2,7 @@
  * Wall
  *
  * Spacing:
+ *  - small font size:  0.90rem
  *  - standard padding: 1.00rem
  *  - small padding:    0.25rem
  */
@@ -9,49 +10,6 @@
 @import url("client.css");
 
 /* ==== General ==== */
-
-form
-{
-    overflow: visible;
-}
-
-input,
-textarea,
-label
-{
-    display: block;
-    margin: 1.5rem 0;
-}
-
-input,
-textarea
-{
-    color: #333;
-    background: #fff;
-    border: 1px solid white;
-    border-radius: 0.25rem;
-    box-shadow: inset 1px 1px 1px 0 rgba(0, 0, 0, 0.5);
-    width: 100%;
-    padding: 0.25rem;
-}
-
-textarea
-{
-    height: calc(15.5rem + 2px);
-}
-
-label input,
-label textarea
-{
-    margin: 0;
-}
-
-label small
-{
-    font-size: 0.8rem;
-    text-align: right;
-    display: block;
-}
 
 button {
     display: inline-block;
@@ -67,7 +25,7 @@ button {
 button img {
     vertical-align: top;
     height: 1rem;
-    margin: 0.25rem 0.25rem 0.25rem 0;
+    margin: 0.25rem;
 }
 
 button.incognito {
@@ -93,8 +51,43 @@ p.buttons > button:first-child {
     border-left: none;
 }
 
-.templates {
-    display: none;
+/* ==== Form ==== */
+
+form {
+    overflow: visible;
+}
+
+input,
+textarea,
+label {
+    display: block;
+    margin: 1.5rem 0;
+}
+
+input,
+textarea {
+    width: 100%;
+    padding: 0.25rem;
+    border: 1px solid #fff;
+    border-radius: 0.25rem;
+    box-shadow: inset 1px 1px 1px 0 rgba(0, 0, 0, 0.5);
+    color: #333;
+    background: #fff;
+}
+
+textarea {
+    height: calc(15.5rem + 2px);
+}
+
+label input,
+label textarea {
+    margin: 0;
+}
+
+label small {
+    display: block;
+    font-size: 0.9rem;
+    text-align: right;
 }
 
 /* ==== Screen ==== */
@@ -172,35 +165,6 @@ header.bar > button.bar-secondary {
     border-width: 0 1px 0 0;
 }
 
-/* ==== Selectable List ==== */
-
-ul.select li {
-    cursor: pointer;
-    border-bottom: 1px solid #555;
-    display: block;
-    margin: 0;
-    padding: 0.25rem
-}
-ul.select li:first-child {
-    border-top: 1px solid #555;
-}
-ul.select li::after {
-    content: " ";
-    display: block;
-    clear: both;
-}
-ul.select img {
-    display: block;
-    float: left;
-    margin-right: 1rem;
-    height: 3rem;
-}
-ul.select p {
-    margin: 0;
-    max-height: 3rem;
-    overflow: hidden;
-}
-
 /* ==== Overlay Menu ==== */
 
 ul.overlay-menu
@@ -234,6 +198,45 @@ ul.overlay-menu li
 .connection-screen-detail
 {
     font-size: 0.9rem;
+}
+
+/* ==== ListElement ==== */
+
+.list:empty {
+    display: none;
+}
+
+.list > li {
+    display: flex;
+    border: solid #555;
+    border-width: 1px 0 0 0;
+    align-items: flex-start;
+    cursor: pointer;
+}
+
+.list > li:last-child {
+    border-width: 1px 0;
+}
+
+.list > li > img {
+    order: -1;
+    flex: none;
+    height: 3rem;
+    margin: 0.25rem 1rem 0.25rem 0.25rem;
+}
+
+.list > li > p {
+    flex: auto;
+    max-height: 3.5rem;
+    padding: 0.25rem;
+    margin: 0;
+}
+
+.list > li > button {
+    order: 1;
+    flex: none;
+    border: none;
+    border-radius: 0;
 }
 
 /* ==== Post Space ==== */

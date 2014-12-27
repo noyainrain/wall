@@ -17,21 +17,18 @@
 
 /* ==== Fonts ==== */
 
-@font-face
-{
+@font-face {
     font-family: "Open Sans";
     src: url("fonts/open-sans-regular.woff");
 }
 
-@font-face
-{
+@font-face {
     font-family: "Open Sans";
     src: url("fonts/open-sans-italic.woff");
     font-style: italic;
 }
 
-@font-face
-{
+@font-face {
     font-family: "Open Sans";
     src: url("fonts/open-sans-bold.woff");
     font-weight: bold;
@@ -39,12 +36,11 @@
 
 /* ==== General ==== */
 
-*
-{
-    line-height: 1.5;
-    overflow: hidden;
+* {
     box-sizing: border-box;
     -moz-box-sizing: border-box;
+    line-height: 1.5;
+    overflow: hidden;
 }
 
 html
@@ -78,4 +74,8 @@ h1
 h2
 {
     font-size: 1.33rem;
+}
+
+.templates {
+    display: none;
 }

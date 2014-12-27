@@ -69,7 +69,14 @@ ns.PostElement = function(post, ui) {
     this.element.classList.add(wall.hyphenate(this.postType));
 
     $(this.element).one("load", function(event) {
-        this.element.contentDocument.body.appendChild(this.content);
+        var doc = this.element.contentDocument;
+        doc.querySelector(".post-poster").textContent = this.post.poster.name;
+        doc.querySelector(".post-posted").textContent =
+            new Date(this.post.posted).toLocaleString();
+        if (this.post.is_collection) {
+            doc.querySelector(".post-meta").style.display = "none";
+        }
+        doc.body.insertBefore(this.content, doc.body.firstElementChild);
         this.contentAttachedCallback();
     }.bind(this));
     this.element.src = "/display/post?id=" + this.post.id;
@@ -133,18 +140,22 @@ ns.GridPostElement = function(post, ui) {
     this._itemRemovedHandler = this._itemRemoved.bind(this);
 };
 
+/**
+ * View for grid posts.
+ */
 ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
     postType: {value: "GridPost"},
 
     contentAttachedCallback: {value: function() {
         this.ui.call("collection_get_items", {collection_id: this.post.id},
-            function(items) {
+            function(posts) {
                 this.ui.addEventListener("collection_posted",
                     this._postedHandler);
                 this.ui.addEventListener("collection_item_removed",
                     this._itemRemovedHandler);
-                for (var i = 0; i < items.length; i++) {
-                    this._addItem(i, items[i]);
+
+                for (var i = 0; i < posts.length; i++) {
+                    this._addItem(posts[i]);
                 }
             }.bind(this));
     }},
@@ -155,7 +166,7 @@ ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
             this._itemRemovedHandler);
     }},
 
-    _addItem: {value: function(index, post) {
+    _addItem: {value: function(post) {
         var postSpace = new ns.PostSpace(this.ui);
         this.content.appendChild(postSpace.element);
         postSpace.attachedCallback();
@@ -188,7 +199,7 @@ ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
         if (event.args.collection_id !== this.post.id) {
             return;
         }
-        this._addItem(event.args.index, event.args.post);
+        this._addItem(event.args.post);
     }},
 
     _itemRemoved: {value: function(event) {
