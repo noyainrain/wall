@@ -223,6 +223,8 @@ ns.Screen = function() {
     this.content = this.element.querySelector(".screen-content");
     this.element.querySelector(".screen-settings").addEventListener(
         "click", this._settingsClicked.bind(this));
+    this.element.querySelector(".screen-open-display").addEventListener(
+        "click", this._openDisplayClicked.bind(this));
     this.element.querySelector(".screen-go-back").addEventListener(
         "click", this._goBackClicked.bind(this));
 
@@ -256,6 +258,10 @@ ns.Screen.prototype = Object.create(wall.Element.prototype, {
 
     _settingsClicked: {value: function(event) {
         ui.showScreen(new ns.MenuScreen());
+    }},
+
+    _openDisplayClicked: {value: function(event) {
+        location.href = "display";
     }},
 
     _goBackClicked: {value: function(event) {
