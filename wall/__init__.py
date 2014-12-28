@@ -8,6 +8,7 @@ import sys
 import os
 import json
 import exceptions
+import socket
 from datetime import datetime
 from logging import StreamHandler, Formatter, getLogger, DEBUG
 from ConfigParser import SafeConfigParser, Error as ConfigParserError
@@ -334,8 +335,17 @@ class WallApp(Object, EventTarget, Collection, Application):
             return
         # XXX do not hardcode
         self.allow_post_for_untrusted = False
-        self.listen(8080)
+        port = int(self.config['port'])
+        address = self.config['address']
+        try:
+            self.listen(port = port, address = address)
+        except socket.error as e:
+            self.logger.error('failed to listen on {}:{}: {}'.format(address, port, str(e)))
+            return
         self.logger.info('server started')
+        baseurl = 'display URL: http://{}:{}'.format(address, port)
+        self.logger.info('display URL: ' + baseurl + '/display')
+        self.logger.info('client URL: ' + baseurl)
         IOLoop.instance().start()
 
     def add_message_handler(self, type, handler):
