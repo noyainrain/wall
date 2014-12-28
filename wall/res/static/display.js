@@ -263,8 +263,12 @@ ns.PostSpace.prototype = Object.create(wall.Element.prototype, {
 
             if (this._post) {
                 var postType = this._post.__type__;
-                if(postType == 'UrlPost' && this._post.url.match(/\.(webm|mp4|ogv)$/)){
-                    postType = 'VideoPost';
+                if(postType == 'UrlPost'){
+                    if (this._post.url.match(/\.(webm|mp4|ogv)$/i)){
+                        postType = 'VideoPost';
+                    } else if (this._post.url.match(/\.(jpe?g|png|gif|bmp)$/i)){
+                        postType = 'ImagePost';
+                    }
                 }
 
                 var postElementType = this.ui.postElementTypes[postType];
