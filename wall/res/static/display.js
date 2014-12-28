@@ -29,6 +29,7 @@ ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
             this.addPostElementType(ns.TextPostElement);
             this.addPostElementType(ns.ImagePostElement);
             this.addPostElementType(ns.GridPostElement);
+            this.addPostElementType(ns.VideoPostElement);
 
             this._postSpace = new ns.PostSpace(this);
             document.body.appendChild(this._postSpace.element);
@@ -130,6 +131,24 @@ ns.ImagePostElement = function(post, ui) {
 
 ns.ImagePostElement.prototype = Object.create(ns.PostElement.prototype, {
     postType: {value: "ImagePost"}
+});
+
+/* ==== VideoPostElement ==== */
+
+ns.VideoPostElement = function(post, ui) {
+    ns.PostElement.call(this, post, ui);
+    var video = document.createElement('video');
+    video.src = this.post.url;
+    video.controls = false;
+    video.loop = true;
+    video.autoplay = true;
+    video.style.width = '100%';
+    video.style.height = '100%';
+    this.content.appendChild(video);
+};
+
+ns.VideoPostElement.prototype = Object.create(ns.PostElement.prototype, {
+    postType: {value: "VideoPost"}
 });
 
 /* ==== GridPostElement ==== */
@@ -243,8 +262,12 @@ ns.PostSpace.prototype = Object.create(wall.Element.prototype, {
             this._post = value;
 
             if (this._post) {
-                var postElementType =
-                    this.ui.postElementTypes[this._post.__type__];
+                var postType = this._post.__type__;
+                if(postType == 'UrlPost' && this._post.url.match(/\.(webm|mp4|ogv)$/)){
+                    postType = 'VideoPost';
+                }
+
+                var postElementType = this.ui.postElementTypes[postType];
                 this._postElement = new postElementType(this._post, this.ui);
                 this.element.appendChild(this._postElement.element);
                 this._postElement.attachedCallback();
