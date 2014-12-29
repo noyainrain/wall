@@ -82,7 +82,7 @@ ns.RemoteUrlPostElement.prototype = Object.create(wall.PostElement.prototype, {
 
 /* ==== PostUrlScreen ==== */
 
-ns.PostUrlScreen = function(ui) {
+ns.PostUrlScreen = function() {
     wall.remote.DoPostScreen.call(this, ui);
     this._resultList = null;
     this.title = "Post URL";
@@ -90,8 +90,14 @@ ns.PostUrlScreen = function(ui) {
     var template = ui.bricks["url"].html.querySelector(
         ".url-post-url-screen-content-template");
     this.content.appendChild(wall.util.cloneChildNodes(template));
+
     $(".url-post", this.content).submit(this._postSubmitted.bind(this));
     $(".url-search", this.content).submit(this._searchSubmitted.bind(this));
+
+    var href = 'javascript:void(location.href="http://' + location.host +
+        '/#url," + location.href);';
+    this.content.querySelector(".url-post-screen-bookmarklet").setAttribute(
+        "href", href);
 
     this._resultList = new wall.remote.ListElement(this.ui);
     this._resultList.element.addEventListener("select",
@@ -110,11 +116,19 @@ ns.PostUrlScreen = function(ui) {
 };
 
 ns.PostUrlScreen.prototype = Object.create(wall.remote.DoPostScreen.prototype, {
-    attachedCallback: {
-        value: function(){
-            $('.url-url').focus();
+    url: {
+        get: function() {
+            return this.content.querySelector(".url-url").value;
+        },
+        set: function(value) {
+            this.content.querySelector(".url-url").value = value;
         }
     },
+
+    attachedCallback: {value: function(){
+        this.content.querySelector(".url-url").focus();
+    }},
+
     _postSubmitted: {value: function(event) {
         event.preventDefault();
         this.ui.postNew(this.collectionId, "UrlPost",

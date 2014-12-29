@@ -103,6 +103,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
             if (user !== null) {
                 this.user = user;
                 localStorage.user = JSON.stringify(this.user);
+                this.go();
             } else {
                 this.showScreen(new ns.LoginScreen());
             }
@@ -112,6 +113,21 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
     connect: {value: function() {
         wall.Ui.prototype.connect.call(this);
         this.connectionScreen.setState(this.connectionState);
+    }},
+
+    go: {value: function() {
+        //var hash = location.hash.substring(1);
+        var hash = location.href.split('#')[1];
+        if (hash) {
+            var args = hash.split(',');
+            if (args.length >= 2 && args[0] === "url") {
+                var screen = new wall.bricks.url.PostUrlScreen();
+                screen.url = args[1];
+                screen.collectionId =
+                    this.mainScreen._postMenu.target.collectionId;
+                this.showScreen(screen);
+            }
+        }
     }},
 
     notify: {value: function(msg) {
@@ -444,6 +460,7 @@ ns.LoginScreen.prototype = Object.create(ns.Screen.prototype, {
             ui.user = user;
             localStorage.user = JSON.stringify(ui.user);
             ui.popScreen(); // LoginScreen
+            ui.go();
         }.bind(this));
     }}
 });
