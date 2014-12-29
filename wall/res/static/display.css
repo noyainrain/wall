@@ -39,14 +39,14 @@ body
 
 .post-meta {
     position: absolute;
-    bottom: 0.25rem;
-    left: 0.25rem;
-    max-width: calc(100% - 2 * 0.25rem);
-    padding: 0.25rem 1rem;
+    bottom: 2.5px;
+    left: 2.5px;
+    max-width: calc(100% - 2 * 2.5px);
+    padding: 2.5px 10px;
     margin: 0;
-    border-radius: 1rem;
+    border-radius: 10px;
     background: rgba(0, 0, 0, 0.5);
-    font-size: 1rem;
+    font-size: x-small;
     white-space: nowrap;
     text-overflow: ellipsis;
     color: #bbb;
