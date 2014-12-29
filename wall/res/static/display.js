@@ -77,7 +77,7 @@ ns.PostElement = function(post, ui) {
         if (this.post.is_collection) {
             doc.querySelector(".post-meta").style.display = "none";
         }
-        doc.body.insertBefore(this.content, doc.body.firstElementChild);
+        doc.body.insertBefore(this.content, doc.body.querySelector("*"));
         this.contentAttachedCallback();
     }.bind(this));
     this.element.src = "/display/post?id=" + this.post.id;

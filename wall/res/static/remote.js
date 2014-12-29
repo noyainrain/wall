@@ -219,7 +219,7 @@ ns.Screen = function() {
     this._hasGoBack = true;
 
     this.element = wall.util.cloneChildNodes(
-        document.querySelector(".screen-template")).firstElementChild;
+        document.querySelector(".screen-template")).querySelector("*");
     this.content = this.element.querySelector(".screen-content");
     this.element.querySelector(".screen-settings").addEventListener(
         "click", this._settingsClicked.bind(this));
@@ -693,7 +693,7 @@ ns.PostMenu = function(ui) {
     this.target = null;
 
     this.element = wall.util.cloneChildNodes(
-        document.querySelector(".post-menu-template")).firstElementChild;
+        document.querySelector(".post-menu-template")).querySelector("*");
 
     this._targetToggle = this.element.querySelector(".post-menu-target");
     this._targetToggle.addEventListener("click", this._targetClicked.bind(this));
