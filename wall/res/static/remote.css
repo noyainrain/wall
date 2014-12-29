@@ -32,6 +32,7 @@ button > .icon {
     vertical-align: middle;
     height: 1rem;
     margin: 0.25rem;
+    font-size: 0.875rem;
 }
 
 button.incognito {
