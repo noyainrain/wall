@@ -49,6 +49,11 @@ body
     font-size: 1rem;
     white-space: nowrap;
     text-overflow: ellipsis;
+    color: #bbb;
+}
+
+.post-poster {
+    color: white;
 }
 
 /* ==== TextPost ==== */

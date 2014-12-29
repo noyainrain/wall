@@ -186,7 +186,7 @@ class Collection(object):
     def activate_item(self, index):
         post = self.get_item(index)
         post.activate()
-        post.posted = datetime.utcnow().isoformat()
+        post.posted = datetime.utcnow().isoformat() + 'Z'
         self.app.db.hset(post.id, 'posted', post.posted)
         self.app.dispatch_event(Event('collection_item_activated',
             collection=self, index=index, post=post))
