@@ -1,0 +1,21 @@
+# Sample Wall configuration.
+# List items are space separated.
+# Switches may either be set to `True` or `False`.
+
+[wall]
+
+# Server listen address and port
+address = 127.0.0.1
+port = 8080
+
+# Redis database index
+db = 0
+
+# debug mode
+debug = False
+
+# short info text visible on the display
+info =
+
+# list of bricks to load (given by Python module name)
+bricks = wall.bricks.url wall.bricks.photo
