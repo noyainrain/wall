@@ -72,12 +72,18 @@ ns.PostElement = function(post, ui) {
     $(this.element).one("load", function(event) {
         var doc = this.element.contentDocument;
         doc.querySelector(".post-poster").textContent = this.post.poster.name;
-        doc.querySelector(".post-posted").textContent =
-            new Date(this.post.posted).toLocaleString();
+
+        var updatetime = function (post) {
+            doc.querySelector(".post-posted").textContent =
+                moment(post.posted, moment.ISO_8601).fromNow();
+        }
+        updatetime(post);
+        setInterval(updatetime, 1000, post);
+
         if (this.post.is_collection) {
             doc.querySelector(".post-meta").style.display = "none";
         }
-        doc.body.insertBefore(this.content, doc.body.firstElementChild);
+        doc.body.insertBefore(this.content, doc.body.querySelector("*"));
         this.contentAttachedCallback();
     }.bind(this));
     this.element.src = "/display/post?id=" + this.post.id;

@@ -49,20 +49,29 @@ body
     font-size: 1rem;
     white-space: nowrap;
     text-overflow: ellipsis;
+    color: #bbb;
+}
+
+.post-poster {
+    color: white;
 }
 
 /* ==== TextPost ==== */
 
 .text-post-content
 {
+    display: -webkit-flex;
     display: flex;
+    -webkit-justify-content: center;
     justify-content: center;
+    -webkit-align-items: center;
     align-items: center;
     padding: 1.5rem 1rem;
 }
 
 .text-post-content pre
 {
+    -webkit-flex: none;
     flex: none;
     margin: 0;
 }
@@ -77,15 +86,20 @@ body
 /* ==== GridPostElement ==== */
 
 .grid-post-content {
+    display: -webkit-flex;
     display: flex;
     padding: 0.125rem;
     background: #333;
+    -webkit-flex-flow: row wrap;
     flex-flow: row wrap;
+    -webkit-align-items: center;
     align-items: center;
+    -webkit-align-content: center;
     align-content: center;
 }
 
 .grid-post-content > .post-space {
+    -webkit-flex: none;
     flex: none;
     margin: 0.125rem;
     background: #444;
@@ -94,17 +108,23 @@ body
 /* ==== Page ==== */
 
 .display > body {
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-flow: column nowrap;
     flex-flow: column nowrap;
 }
 
 .display > body > .post-space {
+    -webkit-order: 0;
     order: 0;
+    -webkit-flex: auto;
     flex: auto;
 }
 
 .info {
+    -webkit-order: 1;
     order: 1;
+    -webkit-flex: none;
     flex: none;
     padding: 1vh 4vh;
     background: #222;

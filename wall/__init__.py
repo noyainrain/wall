@@ -186,7 +186,7 @@ class Collection(object):
     def activate_item(self, index):
         post = self.get_item(index)
         post.activate()
-        post.posted = datetime.utcnow().isoformat()
+        post.posted = datetime.utcnow().isoformat() + 'Z'
         self.app.db.hset(post.id, 'posted', post.posted)
         self.app.dispatch_event(Event('collection_item_activated',
             collection=self, index=index, post=post))
@@ -228,9 +228,12 @@ class WallApp(Object, EventTarget, Collection, Application):
 
         self._setup_logger()
 
+        self.logger.info('version #{}'.format(release))
+
         config_paths = [os.path.join(res_path, 'default.cfg')]
         if config_path:
             config_paths.append(config_path)
+            self.logger.info("loading custom configuration from {}".format(config_path))
         try:
             parser = SafeConfigParser()
             parser.read(config_paths)
@@ -342,8 +345,8 @@ class WallApp(Object, EventTarget, Collection, Application):
         except socket.error as e:
             self.logger.error('failed to listen on {}:{}: {}'.format(address, port, str(e)))
             return
-        self.logger.info('server started')
-        baseurl = 'display URL: http://{}:{}'.format(address, port)
+        self.logger.info('webserver started')
+        baseurl = 'http://{}:{}'.format(address, port)
         self.logger.info('display URL: ' + baseurl + '/display')
         self.logger.info('client URL: ' + baseurl)
         IOLoop.instance().start()

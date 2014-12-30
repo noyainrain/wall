@@ -42,6 +42,7 @@ button.incognito {
 }
 
 p.buttons {
+    display: -webkit-flex;
     display: flex;
     border-top: 1px solid #555;
     border-radius: 0.25rem;
@@ -49,6 +50,7 @@ p.buttons {
 
 p.buttons > button {
     display: block;
+    -webkit-flex: 1 1 0;
     flex: 1 1 0;
     background: transparent;
     border: none;
@@ -134,8 +136,8 @@ label small {
     transition: transform, opacity;
     transition-duration: 0.5s;
     opacity: 0.25;
-    transform: translate(-100%, 0);
     -webkit-transform: translate(-100%, 0);
+    transform: translate(-100%, 0);
 }
 
 .screen-open
@@ -147,11 +149,13 @@ label small {
 /* ==== Bar ==== */
 
 header.bar {
+    display: -webkit-flex;
     display: flex;
     background: #222;
 }
 
 header.bar > h1 {
+    -webkit-flex: auto;
     flex: auto;
     padding: 0.5rem 1rem;
     margin: 0;
@@ -171,7 +175,9 @@ header.bar > .project {
 }
 
 header.bar > button {
+    -webkit-order: 1;
     order: 1;
+    -webkit-flex: none;
     flex: none;
     padding: 0.5rem;
     border: solid #444;
@@ -180,6 +186,7 @@ header.bar > button {
 }
 
 header.bar > button.bar-secondary {
+    -webkit-order: -1;
     order: -1;
     border-width: 0 1px 0 0;
 }
@@ -226,9 +233,11 @@ ul.overlay-menu li
 }
 
 .list > li {
+    display: -webkit-flex;
     display: flex;
     border: solid #555;
     border-width: 1px 0 0 0;
+    -webkit-align-items: flex-start;
     align-items: flex-start;
     cursor: pointer;
 }
@@ -238,13 +247,16 @@ ul.overlay-menu li
 }
 
 .list > li > img {
+    -webkit-order: -1;
     order: -1;
+    -webkit-flex: none;
     flex: none;
     height: 3rem;
     margin: 0.25rem 1rem 0.25rem 0.25rem;
 }
 
 .list > li > p {
+    -webkit-flex: auto;
     flex: auto;
     max-height: 3.5rem;
     padding: 0.25rem;
@@ -252,7 +264,9 @@ ul.overlay-menu li
 }
 
 .list > li > button {
+    -webkit-order: 1;
     order: 1;
+    -webkit-flex: none;
     flex: none;
     border: none;
     border-radius: 0;
@@ -275,13 +289,17 @@ ul.overlay-menu li
 }
 
 .post-menu-actions {
+    display: -webkit-flex;
     display: flex;
     padding: 0.125rem;
+    -webkit-flex-flow: row wrap;
     flex-flow: row wrap;
+    -webkit-justify-content: center;
     justify-content: center;
 }
 
 .post-menu-actions > button {
+    -webkit-flex: none;
     flex: none;
     width: 11ch; /* 8ch text + ~3ch icon */
     margin: 0.125rem;
