@@ -16,10 +16,7 @@
 
             // apply stylesheets
             for (var i = 0; i < sheets.length; i++) {
-                var link = document.createElement("link");
-                link.rel = "stylesheet";
-                link.href = sheets[i].href;
-                document.head.appendChild(link);
+                document.head.appendChild(sheets[i].ownerNode.cloneNode(true));
             }
         </script>
     </head>
