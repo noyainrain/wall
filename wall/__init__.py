@@ -21,6 +21,7 @@ import tornado.autoreload
 from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
 from wall.util import EventTarget, Event, ObjectRedis, RedisContainer, truncate
+from argparse import ArgumentParser
 
 release = 20
 
@@ -212,7 +213,7 @@ class WallApp(Object, EventTarget, Collection, Application):
      * `disconnected`
     """
 
-    def __init__(self, config={}, config_path=None):
+    def __init__(self):
         super(WallApp, self).__init__('wall', self)
         EventTarget.__init__(self)
         Collection.__init__(self, str(1), str(True))
@@ -228,26 +229,103 @@ class WallApp(Object, EventTarget, Collection, Application):
 
         self._setup_logger()
 
+        default_config = {
+                ('--address', '-a') : {
+                    'help' : 'listening address for HTTP (default: %(default)s)',
+                    'default' : '127.0.0.1',
+                    },
+                ('--port', '-p') : {
+                    'help' : 'listening port for HTTP (default: %(default)s)',
+                   'default' : 8080
+                   },
+                ('--debug', '-d') : {
+                   'action' : 'store_const',
+                   'const' : True,
+                   'help' : 'enable debug mode (also disables caching)',
+                   'default' : False
+                   },
+                ('--db',) : {
+                    'help' : 'Redis database index to be used (default: %(default)s)',
+                    'type' : int,
+                    'default' : 0
+                    },
+                ('--info',) : {
+                    'help' : 'short info text to show below display',
+                    'default' : ''
+                    },
+                ('--bricks',) : {
+                    'nargs' : '+',
+                    'metavar' : 'MODULE',
+                    # TODO: simplify usage by not requiring full module name?
+                    'help' : 'list of bricks to load (default: %(default)s)',
+                    'default' : 'wall.bricks.url wall.bricks.photo wall.bricks.mix'
+                    },
+                }
+
+        argparser = ArgumentParser()
+
+        for names, opts in default_config.iteritems():
+            # Do not actually pass default values to the ArgumentParser as
+            # a workaround for the limitations of argparse. It doesn't tell us
+            # whether a argument was explicitely set on the command line, but
+            # we need that knowledge for merging the arguments with the
+            # configuration file.
+            tmp = opts.copy()
+            tmp['help'] = tmp['help'] % {'default' : tmp['default'] }
+            del tmp['default']
+            argparser.add_argument(*names, **tmp)
+
+        # add --config separately so that it doesn't show up in the generated file
+        user_config = os.path.expanduser('~/.wall.cfg')
+        argparser.add_argument('--config', '-c',
+                help = 'path to configuration file',
+                default = user_config)
+
+        # parse arguments as early as possible, even if we do not need them yet
+        args = argparser.parse_args()
+
         self.logger.info('version #{}'.format(release))
 
-        config_paths = [os.path.join(res_path, 'default.cfg')]
-        if config_path:
-            config_paths.append(config_path)
-            self.logger.info("loading custom configuration from {}".format(config_path))
+        if not os.path.isfile(user_config):
+            # create initial user configuration
+            s = '# Default Wall configuration. List items are space separated. Switches may\n'
+            s += '# either be set to `True` or `False`.\n'
+            s += '[wall]\n'
+            for names, opts in default_config.iteritems():
+                s += '\n'
+                s += '# {}\n'.format(opts['help'])
+                s += '# {} = {}\n'.format(names[0].replace('--', ''), opts['default'])
+
+            self.logger.info('writing initial config to ' + user_config)
+            try:
+                with open(user_config, 'w') as f:
+                    f.write(s)
+            except IOError as e:
+                self.logger.error('failed: ' + str(e))
+
+
+        # start with default values for initial config dictionary
+        self.config = {}
+        for names, opts in default_config.iteritems():
+            self.config[names[0].replace('--', '')] = opts['default']
+
+        # override defaults with user configuration
+        self.logger.info("loading user configuration file: {}".format(args.config))
         try:
             parser = SafeConfigParser()
-            parser.read(config_paths)
+            parser.read(args.config)
         except ConfigParserError as e:
-            self.logger.error('failed to parse configuration file')
+            self.logger.error('failed to parse user configuration file')
             self._init = False
             return
 
-        self.config = {}
         for section in parser.sections():
             prefix = section + '.' if section != 'wall' else ''
             for key, value in parser.items(section):
                 self.config[prefix + key] = value
-        self.config.update(config)
+
+        # override default/user configuration with command line arguments, if present
+        self.config.update({k:v for k,v in vars(args).iteritems() if v is not None})
 
         self.db = ObjectRedis(StrictRedis(db=int(self.config['db'])),
             self._decode_redis_hash)
