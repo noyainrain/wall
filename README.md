@@ -25,10 +25,11 @@ Wall requires:
 
 Run Wall with:
 
-    ./wall.py <config_file>
+    ./wall.py
 
- * config_file: path to a config file (optional). Documentation is available in
-   the default config file (`wall/res/default.cfg`).
+ * On its first run, Wall creates an initial configuration file ~/.wall.cfg.
+   See comments in this file and the Wall command line usage (`--help`) for
+   customizing its behavior.
 
 Browser Support
 ---------------
