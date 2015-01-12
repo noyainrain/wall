@@ -407,13 +407,13 @@ ns.PostNoteScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
 ns.PostHistoryScreen = function(ui) {
     ns.DoPostScreen.call(this, ui);
     this._list = null;
+    this.title = "History";
 
     this.element.classList.add("post-history-screen");
-    this._list = new ns.ListElement(this.ui);
+    this._list = new ns.ListElement();
     this._list.element.addEventListener("select", this._selected.bind(this));
     this.content.appendChild(this._list.element);
     this._list.attachedCallback();
-    this.title = "History";
 };
 
 ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
@@ -443,7 +443,7 @@ ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
 
 /* ==== ListElement ==== */
 
-ns.ListElement = function(ui) {
+ns.ListElement = function() {
     wall.Element.call(this, ui);
     this.element = document.createElement("ul");
     this.element.classList.add("list");
@@ -466,14 +466,7 @@ ns.ListElement.prototype = Object.create(wall.Element.prototype, {
                 button = e;
             }
         }
-
-        var index = 0;
-        for (; index < this.element.children.length; index++) {
-            var child = this.element.children[index];
-            if (child === li) {
-                break;
-            }
-        }
+        var index = Array.prototype.indexOf.call(this.element.children, li);
 
         var event = null;
         if (button) {
