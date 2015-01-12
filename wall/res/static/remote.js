@@ -57,7 +57,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                             "/static/images/note.svg", this));
                     break;
                 case "grid":
-                    this.addDoPostHandler(new ns.GridDoPostHandler(this));
+                    this.addDoPostHandler(new ns.GridDoPostHandler());
                     break;
                 case "history":
                     this.addDoPostHandler(
@@ -453,7 +453,6 @@ ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
             if (error && error.__type__ === "ValueError"
                 && error.args[0] === "post_collection_not_wall")
             {
-                // "The selected post is a collection, but the target is not Wall."
                 this.ui.notify("Only Wall can hold collections.");
                 return;
             }
@@ -466,7 +465,7 @@ ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
 
 ns.GridPostElement = function(post, ui) {
     wall.PostElement.call(this, post, ui);
-    this._list = new ns.ListElement(this.ui);
+    this._list = new ns.ListElement();
     this._list.element.addEventListener("select", this._selected.bind(this));
     this._list.element.addEventListener("actionclick",
         this._actionClicked.bind(this));
@@ -756,7 +755,7 @@ ns.SingleDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
 
 /* ==== GridDoPostHandler ==== */
 
-ns.GridDoPostHandler = function(ui) {
+ns.GridDoPostHandler = function() {
     ns.DoPostHandler.call(this, ui);
     this.title = "Grid";
     this.icon = "/static/images/grid.svg";
@@ -768,7 +767,6 @@ ns.GridDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
             if (post.__type__ === "ValueError"
                 && post.args[0] === "type_collection_not_wall")
             {
-                // see PostHistoryScreen._selected
                 this.ui.notify("Only Wall can hold collections.");
                 return;
             }
