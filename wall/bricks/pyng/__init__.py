@@ -73,19 +73,14 @@ class PyngPost(Post):
 
         self._ticks = 0
         self._clock = PeriodicCallback(self._tick, int(1000 / self.tps))
-        self._active = 0
 
     def activate(self):
-        if self._active == 0:
-            # TODO: remove event listener when post is removed from wall
-            self.app.add_event_listener('disconnected', self._disconnected)
-        self._active += 1
+        # TODO: remove event listener when post is removed from wall
+        self.app.add_event_listener('disconnected', self._disconnected)
 
     def deactivate(self):
-        self._active -= 1
-        if self._active == 0:
-            self._stop()
-            self.subscribers = []
+        self._stop()
+        self.subscribers = []
 
     def subscribe(self, user):
         self.subscribers.append(Subscriber(randstr(), user))

@@ -15,12 +15,13 @@ from subprocess import Popen
 from string import ascii_lowercase
 from random import choice
 from collections import OrderedDict
+from importlib import import_module
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RequestHandler, StaticFileHandler
 import tornado.autoreload
 from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
-from wall.util import EventTarget, Event, ObjectRedis, RedisContainer, truncate
+from .util import EventTarget, Event, ObjectRedis, RedisContainer, truncate
 
 release = 20
 
@@ -226,7 +227,8 @@ class WallApp(Object, EventTarget, Collection, Application):
         # initialize bricks
         bricks = self.config['bricks'].split()
         for name in bricks:
-            module = __import__(name, globals(), locals(), [b'foo'])
+            self.logger.info('loading extension "{}"...'.format(name))
+            module = import_module(name)
             brick = module.Brick(self)
             self.bricks[brick.id] = brick
 
@@ -298,12 +300,14 @@ class WallApp(Object, EventTarget, Collection, Application):
         return post
 
     def get_collection(self, id):
-        # TODO: document
         if id == 'wall':
             return self
         else:
-            # TODO: check for Collection
-            return self.posts[id]
+            post = self.posts.get(id)
+            # also captures None
+            if not isinstance(post, Collection):
+                raise KeyError()
+            return post
 
     # TODO: validate input in message handlers
     def get_history_msg(self, msg):
