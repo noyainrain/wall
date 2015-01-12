@@ -250,7 +250,7 @@ ns.PostScreen = function(ui, post) {
     postSpace.classList.add("post-space");
     this.content.appendChild(postSpace);
 
-    this._postMenu = new ns.PostMenu(this.ui);
+    this._postMenu = new ns.PostMenu();
     this._postMenu.addTarget("wall", "Wall");
     this.content.appendChild(this._postMenu.element);
     this._postMenu.attachedCallback();
@@ -488,16 +488,29 @@ ns.ListElement.prototype = Object.create(wall.Element.prototype, {
 
 /* ==== PostMenu ==== */
 
-ns.PostMenu = function(ui) {
+/**
+ * Menu for posting.
+ *
+ * The control posts to a `target` collection. A selection of `targets` can be
+ * added to the control via `addTarget()`. If more than one target is available,
+ * a toggle is presented.
+ *
+ * Attributes:
+ *
+ *  - `targets`: selection of targets.
+ *  - `target`: selected target.
+ */
+ns.PostMenu = function() {
     wall.Element.call(this, ui);
     this.targets = [];
     this.target = null;
 
-    this.element = wall.util.cloneChildNodes(
-        document.querySelector(".post-menu-template")).firstElementChild;
+    var template = document.querySelector(".post-menu-template");
+    this.element = wall.util.cloneChildNodes(template).firstElementChild;
 
     this._targetToggle = this.element.querySelector(".post-menu-target");
-    this._targetToggle.addEventListener("click", this._targetClicked.bind(this));
+    this._targetToggle.addEventListener("click",
+        this._targetClicked.bind(this));
 
     var actionsDiv = this.element.querySelector(".post-menu-actions");
     for (var i = 0; i < this.ui.doPostHandlers.length; i++) {
@@ -513,31 +526,19 @@ ns.PostMenu = function(ui) {
     }
 };
 
-/**
- * Menu for posting.
- *
- * The control posts to a `target` collection. A selection of `targets` can be added to
- * the control via `addTarget()`. If more than one target is available, a toggle is
- * presented to the user.
- *
- * Attributes:
- *
- *  - `targets`: selection of targets.
- *  - `target`: selected target.
- */
 ns.PostMenu.prototype = Object.create(wall.Element.prototype, {
     /**
-     * Return the target with the given `collectionId`. If the target does not exist,
-     * `undefined` is returned.
+     * Return the target with the given `collectionId`. If the target does not
+     * exist, `undefined` is returned.
      */
     getTarget: {value: function(collectionId) {
         return this.targets[this._getTargetIndex(collectionId)];
     }},
 
     /**
-     * Add a target to the selection. `collectionId` is the ID of the collection to post
-     * to and `label` is the UI label for the target. If the target already exists, it is
-     * updated.
+     * Add a target to the selection. `collectionId` is the ID of the collection
+     * to post to and `label` is the UI label for the target. If the target
+     * already exists, it is updated.
      */
     addTarget: {value: function(collectionId, label) {
         var target = {collectionId: collectionId, label: label};
@@ -560,8 +561,8 @@ ns.PostMenu.prototype = Object.create(wall.Element.prototype, {
     }},
 
     /**
-     * Remove the target with the given `collectionId` from the selection. If the target
-     * does not exist, nothing will happen.
+     * Remove the target with the given `collectionId` from the selection. If
+     * the target does not exist, nothing will happen.
      */
     removeTarget: {value: function(collectionId) {
         var index = this._getTargetIndex(collectionId);
@@ -580,8 +581,8 @@ ns.PostMenu.prototype = Object.create(wall.Element.prototype, {
     }},
 
     /**
-     * Select the target with the given `collectionId`. If the target does not exist,
-     * nothing will happen.
+     * Select the target with the given `collectionId`. If the target does not
+     * exist, nothing will happen.
      */
     selectTarget: {value: function(collectionId) {
         var target = this.getTarget(collectionId);
@@ -596,26 +597,27 @@ ns.PostMenu.prototype = Object.create(wall.Element.prototype, {
      * Toggle the selected target, i.e. select the next one from the selection.
      */
     toggleTarget: {value: function() {
-        var next =
-            (this._getTargetIndex(this.target.collectionId) + 1) % this.targets.length;
+        var next = (this._getTargetIndex(this.target.collectionId) + 1) %
+            this.targets.length;
         this.selectTarget(this.targets[next].collectionId);
     }},
 
     _getTargetIndex: {value: function(collectionId) {
         for (var i = 0; i < this.targets.length; i++) {
-            var target = this.targets[i];
-            if (target.collectionId === collectionId) {
+            if (this.targets[i].collectionId === collectionId) {
                 return i;
             }
         }
         return -1;
     }},
 
-    _targetClicked: {value: function(event) { this.toggleTarget(); }},
+    _targetClicked: {value: function(event) {
+        this.toggleTarget();
+    }},
 
     _actionClicked: {value: function(event) {
         event.currentTarget._handler.post(this.target.collectionId);
-     }}
+    }}
 });
 
 /* ==== DoPostHandler ==== */
