@@ -37,6 +37,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                 this._itemActivated.bind(this));
             this.addEventListener("collection_item_deactivated",
                 this._itemDeactivated.bind(this));
+            this.addPostElementType(ns.GridPostElement);
 
             if (!wall.util.isArray(this.config.do_post_handlers, "string")) {
                 throw new wall.util.ConfigurationError(
@@ -45,7 +46,7 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
             var handlers = wall.util.createSet(this.config.do_post_handlers);
 
             handlers.forEach(function(handler) {
-                if (["note", "history"].indexOf(handler) === -1) {
+                if (["note", "grid", "history"].indexOf(handler) === -1) {
                     throw new wall.util.ConfigurationError(
                         "do_post_handlers_unknown_item");
                 }
@@ -54,6 +55,9 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                     this.addDoPostHandler(
                         new ns.ScreenDoPostHandler(ns.PostNoteScreen, "Note",
                             "/static/images/note.svg", this));
+                    break;
+                case "grid":
+                    this.addDoPostHandler(new ns.GridDoPostHandler());
                     break;
                 case "history":
                     this.addDoPostHandler(
@@ -244,6 +248,7 @@ ns.PostScreen = function(ui, post) {
     ns.Screen.call(this, ui);
     this._post = null;
     this._postElement = null;
+    this._hasPostMenu = true;
 
     this.element.classList.add("post-screen");
     var postSpace = document.createElement("div");
@@ -298,6 +303,17 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
         },
         get: function() {
             return this._post;
+        }
+    },
+
+    hasPostMenu: {
+        get: function() {
+            return this._hasPostMenu;
+        },
+        set: function(value) {
+            this._hasPostMenu = value;
+            this._postMenu.element.style.display =
+                this._hasPostMenu ? "" : "none";
         }
     },
 
@@ -433,11 +449,91 @@ ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
 
     _selected: {value: function(event) {
         var post = event.detail.li._post;
-        this.ui.post(this.collectionId, post.id,
-            function(error) {
-                // TODO: error handling
-                this.ui.popScreen();
+        this.ui.post(this.collectionId, post.id, function(error) {
+            if (error && error.__type__ === "ValueError"
+                && error.args[0] === "post_collection_not_wall")
+            {
+                this.ui.notify("Only Wall can hold collections.");
+                return;
+            }
+            this.ui.popScreen();
+        }.bind(this));
+    }}
+});
+
+/* ==== GridPostElement ==== */
+
+ns.GridPostElement = function(post, ui) {
+    wall.PostElement.call(this, post, ui);
+    this._list = new ns.ListElement();
+    this._list.element.addEventListener("select", this._selected.bind(this));
+    this._list.element.addEventListener("actionclick",
+        this._actionClicked.bind(this));
+    this.element = this._list.element;
+};
+
+/**
+ * View for grid posts.
+ */
+ns.GridPostElement.prototype = Object.create(wall.PostElement.prototype, {
+    postType: {value: "GridPost"},
+
+    attachedCallback: {value: function() {
+        this.ui.call("collection_get_items", {collection_id: this.post.id},
+            function(posts) {
+                this.ui.addEventListener("collection_posted",
+                    this._posted.bind(this));
+                this.ui.addEventListener("collection_item_removed",
+                    this._itemRemoved.bind(this));
+
+                for (var i = 0; i < posts.length; i++) {
+                    this._addItem(posts[i]);
+                }
             }.bind(this));
+    }},
+
+    _addItem: {value: function(post) {
+        var li = document.createElement("li");
+        li._post = post;
+        var p = document.createElement("p");
+        p.textContent = post.title;
+        li.appendChild(p);
+        var button = document.createElement("button");
+        var img = document.createElement("img");
+        img.src = "/static/images/remove.svg";
+        button.appendChild(img);
+        li.appendChild(button);
+        this._list.element.appendChild(li);
+    }},
+
+    _removeItem: {value: function(index, post) {
+        this._list.element.removeChild(this._list.element.children[index]);
+    }},
+
+    _selected: {value: function(event) {
+        var screen = new ns.PostScreen(this.ui);
+        screen.post = event.detail.li._post;
+        screen.hasPostMenu = false;
+        this.ui.showScreen(screen);
+    }},
+
+    _actionClicked: {value: function(event) {
+        this.ui.call("collection_remove_item",
+            {collection_id: this.post.id, index: event.detail.index});
+    }},
+
+    _posted: {value: function(event) {
+        if (event.args.collection_id !== this.post.id) {
+            return;
+        }
+        this._addItem(event.args.post);
+    }},
+
+    _itemRemoved: {value: function(event) {
+        if (event.args.collection_id !== this.post.id) {
+            return;
+        }
+        this._removeItem(event.args.index, event.args.post);
     }}
 });
 
@@ -654,6 +750,27 @@ ns.SingleDoPostHandler = function(postType, title, icon, ui) {
 ns.SingleDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
     post: {value: function(collectionId) {
         this.ui.postNew(collectionId, this.postType, {}, function(post) {});
+    }}
+});
+
+/* ==== GridDoPostHandler ==== */
+
+ns.GridDoPostHandler = function() {
+    ns.DoPostHandler.call(this, ui);
+    this.title = "Grid";
+    this.icon = "/static/images/grid.svg";
+};
+
+ns.GridDoPostHandler.prototype = Object.create(ns.DoPostHandler.prototype, {
+    post: {value: function(collectionId) {
+        this.ui.postNew(collectionId, "GridPost", {}, function(post) {
+            if (post.__type__ === "ValueError"
+                && post.args[0] === "type_collection_not_wall")
+            {
+                this.ui.notify("Only Wall can hold collections.");
+                return;
+            }
+        }.bind(this));
     }}
 });
 
