@@ -406,29 +406,76 @@ ns.PostNoteScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
 
 ns.PostHistoryScreen = function(ui) {
     ns.DoPostScreen.call(this, ui);
+    this._list = null;
     this.title = "History";
 
-    $(this.element).addClass("post-history-screen");
-    $(this.content).append($('<ul class="select"></ul>'));
-
-    this.ui.call("get_history", {}, function(posts) {
-        posts.forEach(function(post) {
-            var li = $("<li>")
-                .data("post", post)
-                .click(this._postClicked.bind(this))
-                .appendTo($("ul", this.content));
-            $("<p>").text(post.title).appendTo(li);
-        }, this);
-    }.bind(this));
+    this.element.classList.add("post-history-screen");
+    this._list = new ns.ListElement();
+    this._list.element.addEventListener("select", this._selected.bind(this));
+    this.content.appendChild(this._list.element);
+    this._list.attachedCallback();
 };
 
 ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
-    _postClicked: {value: function(event) {
-        var post = $(event.currentTarget).data("post");
-        this.ui.post(this.collectionId, post.id, function(error) {
-            // TODO: error handling
-            this.ui.popScreen();
+    attachedCallback: {value: function() {
+        this.ui.call("get_history", {}, function(posts) {
+            for (var i = 0; i < posts.length; i++) {
+                var post = posts[i];
+                var li = document.createElement("li");
+                li._post = post;
+                var p = document.createElement("p");
+                p.textContent = post.title;
+                li.appendChild(p);
+                this._list.element.appendChild(li);
+            }
         }.bind(this));
+    }},
+
+    _selected: {value: function(event) {
+        var post = event.detail.li._post;
+        this.ui.post(this.collectionId, post.id,
+            function(error) {
+                // TODO: error handling
+                this.ui.popScreen();
+            }.bind(this));
+    }}
+});
+
+/* ==== ListElement ==== */
+
+ns.ListElement = function() {
+    wall.Element.call(this, ui);
+    this.element = document.createElement("ul");
+    this.element.classList.add("list");
+    this.element.addEventListener("click", this._clicked.bind(this));
+    this.content = this.element;
+};
+
+/**
+ * Interactive list.
+ */
+ns.ListElement.prototype = Object.create(wall.Element.prototype, {
+    _clicked: {value: function(event) {
+        var li = null;
+        var button = null;
+        for (var e = event.target; e != this.element; e = e.parentElement) {
+            if (e instanceof HTMLLIElement) {
+                li = e;
+            }
+            if (e instanceof HTMLButtonElement) {
+                button = e;
+            }
+        }
+        var index = Array.prototype.indexOf.call(this.element.children, li);
+
+        var event = null;
+        if (button) {
+            event = new CustomEvent("actionclick",
+                {detail: {button: button, li: li, index: index}});
+        } else {
+            event = new CustomEvent("select", {detail: {li: li, index: index}});
+        }
+        this.element.dispatchEvent(event);
     }}
 });
 
