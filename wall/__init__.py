@@ -43,6 +43,21 @@ class Object(object):
         self.id = id
         self.app = app
 
+    def json(self):
+        """
+        Return a JSON representation of the object. It includes the name of the
+        object type as `__type__`.
+
+        Subclass API: the default implementation includes all public attributes
+        but `app`. Subclasses are free to customize the set of returned
+        attributes.
+        """
+
+        json = dict((k, v) for k, v in vars(self).items()
+            if not k.startswith('_') and k != 'app')
+        json['__type__'] = type(self).__name__
+        return json
+
 class Collection(object):
     """
     Collection of posts.
@@ -161,6 +176,11 @@ class WallApp(Object, EventTarget, Collection, Application):
     """
     Wall application.
 
+    Attributes:
+
+     * `user`: active user.
+     * `users`: all users.
+
     Events:
 
      * `connected`
@@ -173,6 +193,7 @@ class WallApp(Object, EventTarget, Collection, Application):
         Collection.__init__(self)
         Application.__init__(self, template_path=template_path, autoescape=None)
 
+        self.user = None
         self.logger = getLogger('wall')
         self.bricks = {}
         self.post_types = {}
@@ -202,6 +223,7 @@ class WallApp(Object, EventTarget, Collection, Application):
 
         self.db = ObjectRedis(StrictRedis(db=int(self.config['db'])),
             self._decode_redis_hash)
+        self.users = RedisContainer(self.db, 'users')
         self.posts = RedisContainer(self.db, 'posts')
 
         self.add_post_type(TextPost)
@@ -213,7 +235,9 @@ class WallApp(Object, EventTarget, Collection, Application):
             'collection_get_items': self.collection_get_items_msg,
             'collection_post': self.collection_post_msg,
             'collection_post_new': self.collection_post_new_msg,
-            'collection_remove_item': self.collection_remove_item_msg
+            'collection_remove_item': self.collection_remove_item_msg,
+            'login': self.login_msg,
+            'authenticate': self.authenticate_msg
         }
 
         self.add_event_listener('collection_posted', self._collection_posted)
@@ -257,6 +281,26 @@ class WallApp(Object, EventTarget, Collection, Application):
     @property
     def items(self):
         return [self.current_post] if self.current_post else []
+
+    def login(self, name, ap):
+        """
+        Log in an user (device). See *api.md*.
+
+        `ap` is the access point (e.g. IP address) used to log in.
+        """
+
+        if not name:
+            raise ValueError('name_empty')
+        if not ap:
+            raise ValueError('ap_empty')
+        if any(u.name == name for u in self.users.values()):
+            raise ValueError('user_name_exists')
+
+        user = User('user:' + randstr(), name, randstr(), ap, self)
+        self.db.hmset(user.id, user.json())
+        self.db.sadd('users', user.id)
+        self.db.hset('session_map', user.session, user.id)
+        return user
 
     def run(self):
         if not self._init:
@@ -340,6 +384,17 @@ class WallApp(Object, EventTarget, Collection, Application):
         post = collection.remove_item(index)
         return Message('collection_remove_item', post.json())
 
+    def login_msg(self, msg):
+        user = self.login(msg.data['name'], msg.frm.request.remote_ip)
+        msg.frm.user = user
+        return Message('login', user.json())
+
+    def authenticate_msg(self, msg):
+        user = self.users.get(self.db.hget('session_map', msg.data['token']))
+        if user:
+            msg.frm.user = user
+        return Message('authenticate', user is not None)
+
     def get_history(self):
         return sorted(self.posts.values(), key=lambda p: p.posted, reverse=True)
 
@@ -351,8 +406,10 @@ class WallApp(Object, EventTarget, Collection, Application):
         self.post_types[post_type.__name__] = post_type
 
     def _decode_redis_hash(self, hash):
-        post_type = self.post_types[hash['__type__']]
-        return post_type(self, **hash)
+        types = {'User': User}
+        types.update(self.post_types)
+        type = types[hash.pop('__type__')]
+        return type(app=self, **hash)
 
     def _setup_logger(self):
         logger = getLogger()
@@ -394,13 +451,25 @@ class WallApp(Object, EventTarget, Collection, Application):
     __repr__ = __str__
 
 class Socket(WebSocketHandler):
+    """
+    WebSocket connection.
+
+    Attributes:
+
+     * `user`: associated user. `None` means the connection is anonymous.
+     * `app`: Wall application.
+    """
+
     def initialize(self):
+        self.user = None
         self.app = self.application
 
     def send(self, msg):
         self.write_message(str(msg))
-        self.app.logger.debug('sent message %s to %s',
-            truncate(str(msg), ellipsis='\u2026}'), self.request.remote_ip)
+        self.app.logger.debug('sent message %s to %s (%s)',
+            truncate(str(msg), ellipsis='\u2026}'),
+            self.user.name if self.user else 'anonymous',
+            self.request.remote_ip)
 
     def open(self):
         self.app.clients.append(self)
@@ -422,9 +491,12 @@ class Socket(WebSocketHandler):
 
     def on_message(self, msgstr):
         msg = Message.parse(msgstr, self)
-        self.app.logger.debug('received message %s from %s',
-            truncate(str(msg), ellipsis='\u2026}'), self.request.remote_ip)
+        self.app.logger.debug('received message %s from %s (%s)',
+            truncate(str(msg), ellipsis='\u2026}'),
+            self.user.name if self.user else 'anonymous',
+            self.request.remote_ip)
 
+        self.app.user = self.user
         handle = self.app.msg_handlers[msg.type]
         try:
             # TODO: support Future for asynchronous handlers (see
@@ -465,6 +537,17 @@ class DisplayPostPage(RequestHandler):
     def get(self):
         self.render('display-post.html', app=self.application)
 
+class User(Object):
+    """
+    Wall user. See *api.md*.
+    """
+
+    def __init__(self, id, name, session, ap, app):
+        super(User, self).__init__(id, app)
+        self.name = name
+        self.session = session
+        self.ap = ap
+
 class Post(Object):
     @classmethod
     def create(cls, app, **args):
@@ -502,15 +585,14 @@ class Post(Object):
         pass
 
     def json(self, view=None):
-        if not view:
-            filter = lambda k: not k.startswith('_') and k != 'app'
-        elif view == 'common':
-            filter = lambda k: k in ['id', 'title', 'posted']
-        else:
-            raise ValueError('view')
+        if view not in [None, 'common']:
+            raise ValueError('view_unknown')
 
-        return dict(((k, v) for k, v in vars(self).items() if filter(k)),
-            __type__=type(self).__name__)
+        json = super(Post, self).json()
+        if view == 'common':
+            json = dict((k, v) for k, v in json.items()
+                if k in ['id', 'title', 'posted', '__type__'])
+        return json
 
     def __eq__(self, other):
         # TODO: replace this by identity mapping / caching (see
@@ -634,6 +716,17 @@ def randstr(length=8, charset=ascii_lowercase):
 from wall.test import TestCase, CommonPostTest, CommonCollectionTest, TestPost
 from tempfile import NamedTemporaryFile
 
+class ObjectTest(TestCase):
+    def setUp(self):
+        super(ObjectTest, self).setUp()
+        self.object = self.app.login('Ivanova', 'test')
+
+    def test_json(self):
+        json = self.object.json()
+        self.assertEqual(json.get('id'), self.object.id)
+        self.assertEqual(json.get('name'), self.object.name)
+        self.assertEqual(json.get('__type__'), type(self.object).__name__)
+
 class CollectionTest(TestCase):
     def setUp(self):
         super(CollectionTest, self).setUp()
@@ -686,6 +779,15 @@ class WallTest(TestCase, CommonCollectionTest):
         posts.insert(0, self.app.post_new('TestPost'))
         posts.insert(0, self.app.post_new('TestPost'))
         self.assertEqual(posts, self.app.get_history()[0:2])
+
+    def test_login(self):
+        user = self.app.login('Ivanova', 'test')
+        self.assertIn(user.id, self.app.users)
+
+    def test_login_user_name_exists(self):
+        user = self.app.login('Ivanova', 'test')
+        with self.assertRaises(ValueError):
+            self.app.login('Ivanova', 'test')
 
 class TextPostTest(TestCase, CommonPostTest):
     def setUp(self):
