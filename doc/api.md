@@ -127,6 +127,16 @@ Attributes:
  * `session`: current session id (and authentication token).
  * `ap`: current access point (e.g. IP address).
 
+### Post
+
+Post.
+
+Attributes:
+
+ * `title`: title.
+ * `poster_id`: id of the `User` who posted the post.
+ * `posted`: time the post was posted.
+
 Post Types
 ----------
 

@@ -69,7 +69,14 @@ ns.PostElement = function(post, ui) {
     this.element.classList.add(wall.hyphenate(this.postType));
 
     $(this.element).one("load", function(event) {
-        this.element.contentDocument.body.appendChild(this.content);
+        var doc = this.element.contentDocument;
+        doc.querySelector(".post-poster").textContent = this.post.poster.name;
+        doc.querySelector(".post-posted").textContent =
+            new Date(this.post.posted).toLocaleString();
+        if (this.post.is_collection) {
+            doc.querySelector(".post-meta").style.display = "none";
+        }
+        doc.body.insertBefore(this.content, doc.body.firstElementChild);
         this.contentAttachedCallback();
     }.bind(this));
     this.element.src = "/display/post?id=" + this.post.id;

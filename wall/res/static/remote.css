@@ -51,10 +51,6 @@ p.buttons > button:first-child {
     border-left: none;
 }
 
-.templates {
-    display: none;
-}
-
 /* ==== Form ==== */
 
 form {
