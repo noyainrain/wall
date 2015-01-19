@@ -284,7 +284,7 @@ class WallApp(Object, EventTarget, Collection, Application):
 
     def login(self, name, ap):
         """
-        See *api.md*.
+        Log in an user (device). See *api.md*.
 
         `ap` is the access point (e.g. IP address) used to log in.
         """
@@ -539,7 +539,7 @@ class DisplayPostPage(RequestHandler):
 
 class User(Object):
     """
-    See *api.md*.
+    Wall user. See *api.md*.
     """
 
     def __init__(self, id, name, session, ap, app):
