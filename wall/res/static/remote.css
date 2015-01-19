@@ -64,7 +64,7 @@ button {
     text-shadow: inherit;
 }
 
-button > img {
+button img {
     vertical-align: top;
     height: 1rem;
     margin: 0.25rem;
@@ -85,9 +85,7 @@ p.buttons {
 p.buttons > button {
     display: block;
     flex: 1 1 0;
-    background: transparent;
-    border: none;
-    border-left: 1px solid #555;
+    border-width: 0 0 0 1px;
     border-radius: 0;
 }
 
@@ -209,7 +207,7 @@ ul.overlay-menu li
     font-size: 0.9rem;
 }
 
-/* ==== ListElement ==== */
+/* ==== List ==== */
 
 .list:empty {
     display: none;
@@ -254,7 +252,7 @@ ul.overlay-menu li
     overflow: visible;
 }
 
-/* ==== Post Menu ==== */
+/* ==== PostMenu ==== */
 
 .post-menu {
     margin: 1.5rem 0;
@@ -273,7 +271,7 @@ ul.overlay-menu li
 
 .post-menu-actions > button {
     flex: none;
-    width: 11ch; /* 8ch text + ~3ch icon */
+    width: calc(1rem /*img*/ + 9ch /*text*/);
     margin: 0.125rem;
     border: none;
     border-radius: 0;
