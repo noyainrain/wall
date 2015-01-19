@@ -298,7 +298,7 @@ class WallApp(Object, EventTarget, Collection, Application):
             raise ValueError('user_name_exists')
 
         user = User('user:' + randstr(), name, randstr(), ap, self)
-        self.db.hmset(user.id, user.json(include_private=True))
+        self.db.hmset(user.id, user.json())
         self.db.sadd('users', user.id)
         user = self.users[user.id] # cache
         self.db.hset('session_map', user.session, user.id)
@@ -378,7 +378,7 @@ class WallApp(Object, EventTarget, Collection, Application):
         collection = self.get_collection(msg.data.pop('collection_id'))
         post_type = msg.data.pop('type')
         post = collection.post_new(post_type, **msg.data)
-        return Message('collection_post_new', post.json())
+        return Message('collection_post_new', post.json(include_poster=True))
 
     def collection_remove_item_msg(self, msg):
         collection = self.get_collection(msg.data['collection_id'])
@@ -389,7 +389,7 @@ class WallApp(Object, EventTarget, Collection, Application):
     def login_msg(self, msg):
         user = self.login(msg.data['name'], msg.frm.request.remote_ip)
         msg.frm.user = user
-        return Message('login', user.json(include_private=True))
+        return Message('login', user.json())
 
     def authenticate_msg(self, msg):
         user = self.users.get(self.db.hget('session_map', msg.data['token']))
@@ -550,16 +550,16 @@ class User(Object):
         self.session = session
         self.ap = ap
 
-    def json(self, include_private=False):
+    def json(self, exclude_private=False):
         """
         Return a JSON representation of the user. See `Object.json()`.
 
-        If `include_private` is `True` (default `False`), non-public attributes
-        (`session`, `ap`) are included.
+        If `exclude_private` is `True` (default `False`), non-public attributes
+        (`session`, `ap`) are excluded.
         """
 
         json = super(User, self).json()
-        if not include_private:
+        if exclude_private:
             json = dict((k, v) for k, v in json.items()
                 if k not in ['session', 'ap'])
         return json
@@ -625,7 +625,7 @@ class Post(Object):
             json = dict((k, v) for k, v in json.items()
                 if k in ['id', 'title', 'poster_id', 'posted', '__type__'])
         if include_poster:
-            json['poster'] = self.poster.json()
+            json['poster'] = self.poster.json(exclude_private=True)
         return json
 
     def __str__(self):
@@ -826,13 +826,13 @@ class UserTest(TestCase):
 
     def test_json(self):
         json = self.user.json()
-        self.assertNotIn('session', json)
-        self.assertNotIn('ap', json)
-
-    def test_json_include_private(self):
-        json = self.user.json(include_private=True)
         self.assertIn('session', json)
         self.assertIn('ap', json)
+
+    def test_json_exclude_private(self):
+        json = self.user.json(exclude_private=True)
+        self.assertNotIn('session', json)
+        self.assertNotIn('ap', json)
 
 class TextPostTest(TestCase, CommonPostTest):
     def setUp(self):
