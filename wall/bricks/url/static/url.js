@@ -92,7 +92,7 @@ ns.PostUrlScreen = function(ui) {
     $(".url-post", this.content).submit(this._postSubmitted.bind(this));
     $(".url-search", this.content).submit(this._searchSubmitted.bind(this));
 
-    this._resultList = new wall.remote.ListElement(this.ui);
+    this._resultList = new wall.remote.ListElement();
     this._resultList.element.addEventListener("select",
         this._resultSelected.bind(this));
     this.content.querySelector("section").appendChild(this._resultList.element);

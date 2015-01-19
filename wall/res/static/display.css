@@ -79,12 +79,12 @@ body
 
 /* ==== Page ==== */
 
-.display > body {
+.display body {
     display: flex;
     flex-flow: column nowrap;
 }
 
-.display > body > .post-space {
+.display body > .post-space {
     order: 0;
     flex: auto;
 }
