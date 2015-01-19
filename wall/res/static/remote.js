@@ -380,21 +380,17 @@ ns.ConnectionScreen.prototype = Object.create(ns.Screen.prototype, {
  */
 ns.LoginScreen = function() {
     ns.Screen.call(this);
+    this._loginSubmittedHandler = this._loginSubmitted.bind(this);
+    this.title = "Log in";
+    this.hasGoBack = false;
+
+    var template = document.querySelector(".login-screen-template");
+    this.content.appendChild(wall.util.cloneChildNodes(template));
+    this.content.querySelector(".login-screen-login")
+        .addEventListener("submit", this._loginSubmittedHandler);
 };
 
 ns.LoginScreen.prototype = Object.create(ns.Screen.prototype, {
-    attachedCallback: {value: function() {
-        ns.Screen.prototype.attachedCallback.call(this);
-        this.title = "Log in";
-        this.hasGoBack = false;
-        this._loginSubmittedHandler = this._loginSubmitted.bind(this);
-
-        var template = document.querySelector(".login-screen-template");
-        this.content.appendChild(wall.util.cloneChildNodes(template));
-        this.content.querySelector(".login-screen-login")
-            .addEventListener("submit", this._loginSubmittedHandler);
-    }},
-
     _loginSubmitted: {value: function(event) {
         event.preventDefault();
         var name = this.content
