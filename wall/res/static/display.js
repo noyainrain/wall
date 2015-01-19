@@ -189,7 +189,7 @@ ns.GridPostElement.prototype = Object.create(ns.PostElement.prototype, {
         var size = 100 / Math.ceil(Math.sqrt(this.content.children.length));
         for (var i = 0; i < this.content.children.length; i++) {
             var element = this.content.children[i];
-            // - 1px to prevent overflow due to rounding errors
+            // - 1px to prevent wrap due to rounding errors
             element.style.width = "calc(" + size + "% - 0.25rem - 1px)";
             element.style.height = "calc(" + size + "% - 0.25rem)";
         }

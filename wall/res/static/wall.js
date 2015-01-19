@@ -100,7 +100,7 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
 
         var loadQueue = [];
         bricks.forEach(function(brick) {
-            console.log('loading brick "' + brick + '"…');
+            console.log('loading extension "' + brick + '"...');
             var link = document.createElement("link");
             loadQueue.push(wall.util.load(link, brick));
             link.rel = "import";

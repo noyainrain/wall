@@ -57,9 +57,9 @@ Example:
 authenticate: token
 ```
 
-Authenticate an user (device). `token` is a secret authentication token that
-identifies the user (device). `true` is returned if the authentication is
-successful, `false` otherwise.
+Authenticate an user. `token` is a secret authentication token that identifies
+the user. `true` is returned if the authentication is successful, `false`
+otherwise.
 
 Calls
 -----
@@ -124,7 +124,7 @@ Wall user.
 Attributes:
 
  * `name`: name.
- * `session`: current session id (authentication token).
+ * `session`: current session id (and authentication token).
  * `ap`: current access point (e.g. IP address).
 
 ### Post
