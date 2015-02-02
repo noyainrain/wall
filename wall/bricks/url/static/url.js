@@ -99,7 +99,7 @@ ns.PostUrlScreen = function() {
     this.content.querySelector(".url-post-screen-bookmarklet").setAttribute(
         "href", href);
 
-    this._resultList = new wall.remote.ListElement(this.ui);
+    this._resultList = new wall.remote.ListElement();
     this._resultList.element.addEventListener("select",
         this._resultSelected.bind(this));
     this.content.querySelector("section").appendChild(this._resultList.element);

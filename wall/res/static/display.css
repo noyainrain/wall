@@ -107,14 +107,14 @@ body
 
 /* ==== Page ==== */
 
-.display > body {
+.display body {
     display: -webkit-flex;
     display: flex;
     -webkit-flex-flow: column nowrap;
     flex-flow: column nowrap;
 }
 
-.display > body > .post-space {
+.display body > .post-space {
     -webkit-order: 0;
     order: 0;
     -webkit-flex: auto;

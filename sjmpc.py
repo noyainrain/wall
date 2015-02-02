@@ -37,10 +37,10 @@ class SjmpClient():
 
         try:
             if args.auth_token:
-                if not self._call('authenticate', token=args.auth_token):
+                if not self._call('authenticate', {'token': args.auth_token}):
                     print('error: failed to authenticate')
                     sys.exit(1)
-            result = self._call(args.type, **dict(args.arg))
+            result = self._call(args.type, dict(args.arg))
             self._connection.close()
         except WebSocketException as e:
             print('error: disconnected (details: {})'.format(e),
@@ -49,7 +49,7 @@ class SjmpClient():
 
         print(json.dumps(result, indent=4))
 
-    def _call(self, type, **args):
+    def _call(self, type, args):
         self._connection.send(str(Message(type, args)))
         while True:
             msg = Message.parse(self._connection.recv())
