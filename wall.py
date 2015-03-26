@@ -16,5 +16,4 @@ if __name__ == '__main__':
         config_path = sys.argv[1] if len(sys.argv) >= 2 else None
         WallApp(config_path=config_path).run()
     except KeyboardInterrupt:
-        # XXX: could do some cleanup here, if necessary
-        print()
+        pass

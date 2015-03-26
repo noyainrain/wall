@@ -16,9 +16,10 @@ How to Contribute
        the modification / the new interface
     2. Receive feedback and adjust the draft
  2. Code...
- 3. [Create a pull request](https://github.com/NoyaInRain/wall/pulls)
- 4. Receive feedback and adjust the code
- 5. The change is merged. \o/
+ 3. Make sure all unit tests pass (see *Testing*)
+ 4. [Create a pull request](https://github.com/NoyaInRain/wall/pulls)
+ 5. Receive feedback and adjust the code
+ 6. The change is merged. \o/
 
 Please make sure to follow the Wall *Conventions*.
 

@@ -64,21 +64,20 @@ class Object(object):
 
 class Collection(object):
     """
-    Collection of posts.
+    Collection of posts. See `api.md`.
 
     Attributes:
 
-     * `limit`: TODO
      * `items`: list of posts in collection.
-     * `allow_post_for_untrusted`: TODO
 
     Subclass API: `Collection` is a mixin for `Object`s. Hosts must implement
     `get_item`, `do_post`, `do_remove_item` and the `items` property.
     """
 
-    def __init__(self, limit, allow_post_for_untrusted):
+    def __init__(self, limit, allow_modification_by_authenticated):
         self.limit = int(limit)
-        self.allow_post_for_untrusted = allow_post_for_untrusted == 'True'
+        self.allow_modification_by_authenticated = (
+            allow_modification_by_authenticated == 'True')
         self.is_collection = True
 
     @property
@@ -103,13 +102,13 @@ class Collection(object):
         """
 
         if not (self.app.user and
-            (self.allow_post_for_untrusted or self.app.user.trusted)):
+            (self.allow_modification_by_authenticated or
+                self.app.user.trusted)):
             raise PermissionError()
         if isinstance(post, Collection) and self != self.app:
             raise ValueError('post_collection_not_wall')
 
-        # TODO: optimize?
-        if len(self.items) == self.limit:
+        if len(self.items) >= self.limit:
             self.remove_item(0, sudo=True)
         self.do_post(post)
         self.app.dispatch_event(
@@ -141,7 +140,8 @@ class Collection(object):
         """
 
         if not (self.app.user and
-            (self.allow_post_for_untrusted or self.app.user.trusted)):
+            (self.allow_modification_by_authenticated or
+                self.app.user.trusted)):
             raise PermissionError()
         try:
             post_type = self.app.post_types[type]
@@ -158,8 +158,7 @@ class Collection(object):
 
     def remove_item(self, index, sudo=False):
         """
-        Remove the post at the given `index` from the collection. The removed
-        post is returned. May raise a `ValueError('index_out_of_range')`.
+        Remove the post at `index` from the collection. See `api.md`.
         """
 
         post = self.get_item(index)
@@ -168,8 +167,7 @@ class Collection(object):
                 (self.app.user == post.poster or self.app.user.trusted)):
                 raise PermissionError()
 
-        # TODO: should do_remove_item still return post?
-        post = self.do_remove_item(index)
+        self.do_remove_item(index)
         self.app.dispatch_event(Event('collection_item_removed',
             collection=self, index=index, post=post))
         return post

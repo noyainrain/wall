@@ -72,23 +72,30 @@ get_history
 collection_get_items: collection_id
 ```
 
+Return list of posts in the collection given by `collection_id`.
+
 ```
 collection_post: collection_id, post_id
 ```
 
-Permission: authenticated user.
+Allowed: authenticated user, if `allow_modification_by_authenticated` is set, or
+trusted user.
 
 ```
 collection_post_new: collection_id, type, …
 ```
 
-Permission: authenticated user.
+Allowed: authenticated user, if `allow_modification_by_authenticated` is set, or
+trusted user.
 
 ```
 collection_remove_item: collection_id, index
 ```
 
-Permission: poster of the item to remove or trusted user.
+Remove the post at `index` from the collection given by `collection_id`. The
+removed post is returned. May return a `ValueError('index_out_of_range')`.
+
+Allowed: poster of the item to remove or trusted user.
 
 ```
 login: name
@@ -143,6 +150,16 @@ Attributes:
  * `title`: title.
  * `poster_id`: id of the `User` who posted the post.
  * `posted`: time the post was posted.
+
+### Collection
+
+Collection of posts.
+
+Attributes:
+
+ * `limit`: maximum number of items.
+ * `allow_modification_by_authenticated`: allow authenticated users to modify
+   the collection?
 
 Post Types
 ----------
