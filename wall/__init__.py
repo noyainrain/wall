@@ -21,6 +21,7 @@ from tornado.web import Application, RequestHandler, StaticFileHandler
 import tornado.autoreload
 from tornado.websocket import WebSocketHandler
 from redis import StrictRedis
+from .sources import ImageSource
 from .util import EventTarget, Event, ObjectRedis, RedisContainer, truncate
 
 release = 20
@@ -138,6 +139,64 @@ class Collection(object):
         self.post(post)
         return post
 
+    def open_url(url, callback=lambda r: None):
+        def run():
+            opener = OpenerDirector()
+            opener.add_handler(HTTPDefaultErrorHandler())
+            # TODO: set max_redirections? (but 10 is okay, maybe)
+            opener.add_handler(HTTPRedirectHandler())
+            opener.add_handler(HTTPHandler())
+            opener.add_handler(HTTPSHandler())
+            opener.add_handler(UnknownHandler())
+            opener.add_handler(HTTPErrorProcessor())
+            # TODO: timeout?
+            # TODO: error handling
+            stream = opener.open(url)
+            ioloop.add_callback(callback, stream)
+        # TODO: https://docs.python.org/2/library/threading.html
+        Thread(target=run).start()
+
+        # instead of Thread (but doesnt really make code easier / smaller)
+        # but is a threadpool
+        # https://code.google.com/p/pythonfutures/
+        future = executor.submit(run)
+        future.add_done_callback(ioloop.add_callback, callback, stream)
+        tornado.add_future(future) # >= 3.0
+
+    def read(stream, n=-1, callback=lambda r: None):
+        """
+        implementation note: very low performance, read large junk
+        """
+        def run():
+            data = stream.read(n)
+            ioloop.add_callback(callback, data)
+        Thread(target=run).start()
+
+    @gen.engine
+    def post_url(self, url, callback=lambda r: None):
+        stream = yield Task(open_url, url)
+        # TODO: headers -> dict
+        stream.headers = stream.info()
+
+        post = None
+        for source_type in self.app.source_types.values():
+            # TODO
+            preview = source_type.handle(url, stream)
+            if preview:
+                post = self.post_new(preview[0], source=preview[1], **preview[2])
+                break
+
+        stream.close()
+        callback(post)
+
+    # old
+    def post_url(self, url, callback=None):
+        def cb(result):
+            headers = stream.info()
+            stream.close()
+        open(url, cb)
+        # ...
+
     def remove_item(self, index):
         """
         Remove the post at the given `index` from the collection. The removed
@@ -198,6 +257,7 @@ class WallApp(Object, EventTarget, Collection, Application):
         self.logger = getLogger('wall')
         self.bricks = {}
         self.post_types = {}
+        self.source_types = []
         self.clients = []
         self.current_post = None
         self._init = True
@@ -230,6 +290,9 @@ class WallApp(Object, EventTarget, Collection, Application):
         self.add_post_type(TextPost)
         self.add_post_type(ImagePost)
         self.add_post_type(GridPost)
+
+        self.register_source_type(ImageSource)
+        self.register_source_type(WebsiteSource)
 
         self.msg_handlers = {
             'get_history': self.get_history_msg,
@@ -310,6 +373,9 @@ class WallApp(Object, EventTarget, Collection, Application):
         self.listen(8080)
         self.logger.info('server started')
         IOLoop.instance().start()
+
+    def register_source_type(self, source_type):
+        self.source_types[source_type.__name__] = source_type
 
     def add_message_handler(self, type, handler):
         """
