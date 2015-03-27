@@ -178,13 +178,24 @@ class Collection(object):
         # TODO: headers -> dict
         stream.headers = stream.info()
 
+        # * Source.preview(url, stream) koennte duenner wrapper sein um try:
+        # return (type(FooPost), Source(url).fetch(stream)) except:
+        # Error('invalidContent'): return None
         post = None
-        for source_type in self.app.source_types.values():
-            # TODO
-            preview = source_type.handle(url, stream)
-            if preview:
-                post = self.post_new(preview[0], source=preview[1], **preview[2])
-                break
+        for source_type in self.app.source_types:
+            source = source_type(url)
+            try:
+                attrs = source.fetch(stream)
+            except WebError as e:
+                if e.code == 'content_invalid':
+                    # source cannot handle content, try next
+                    continue
+                else:
+                    stream.close()
+                    callback(e)
+                    return
+            post = self.post_new(source.post_type, source=source, **attrs)
+            break
 
         stream.close()
         callback(post)
@@ -257,7 +268,7 @@ class WallApp(Object, EventTarget, Collection, Application):
         self.logger = getLogger('wall')
         self.bricks = {}
         self.post_types = {}
-        self.source_types = []
+        self.source_types = set()
         self.clients = []
         self.current_post = None
         self._init = True

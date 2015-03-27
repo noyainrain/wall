@@ -5,5 +5,17 @@ from __future__ import (division, absolute_import, print_function,
     unicode_literals)
 
 class Source(object):
-    def __init__(self):
+    """
+    xxx
+    """
+
+    def __init__(self, url):
         pass
+
+    def fetch(stream=None):
+        if not stream:
+            
+        self.do_fetch(stream)
+
+    def do_fetch(stream):
+        raise NotImplementedError()
