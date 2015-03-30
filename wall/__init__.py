@@ -16,12 +16,18 @@ from string import ascii_lowercase
 from random import choice
 from collections import OrderedDict
 from importlib import import_module
+from urllib2 import (OpenerDirector, URLError, HTTPDefaultErrorHandler,
+    HTTPRedirectHandler, HTTPHandler, HTTPSHandler, UnknownHandler,
+    HTTPErrorProcessor)
+from socket import gaierror, EAI_NONAME
+from threading import Thread
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RequestHandler, StaticFileHandler
 import tornado.autoreload
 from tornado.websocket import WebSocketHandler
+from tornado import gen
+from tornado.gen import Task
 from redis import StrictRedis
-from .sources import ImageSource
 from .util import EventTarget, Event, ObjectRedis, RedisContainer, truncate
 
 release = 20
@@ -139,44 +145,9 @@ class Collection(object):
         self.post(post)
         return post
 
-    def open_url(url, callback=lambda r: None):
-        def run():
-            opener = OpenerDirector()
-            opener.add_handler(HTTPDefaultErrorHandler())
-            # TODO: set max_redirections? (but 10 is okay, maybe)
-            opener.add_handler(HTTPRedirectHandler())
-            opener.add_handler(HTTPHandler())
-            opener.add_handler(HTTPSHandler())
-            opener.add_handler(UnknownHandler())
-            opener.add_handler(HTTPErrorProcessor())
-            # TODO: timeout?
-            # TODO: error handling
-            stream = opener.open(url)
-            ioloop.add_callback(callback, stream)
-        # TODO: https://docs.python.org/2/library/threading.html
-        Thread(target=run).start()
-
-        # instead of Thread (but doesnt really make code easier / smaller)
-        # but is a threadpool
-        # https://code.google.com/p/pythonfutures/
-        future = executor.submit(run)
-        future.add_done_callback(ioloop.add_callback, callback, stream)
-        tornado.add_future(future) # >= 3.0
-
-    def read(stream, n=-1, callback=lambda r: None):
-        """
-        implementation note: very low performance, read large junk
-        """
-        def run():
-            data = stream.read(n)
-            ioloop.add_callback(callback, data)
-        Thread(target=run).start()
-
     @gen.engine
     def post_url(self, url, callback=lambda r: None):
         stream = yield Task(open_url, url)
-        # TODO: headers -> dict
-        stream.headers = stream.info()
 
         # * Source.preview(url, stream) koennte duenner wrapper sein um try:
         # return (type(FooPost), Source(url).fetch(stream)) except:
@@ -386,7 +357,7 @@ class WallApp(Object, EventTarget, Collection, Application):
         IOLoop.instance().start()
 
     def register_source_type(self, source_type):
-        self.source_types[source_type.__name__] = source_type
+        self.source_types.add(source_type)
 
     def add_message_handler(self, type, handler):
         """
@@ -709,6 +680,61 @@ class Post(Object):
         return '<{} {}>'.format(self.__class__.__name__, self.id)
     __repr__ = __str__
 
+class Source(object):
+    """
+    TODO: update
+    URL handler. Takes care of processing a web resource (located at
+    some URL) to create a post preview from it.
+
+    A post preview is a tuple `(type, create_args)`, where `type` is the
+    name of the post type and `create_args` is a dictionary of additional arguments for post
+    creation. See `post_new`.
+
+    Attributes:
+
+     * `url`: URL.
+
+    Sublcass API: Subclasses must implemented `handle`.
+    """
+
+    def __init__(self, url):
+        self.url = url
+
+    @gen.engine
+    def fetch(self, stream=None, callback=lambda r: None):
+        """
+        TODO: update
+        Create a post preview from the web resource found at `url`, if possible, and
+        return it. If the resource can't be handled by this handler, `None` is returned. `headers` is a
+        dictionary of HTTP response headers retrieved for the
+        URL.
+
+        `stream` with additional fields headers, content_type
+
+        Subclass API: Must be implemented by subclasses. Called by `Collection.post_url`.
+        """
+        if not stream:
+            stream = yield Task(open_url_async, self.url)
+            if isinstance(stream, (WebError, IOError)):
+                callback(stream)
+                return
+        callback((yield Task(self.do_fetch, stream)))
+
+    def do_fetch(self, stream, callback=lambda r: None):
+        raise NotImplementedError()
+
+class ImageSource(Source):
+    def do_fetch(self, stream, callback=lambda r: None):
+        supported_types = ['image/gif', 'image/jpeg', 'image/png',
+            'image/svg+xml']
+        if stream.content_type not in supported_types:
+            callback(WebError('content_invalid'))
+            return
+        callback({'url': url})
+
+class WebsiteSource(Source):
+    pass
+
 class Brick(object):
     """
     An extension (plugin) for Wall.
@@ -817,8 +843,72 @@ class Error(Exception):
 
 class ValueError(Error, exceptions.ValueError): pass
 
+class WebError(Error):
+    # TODO: update documentation
+    # TODO: play through with Youtube.search/browse
+    # TODO: play through with Thing.update once it is clear how it works
+    # TODO: http code as optional argument?
+    """
+    (get requests only)
+    well known codes:
+     * communication problems / temporary errors (msg: try again later):
+       * unreachable (connect, resolve, redirect-loop)
+       * io_failed (read, write, timeout, unexpected http code = server bug)
+       * content_invalid (not parsable, broken)
+     (^ try again later)
+     * codes that actually say something about the resource:
+       * forbidden -> 401,403,405,407
+       * not_found -> 404,410
+    """
+    pass
+
 def randstr(length=8, charset=ascii_lowercase):
     return ''.join(choice(charset) for i in xrange(length))
+
+def open_url_async(url, callback=lambda r: None):
+    def run():
+        opener = OpenerDirector()
+        opener.add_handler(HTTPDefaultErrorHandler())
+        # TODO: set max_redirections? (but 10 is okay, maybe)
+        opener.add_handler(HTTPRedirectHandler())
+        opener.add_handler(HTTPHandler())
+        opener.add_handler(HTTPSHandler())
+        opener.add_handler(UnknownHandler())
+        opener.add_handler(HTTPErrorProcessor())
+        # TODO: timeout?
+        # TODO: error handling
+        try:
+            result = opener.open(url)
+        except URLError as e:
+            e = e.reason
+            if isinstance(e, gaierror) and e.errno == EAI_NONAME:
+                e = WebError('resource_not_found')
+            IOLoop.instance().add_callback(callback, e)
+            return
+
+        # TODO: headers -> dict
+        stream.headers = stream.info()
+        stream.content_type = stream.headers.get('Content-Type')
+        IOLoop.instance().add_callback(callback, stream)
+
+    # TODO: https://docs.python.org/2/library/threading.html
+    Thread(target=run).start()
+
+    # instead of Thread (but doesnt really make code easier / smaller)
+    # but is a threadpool
+    # https://code.google.com/p/pythonfutures/
+    #future = executor.submit(run)
+    #future.add_done_callback(ioloop.add_callback, callback, stream)
+    #tornado.add_future(future) # >= 3.0
+
+def read_async(stream, n=-1, callback=lambda r: None):
+    """
+    implementation note: very low performance, read large junk
+    """
+    def run():
+        data = stream.read(n)
+        ioloop.add_callback(callback, data)
+    Thread(target=run).start()
 
 # ==== Tests ====
 

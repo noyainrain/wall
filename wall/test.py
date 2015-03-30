@@ -94,6 +94,18 @@ class CommonPostTest(object):
         self.assertEqual(poster_json.get('id'), self.user.id)
         self.assertNotIn('session', poster_json)
 
+class CommonSourceTest(object):
+    """
+    Attributes:
+
+     * `source_type`: TODO
+    """
+    def setUp(self):
+        self.source_type = None
+
+    def test_fetch(self):
+        pass
+
 class TestPost(Post):
     @classmethod
     def create(cls, app, **args):
