@@ -58,8 +58,8 @@ authenticate: token
 ```
 
 Authenticate an user. `token` is a secret authentication token that identifies
-the user. `true` is returned if the authentication is successful, `false`
-otherwise.
+the user. If the authentication is successful, a non-`null` value (for example a
+representation of the user) is returned, if it fails `null`.
 
 Calls
 -----
@@ -137,7 +137,7 @@ Wall user.
 Attributes:
 
  * `name`: name.
- * `trusted`: TODO
+ * `trusted`: is the user trusted?
  * `session`: current session id (and authentication token).
  * `ap`: current access point (e.g. IP address).
 
@@ -171,3 +171,8 @@ These are the core post types bundled with Wall:
  * URL (`url_post`)
 
 Further post types can be introduced by extensions.
+
+Errors
+------
+
+ * `PermissionError`: raised if a user is not allowed to call a method.

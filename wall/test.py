@@ -21,12 +21,12 @@ class TestCase(AsyncTestCase):
      * `db`: connection to temporary Redis database (`15`)
      * `app`: Wall application. `TestPost` is available as registered post type.
      * `user`: active user.
-     * `trusted_user`: TODO
+     * `trusted_user`: trusted user.
     """
 
     @classmethod
     def setUpClass(cls):
-        getLogger('wall').setLevel(CRITICAL)
+        getLogger('wall').setLevel(51)
 
     def setUp(self):
         super(TestCase, self).setUp()
@@ -58,22 +58,17 @@ class CommonCollectionTest(object):
         post = self.collection.post_new('TestPost')
         self.assertIn(post, self.collection.items)
 
-    def test_post_limit_reached(self):
-        # XXX use edit method
+    def test_post_reached_limit(self):
+        # TODO: use edit
         self.collection.limit = 2
         self.app.user = self.trusted_user
         first = self.collection.post_new('TestPost')
         self.collection.post_new('TestPost')
-
+        # make sure that the item of another poster can be removed by exceeding
+        # the limit
         self.app.user = self.user
         self.collection.post_new('TestPost')
         self.assertNotIn(first, self.collection.items)
-
-    def test_post_not_allowed_for_untrusted(self):
-        # XXX use edit method
-        self.collection.allow_post_for_untrusted = False
-        with self.assertRaises(PermissionError):
-            self.collection.post_new('TestPost')
 
     def test_remove_item(self):
         post = self.collection.post_new('TestPost')

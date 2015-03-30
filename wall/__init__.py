@@ -227,17 +227,16 @@ class WallApp(Object, EventTarget, Collection, Application):
 
         self._setup_logger()
 
-        self.logger.info('version #{}'.format(release))
-
         config_paths = [os.path.join(res_path, 'default.cfg')]
         if config_path:
+            self.logger.info(
+                'loading configuration from {}...'.format(config_path))
             config_paths.append(config_path)
-            self.logger.info("loading custom configuration from {}".format(config_path))
         try:
             parser = SafeConfigParser()
             parser.read(config_paths)
         except ConfigParserError as e:
-            self.logger.error('failed to parse configuration file')
+            self.logger.critical('failed to load configuration file')
             self._init = False
             return
 
@@ -336,19 +335,19 @@ class WallApp(Object, EventTarget, Collection, Application):
     def run(self):
         if not self._init:
             return
-        # XXX do not hardcode
-        self.allow_post_for_untrusted = False
         port = int(self.config['port'])
         address = self.config['address']
         try:
-            self.listen(port = port, address = address)
+            self.listen(port=port, address=address)
         except socket.error as e:
-            self.logger.error('failed to listen on {}:{}: {}'.format(address, port, str(e)))
+            self.logger.critical(
+                'failed to start server on {}:{} ({})'.format(address,
+                    port, str(e)))
             return
-        self.logger.info('webserver started')
-        baseurl = 'http://{}:{}'.format(address, port)
-        self.logger.info('display URL: ' + baseurl + '/display')
-        self.logger.info('client URL: ' + baseurl)
+        self.logger.info('server started')
+        baseurl = 'http://{}:{}/'.format(address, port)
+        self.logger.info('display: ' + baseurl + 'display')
+        self.logger.info('remote: ' + baseurl)
         IOLoop.instance().start()
 
     def add_message_handler(self, type, handler):
@@ -374,8 +373,6 @@ class WallApp(Object, EventTarget, Collection, Application):
             raise ValueError('index_out_of_range')
 
     def do_post(self, post):
-        if self.current_post:
-            self.remove_item(0)
         self.current_post = post
         self.activate_item(0)
 
@@ -734,13 +731,14 @@ class GridPost(Post, Collection):
     def create(cls, app, **args):
         post = GridPost(id='grid_post:' + randstr(), app=app, title='Grid',
             poster_id=app.user.id, posted=None, limit=str(9),
-            allow_post_for_untrusted=str(True), is_collection=None)
+            allow_modification_by_authenticated=str(True), is_collection=None)
         app.db.hmset(post.id, post.json())
         return post
 
-    def __init__(self, limit, allow_post_for_untrusted, is_collection, **args):
+    def __init__(self, limit, allow_modification_by_authenticated,
+        is_collection, **args):
         super(GridPost, self).__init__(**args)
-        Collection.__init__(self, limit, allow_post_for_untrusted)
+        Collection.__init__(self, limit, allow_modification_by_authenticated)
         self._items_key = self.id + '.items'
 
     @property
@@ -778,7 +776,11 @@ class Error(Exception):
 
 class ValueError(Error, exceptions.ValueError): pass
 
-class PermissionError(Error): pass
+class PermissionError(Error):
+    """
+    Raised if a user is not allowed to call a method. See `api.md`.
+    """
+    pass
 
 def randstr(length=8, charset=ascii_lowercase):
     return ''.join(choice(charset) for i in xrange(length))
@@ -813,6 +815,12 @@ class CollectionTest(TestCase):
         with self.assertRaises(ValueError):
             self.collection.post_new('foo')
 
+    def test_post_new_not_allow_modification_by_authenticated(self):
+        # TODO: use edit
+        self.collection.allow_modification_by_authenticated = False
+        with self.assertRaises(PermissionError):
+            self.collection.post_new('TestPost')
+
 class WallTest(TestCase, CommonCollectionTest):
     def setUp(self):
         super(WallTest, self).setUp()
@@ -846,10 +854,6 @@ class WallTest(TestCase, CommonCollectionTest):
         self.app.post(post)
         self.assertTrue(post.deactivate_called)
 
-    def test_post_limit_reached(self):
-        # test is not applicable, because WallApp.limit cannot be changed
-        pass
-
     def test_get_history(self):
         posts = []
         posts.insert(0, self.app.post_new('TestPost'))
@@ -859,6 +863,7 @@ class WallTest(TestCase, CommonCollectionTest):
     def test_login(self):
         user = self.app.login('Talia', 'test')
         self.assertIn(user.id, self.app.users)
+        self.assertFalse(user.trusted)
         self.assertTrue(self.trusted_user.trusted)
 
     def test_login_user_name_exists(self):
