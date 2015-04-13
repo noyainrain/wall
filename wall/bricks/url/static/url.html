@@ -7,20 +7,27 @@
 <script src="url.js"></script>
 
 <div class="url-post-url-screen-content-template">
-    <form class="url-post" novalidate="novalidate">
-        <input class="url-url" type="url">
+    <form class="url-post-url-screen-post" novalidate="novalidate">
+        <input type="url" name="url">
         <p class="buttons">
             <button>
                 <span class="icon fa fa-plus-circle fa-fw"></span>Post
             </button>
         </p>
     </form>
-    <p>
-        Bookmarklet: <a class="url-post-screen-bookmarklet">Post to Wall</a>.
-        Bookmark this link. Then, to post the page you are currently visiting,
-        simply select the bookmark.
-    </p>
+
     <section>
+        <h2>Bookmarklet</h2>
+        <p>
+            Bookmark this link:
+            <a class="url-post-url-screen-bookmarklet">Post to Wall</a>. Then,
+            to post the page you are currently visiting, simply select the
+            bookmark.
+        </p>
+    </section>
+
+    <!-- TODO: adjust class names to convention -->
+    <section class="url-post-url-screen-search">
         <h2 style="display: inline;">Search</h2>
         <small class="url-handlers"></small>
         <form class="url-search" novalidate="novalidate">

@@ -82,6 +82,13 @@ ns.RemoteUrlPostElement.prototype = Object.create(wall.PostElement.prototype, {
 
 /* ==== PostUrlScreen ==== */
 
+/**
+ * TODO.
+ *
+ * Attributes:
+ *
+ *  - `url`: TODO
+ */
 ns.PostUrlScreen = function() {
     wall.remote.DoPostScreen.call(this, ui);
     this._resultList = null;
@@ -90,19 +97,19 @@ ns.PostUrlScreen = function() {
     var template = ui.bricks["url"].html.querySelector(
         ".url-post-url-screen-content-template");
     this.content.appendChild(wall.util.cloneChildNodes(template));
-
-    $(".url-post", this.content).submit(this._postSubmitted.bind(this));
+    $(".url-post-url-screen-post", this.content).submit(
+        this._postSubmitted.bind(this));
     $(".url-search", this.content).submit(this._searchSubmitted.bind(this));
 
     var href = 'javascript:void(location.href="http://' + location.host +
-        '/#url," + location.href);';
-    this.content.querySelector(".url-post-screen-bookmarklet").setAttribute(
-        "href", href);
+        '/#url?url=" + location.href);';
+    this.content.querySelector(".url-post-url-screen-bookmarklet").href = href;
 
     this._resultList = new wall.remote.ListElement();
     this._resultList.element.addEventListener("select",
         this._resultSelected.bind(this));
-    this.content.querySelector("section").appendChild(this._resultList.element);
+    this.content.querySelector(".url-post-url-screen-search").appendChild(
+        this._resultList.element);
     this._resultList.attachedCallback();
 
     this.ui.call(
@@ -118,21 +125,28 @@ ns.PostUrlScreen = function() {
 ns.PostUrlScreen.prototype = Object.create(wall.remote.DoPostScreen.prototype, {
     url: {
         get: function() {
-            return this.content.querySelector(".url-url").value;
+            return this.content
+                .querySelector('.url-post-url-screen-post input[name="url"]')
+                .value;
         },
         set: function(value) {
-            this.content.querySelector(".url-url").value = value;
+            var input = this.content
+                .querySelector('url-post-url-screen-post input[name="url"]');
+            input.value = value;
         }
     },
 
-    attachedCallback: {value: function(){
-        this.content.querySelector(".url-url").focus();
+    attachedCallback: {value: function() {
+        this.content
+            .querySelector('.url-post-url-screen-post input[name="url"]')
+            .focus();
     }},
 
     _postSubmitted: {value: function(event) {
         event.preventDefault();
-        this.ui.postNew(this.collectionId, "UrlPost",
-            {"url": $(".url-url", this.content).val()},
+        var url = this.content
+            .querySelector('.url-post-url-screen-post input[name="url"]').value;
+        this.ui.postNew(this.collectionId, "UrlPost", {"url": url},
             function(post) {
                 if (post.__type__ == "ValueError" && post.args[0] == "url") {
                     this.ui.notify("URL missing.");
