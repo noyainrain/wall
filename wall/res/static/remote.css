@@ -60,6 +60,10 @@ p.buttons > button:first-child {
     border-left: none;
 }
 
+section {
+    overflow: visible;
+}
+
 /* ==== Form ==== */
 
 form {
