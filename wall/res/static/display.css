@@ -39,17 +39,16 @@ body
 
 .post-meta {
     position: absolute;
-    bottom: 2.5px;
-    left: 2.5px;
-    max-width: calc(100% - 2 * 2.5px);
-    padding: 2.5px 10px;
+    bottom: 0.25rem;
+    left: 0.25rem;
+    max-width: calc(100% - 2 * 0.25rem);
+    padding: 0.25rem 1rem;
     margin: 0;
-    border-radius: 10px;
+    border-radius: 1rem;
     background: rgba(0, 0, 0, 0.5);
-    font-size: x-small;
     white-space: nowrap;
     text-overflow: ellipsis;
-    color: #bbb;
+    color: #ccc;
 }
 
 .post-poster {
@@ -81,6 +80,13 @@ body
 .image-post-content
 {
     background: center / contain no-repeat;
+}
+
+/* ==== VideoPostElement ==== */
+
+.video-post-content video {
+    width: 100vw;
+    height: 100vh;
 }
 
 /* ==== GridPostElement ==== */

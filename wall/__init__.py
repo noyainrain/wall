@@ -345,7 +345,7 @@ class WallApp(Object, EventTarget, Collection, Application):
                     port, str(e)))
             return
         self.logger.info('server started')
-        baseurl = 'http://{}:{}/'.format(address, port)
+        baseurl = 'http://{}:{}/'.format(address or 'localhost', port)
         self.logger.info('display: ' + baseurl + 'display')
         self.logger.info('remote: ' + baseurl)
         IOLoop.instance().start()

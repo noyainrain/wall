@@ -28,8 +28,8 @@ ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
                 this._itemDeactivated.bind(this));
             this.addPostElementType(ns.TextPostElement);
             this.addPostElementType(ns.ImagePostElement);
-            this.addPostElementType(ns.GridPostElement);
             this.addPostElementType(ns.VideoPostElement);
+            this.addPostElementType(ns.GridPostElement);
 
             this._postSpace = new ns.PostSpace(this);
             document.body.appendChild(this._postSpace.element);
@@ -148,8 +148,6 @@ ns.VideoPostElement = function(post, ui) {
     video.controls = false;
     video.loop = true;
     video.autoplay = true;
-    video.style.width = '100%';
-    video.style.height = '100%';
     this.content.appendChild(video);
 };
 
