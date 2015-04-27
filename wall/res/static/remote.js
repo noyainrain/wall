@@ -41,10 +41,6 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         return this.loadConfig().then(function() {
             this.initCommon();
 
-            if (localStorage.user) {
-                this.user = JSON.parse(localStorage.user);
-            }
-
             this.addEventListener("collection_item_activated",
                 this._itemActivated.bind(this));
             this.addEventListener("collection_item_deactivated",
@@ -78,6 +74,10 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                     break;
                 }
             }, this);
+
+            if (localStorage.user) {
+                this.user = JSON.parse(localStorage.user);
+            }
 
             return this.loadBricks();
         }.bind(this)).then(function() {
