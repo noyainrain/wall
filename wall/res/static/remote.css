@@ -216,6 +216,12 @@ ul.overlay-menu li
     padding: 0.25rem 0.5rem;
 }
 
+/* ==== MenuScreen ==== */
+
+.menu-screen-attribution {
+    text-align: right;
+}
+
 /* ==== Connection Screen ==== */
 
 .connection-screen .screen-content
@@ -257,12 +263,14 @@ ul.overlay-menu li
     margin: 0.25rem 1rem 0.25rem 0.25rem;
 }
 
-.list > li > p {
+.list > li > p,
+.list > li > a {
     -webkit-flex: auto;
     flex: auto;
     max-height: 3.5rem;
     padding: 0.25rem;
     margin: 0;
+    text-decoration: none;
 }
 
 .list > li > button {
