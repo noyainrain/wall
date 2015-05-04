@@ -23,6 +23,7 @@
                 ui = new wall.remote.RemoteUi();
                 ui.init().catch(function(error) {
                     // TODO: utility function
+                    // escape error from promise error handling
                     setTimeout(function() { throw error; }, 1);
                 });
             });
@@ -39,12 +40,8 @@
                 <div class="screen">
                     <header class="bar">
                         <h1></h1>
-                        <span class="project">Wall</span>
-                        <button class="screen-open-display">
-                            <span class="icon fa fa-desktop fa-fw"></span>
-                        </button>
-                        <button class="screen-settings">
-                            <span class="icon fa fa-bars fa-fw"></span>
+                        <button class="screen-menu">
+                            <span class="icon fa fa-bars fa-fw"></span>Wall
                         </button>
                         <button class="bar-secondary screen-go-back">
                             <span class="icon fa fa-chevron-left fa-fw"></span>
@@ -55,13 +52,16 @@
             </div>
 
             <div class="menu-screen-template">
-                <p>
-                    Powered by Wall -
-                    <a href="https://github.com/NoyaInRain/wall" target="_blank">https://github.com/NoyaInRain/wall</a>
-                </p>
-                <p>
-                    Ideas, Bugs, Questions? Great! -
-                    <a href="https://github.com/NoyaInRain/wall/wiki/31c3" target="_blank">https://github.com/NoyaInRain/wall/wiki/31c3</a>
+                <ul class="list">
+                    <li>
+                        <a href="https://github.com/NoyaInRain/wall/issues" target="_blank">Feedback</a>
+                    </li>
+                    <li>
+                        <a href="display" target="_blank">Display</a>
+                    </li>
+                </ul>
+                <p class="menu-screen-attribution">
+                    <a href="https://github.com/NoyaInRain/wall" target="_blank">Powered by Wall</a>
                 </p>
             </div>
 

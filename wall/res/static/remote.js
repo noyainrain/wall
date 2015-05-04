@@ -229,20 +229,32 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
 
 /* ==== Screen ==== */
 
+/**
+ * Wall screen.
+ *
+ * Attributes:
+ *
+ * - `hasMenu`: TODO.
+ */
 ns.Screen = function() {
     wall.Element.call(this, ui);
     this._title = null;
     this._hasGoBack = true;
 
+    this._onGoBackClick = function(e) {
+        this.ui.popScreen();
+    }.bind(this);
+    this._onMenuClick = function(e) {
+        ui.showScreen(new ns.MenuScreen());
+    }.bind(this);
+
     this.element = wall.util.cloneChildNodes(
         document.querySelector(".screen-template")).querySelector("*");
     this.content = this.element.querySelector(".screen-content");
-    this.element.querySelector(".screen-settings").addEventListener(
-        "click", this._settingsClicked.bind(this));
-    this.element.querySelector(".screen-open-display").addEventListener(
-        "click", this._openDisplayClicked.bind(this));
-    this.element.querySelector(".screen-go-back").addEventListener(
-        "click", this._goBackClicked.bind(this));
+    this.element.querySelector(".screen-menu").addEventListener("click",
+        this._onMenuClick);
+    this.element.querySelector(".screen-go-back").addEventListener("click",
+        this._onGoBackClick);
 
     this.title = null;
 };
@@ -272,17 +284,16 @@ ns.Screen.prototype = Object.create(wall.Element.prototype, {
         }
     },
 
-    _settingsClicked: {value: function(event) {
-        ui.showScreen(new ns.MenuScreen());
-    }},
-
-    _openDisplayClicked: {value: function(event) {
-        location.href = "display";
-    }},
-
-    _goBackClicked: {value: function(event) {
-        this.ui.popScreen();
-    }}
+    hasMenu: {
+        get: function() {
+            return !this.element.querySelector(".screen-menu").disabled;
+        },
+        set: function(value) {
+            this.element.querySelector(".screen-menu").disabled = !value;
+            this.element.querySelector(".screen-menu .icon").style.display =
+                value ? "" : "none";
+        }
+    }
 });
 
 /* ==== PostScreen ==== */
@@ -301,10 +312,10 @@ ns.PostScreen = function(ui, post) {
     this.content.appendChild(postSpace);
 
     this._postMenu = new ns.PostMenu();
-    // TODO: if (settings.allow_post_for_untrusted || ...
-    if (ui.user && ui.user.trusted) {
-        this._postMenu.addTarget("wall", "Wall");
-    }
+    // TODO: see Collection.post() on server
+    // if (ui.settings.allow_modification_by_authenticated || ui.user.trusted) {
+    this._postMenu.addTarget("wall", "Wall");
+    // }
     this.content.appendChild(this._postMenu.element);
     this._postMenu.attachedCallback();
 
@@ -345,10 +356,12 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
             }
             this.title = this._post.title;
             if (this._post.is_collection) {
-                // TODO: if (this._post.allow_post_for_untrusted || ui.user.trusted) {
+                // see Collection.post() on server
+                if (this._post.allow_modification_by_authenticated
+                        || ui.user.trusted) {
                     this._postMenu.addTarget(this._post.id, this._post.title);
                     this._postMenu.selectTarget(this._post.id);
-                //}
+                }
             }
         },
         get: function() {
@@ -374,12 +387,17 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
 
 /* ==== MenuScreen ==== */
 
+/**
+ * Wall menu screen.
+ */
 ns.MenuScreen = function() {
     ns.Screen.call(this);
     this.title = "Menu";
+    this.hasMenu = false;
 
     var template = document.querySelector(".menu-screen-template");
-    this.content.appendChild(wall.util.cloneChildNodes(template));
+    this.element.querySelector(".screen-content").appendChild(
+        wall.util.cloneChildNodes(template));
 };
 
 ns.MenuScreen.prototype = Object.create(ns.Screen.prototype);
@@ -609,8 +627,8 @@ ns.GridPostElement.prototype = Object.create(wall.PostElement.prototype, {
         var p = document.createElement("p");
         p.textContent = post.title;
         li.appendChild(p);
-        // XXX ui.user should always be set. Show mainScreen after login and
-        // retreive current post via collection_get_items
+        // TODO: user should always be set
+        // see Collection.remove_item()
         if (ui.user && (ui.user.id === post.poster_id || ui.user.trusted)) {
             var button = document.createElement("button");
             var icon = document.createElement("span");
