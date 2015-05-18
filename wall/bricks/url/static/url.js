@@ -67,16 +67,27 @@ ns.ClientBrick.prototype = Object.create(wall.Brick.prototype, {
 
 /* ==== RemoteUrlPostElement ==== */
 
-ns.RemoteUrlPostElement = function(post, ui) {
-    wall.PostElement.call(this, post, ui);
-    this.element = document.createElement("p");
-    this.element.classList.add("post");
+ns.RemoteUrlPostElement = function() {
+    wall.remote.PostElement.call(this);
     this.element.classList.add("url-post");
-    this.element.textContent = post.url;
 };
 
-ns.RemoteUrlPostElement.prototype = Object.create(wall.PostElement.prototype, {
-    postType: {value: "UrlPost"}
+ns.RemoteUrlPostElement.prototype = Object.create(
+    wall.remote.PostElement.prototype,
+{
+    postType: {value: "UrlPost"},
+
+    post: {
+        get: Object
+            .getOwnPropertyDescriptor(wall.remote.PostElement.prototype, "post")
+            .get,
+        set: function(value) {
+            Object.getOwnPropertyDescriptor(wall.remote.PostElement.prototype,
+                "post").set.call(this, value);
+            this.element.querySelector(".post-content").textContent =
+                this.post.url;
+        }
+    }
 });
 
 /* ==== PostUrlScreen ==== */

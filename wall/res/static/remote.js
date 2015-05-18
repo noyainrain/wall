@@ -282,15 +282,12 @@ ns.PostScreen = function(ui, post) {
 ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
     post: {
         set: function(value) {
-            // TODO: implement (remote) PostElement
             var postSpace = this.element.querySelector(".post-space");
 
             if (this._post) {
-                if (this._postElement) {
-                    postSpace.removeChild(this._postElement.element);
-                    this._postElement.detachedCallback();
-                    this._postElement = null;
-                }
+                postSpace.removeChild(this._postElement.element);
+                this._postElement.detachedCallback();
+                this._postElement = null;
                 this.title = "Empty Wall";
                 if (this._post.is_collection) {
                     this._postMenu.removeTarget(this._post.id);
@@ -303,13 +300,12 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
                 return;
             }
 
-            var postElementType = this.ui.postElementTypes[this._post.__type__];
-            if (postElementType) {
-                this._postElement =
-                    new postElementType(this._post, this.ui);
-                postSpace.appendChild(this._postElement.element);
-                this._postElement.attachedCallback();
-            }
+            var postElementType = this.ui.postElementTypes[this._post.__type__]
+                || ns.PostElement;
+            this._postElement = new postElementType();
+            this._postElement.post = this._post;
+            postSpace.appendChild(this._postElement.element);
+            this._postElement.attachedCallback();
             this.title = this._post.title;
             if (this._post.is_collection) {
                 this._postMenu.addTarget(this._post.id, this._post.title);
@@ -517,21 +513,61 @@ ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
     }}
 });
 
+/* ==== PostElement ==== */
+
+/**
+ * Post element.
+ *
+ * Content can be added to the `.post-content` element.
+ *
+ * Properties:
+ *
+ * - `post`: associated `Post`.
+ *
+ * Subclass API: subclasses may override the `post` setter to update the UI when
+ * `post` is set.
+ */
+ns.PostElement = function() {
+    wall.Element.call(this, ui);
+    this._post = null;
+    var template = document.querySelector(".post-template");
+    this.element = template.firstElementChild.cloneNode(true);
+};
+
+ns.PostElement.prototype = Object.create(wall.Element.prototype, {
+    postType: {value: null},
+
+    post: {
+        get: function() {
+            return this._post;
+        },
+        set: function(value) {
+            this._post = value;
+            this.element.querySelector(".post-poster").textContent =
+                this._post.poster.name;
+            this.element.querySelector(".post-posted").textContent =
+                new Date(this._post.posted).toLocaleString();
+        }
+    }
+});
+
 /* ==== GridPostElement ==== */
 
-ns.GridPostElement = function(post, ui) {
-    wall.PostElement.call(this, post, ui);
+ns.GridPostElement = function() {
+    wall.remote.PostElement.call(this);
+    this.element.classList.add("grid-post");
     this._list = new ns.ListElement();
     this._list.element.addEventListener("select", this._selected.bind(this));
     this._list.element.addEventListener("actionclick",
         this._actionClicked.bind(this));
-    this.element = this._list.element;
+    this.element.querySelector(".post-content").appendChild(this._list.element);
 };
 
 /**
  * View for grid posts.
  */
-ns.GridPostElement.prototype = Object.create(wall.PostElement.prototype, {
+ns.GridPostElement.prototype = Object.create(wall.remote.PostElement.prototype,
+{
     postType: {value: "GridPost"},
 
     attachedCallback: {value: function() {

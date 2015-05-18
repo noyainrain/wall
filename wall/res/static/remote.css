@@ -200,6 +200,26 @@ ul.overlay-menu li
     font-size: 0.9rem;
 }
 
+/* ==== PostElement ==== */
+
+.post {
+    margin: 1.5rem 0;
+}
+
+.post-content {
+    overflow: visible;
+}
+
+.post-content > :first-child,
+.post-content:empty + .post-meta {
+    margin-top: 0;
+}
+
+.post-meta {
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+
 /* ==== List ==== */
 
 .list:empty {
