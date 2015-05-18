@@ -84,6 +84,11 @@ class UrlBrick(Brick):
         self.search(msg.data['query'], cb)
 
 class UrlPost(Post):
+    """URL post.
+
+    See `api.md`.
+    """
+
     @classmethod
     def create(cls, app, **args):
         url = args['url'].strip()

@@ -59,8 +59,9 @@ class Object(object):
         return json
 
 class Collection(object):
-    """
-    Collection of posts.
+    """Collection of posts.
+
+    See `api.md`.
 
     Attributes:
 
@@ -565,8 +566,9 @@ class User(Object):
         return json
 
 class Post(Object):
-    """
-    Post. See *api.md*.
+    """Post.
+
+    See `api.md`.
     """
 
     @classmethod
@@ -658,6 +660,11 @@ class Brick(object):
             os.path.dirname(sys.modules[self.__module__].__file__), 'static')
 
 class TextPost(Post):
+    """Text post.
+
+    See `api.md`.
+    """
+
     @classmethod
     def create(cls, app, **args):
         try:
@@ -679,6 +686,11 @@ class TextPost(Post):
         self.content = content
 
 class ImagePost(Post):
+    """Image post.
+
+    See `api.md`.
+    """
+
     @classmethod
     def create(cls, app, **args):
         # TODO: check args
@@ -693,6 +705,11 @@ class ImagePost(Post):
         self.url = url
 
 class GridPost(Post, Collection):
+    """Grid post.
+
+    See `api.md`.
+    """
+
     @classmethod
     def create(cls, app, **args):
         post = GridPost(id='grid_post:' + randstr(), app=app, title='Grid',
