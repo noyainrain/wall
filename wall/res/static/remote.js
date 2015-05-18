@@ -649,10 +649,13 @@ ns.ListElement.prototype = Object.create(wall.Element.prototype, {
         for (var e = event.target; e != this.element; e = e.parentElement) {
             if (e instanceof HTMLLIElement) {
                 li = e;
-            }
-            if (e instanceof HTMLButtonElement) {
+            } else if (e instanceof HTMLButtonElement) {
                 button = e;
             }
+        }
+        if (!li) {
+            // may happen if the list is empty
+            return;
         }
         var index = Array.prototype.indexOf.call(this.element.children, li);
 

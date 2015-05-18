@@ -220,11 +220,15 @@ ul.overlay-menu li
     font-size: 0.9rem;
 }
 
-/* ==== List ==== */
+/* ==== GridPostElement ==== */
 
-.list:empty {
-    display: none;
+/* TODO: achieve this with .list-empty-content for List. */
+.grid-post .list:empty::before {
+    /* TODO: secondary text color */
+    content: "No post yet.";
 }
+
+/* ==== List ==== */
 
 .list > li {
     display: flex;
