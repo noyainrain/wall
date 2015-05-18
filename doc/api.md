@@ -127,23 +127,61 @@ Attributes:
  * `session`: current session id (and authentication token).
  * `ap`: current access point (e.g. IP address).
 
+### Collection
+
+Collection of posts.
+
+Attributes:
+
+* `is_collection`: hint that this is a collection. Always `true`.
+
 ### Post
 
 Post.
 
 Attributes:
 
- * `title`: title.
- * `poster_id`: id of the `User` who posted the post.
- * `posted`: time the post was posted.
+* `title`: title.
+* `poster_id`: id of the `User` who posted the post.
+* `posted`: time the post was posted.
 
-Post Types
-----------
+### Post Types
 
-These are the core post types bundled with Wall:
+The following are the core post types bundled with Wall. Further post types can
+be introduced by extensions.
 
- * Text (`text_post`)
- * Image (`image_post`)
- * URL (`url_post`)
+#### TextPost
 
-Further post types can be introduced by extensions.
+Text post.
+
+Extends `Post`.
+
+Attributes:
+
+* `content`: text content.
+
+#### ImagePost
+
+Image post.
+
+Extends `Post`.
+
+Attributes:
+
+* `url`: URL of the image.
+
+#### GridPost
+
+Grid post.
+
+Extends `Post` and `Collection`.
+
+#### UrlPost
+
+URL post.
+
+Extends `Post`.
+
+Attributes:
+
+* `url`: URL.
