@@ -24,8 +24,8 @@ def main():
     linter = PyLinter()
     linter.load_default_plugins()
     linter.load_file_configuration()
-    # TODO: linter.check(['wall', 'runwall.py', 'sjmpc.py', 'check.py'])
-    linter.check(['wall.util', 'runwall.py', 'check.py'])
+    # TODO: linter.check(['wall', 'walld.py', 'sjmpc.py', 'check.py'])
+    linter.check(['wall.util', 'walld.py', 'check.py'])
 
     if not (test_result.wasSuccessful() and linter.msg_status == 0):
         return 1

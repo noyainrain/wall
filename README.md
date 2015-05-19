@@ -25,7 +25,7 @@ Wall requires:
 
 Run Wall with:
 
-    ./wall.py <config_file>
+    python walld.py <config_file>
 
  * config_file: path to a config file (optional). Documentation is available in
    the default config file (`wall/res/default.cfg`).
