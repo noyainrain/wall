@@ -17,11 +17,10 @@ Setup
 
 Wall requires:
 
- * Python           >= 2.6
- * Tornado          >= 2.3
- * Redis            >= 2.4
- * redis-py         >= 2.4
- * websocket-client >= 0.12 (for *sjmpc.py*)
+* Python >= 2.6
+* Tornado >= 2.3
+* Redis >= 2.4
+* redis-py >= 2.4
 
 Run Wall with:
 
