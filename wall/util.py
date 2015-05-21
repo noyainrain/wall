@@ -8,6 +8,7 @@ import sys
 import json
 from urllib import urlencode
 from collections import Mapping
+from itertools import count
 from weakref import WeakValueDictionary
 from tornado.httpclient import AsyncHTTPClient
 from redis import StrictRedis
@@ -234,9 +235,18 @@ class EventTargetTest(TestCase):
 
 class ObjectRedisTest(TestCase):
     class Ship(object):
+        # We use an instance id generator instead of id() because "two objects
+        # with non-overlapping lifetimes may have the same id() value"
+        instance_ids = count()
+
         def __init__(self, id, type):
             self.id = id
             self.type = type
+            self.instance_id = self.instance_ids.next()
+
+        @staticmethod
+        def encode(ship):
+            return {'id': ship.id, 'type': ship.type}
 
     @staticmethod
     def decode(hash):
@@ -251,33 +261,35 @@ class ObjectRedisTest(TestCase):
             'ship:1': ObjectRedisTest.Ship('ship:1', 'frazi')
         }
         for key, object in self.objects.items():
-            self.r.hmset(key, vars(object))
+            self.r.hmset(key, self.Ship.encode(object))
 
     def test_oget(self):
         ship = self.r.oget('ship:0')
         same = self.r.oget('ship:0')
         self.assertIsInstance(ship, ObjectRedisTest.Ship)
-        self.assertEqual(vars(self.objects['ship:0']), vars(ship))
-        self.assertEqual(id(ship), id(same))
+        self.assertEqual(self.Ship.encode(ship),
+                         self.Ship.encode(self.objects['ship:0']))
+        self.assertEqual(vars(ship), vars(same))
 
     def test_oget_destroyed_object(self):
         ship = self.r.oget('ship:0')
-        destroyed_uid = id(ship)
+        destroyed_instance_id = ship.instance_id
         del ship
         ship = self.r.oget('ship:0')
-        self.assertNotEqual(destroyed_uid, id(ship))
+        self.assertNotEqual(ship.instance_id, destroyed_instance_id)
 
     def test_oget_caching_disabled(self):
         self.r.caching = False
         ship = self.r.oget('ship:0')
         same = self.r.oget('ship:0')
-        self.assertNotEqual(id(ship), id(same))
+        self.assertEqual(self.Ship.encode(ship), self.Ship.encode(same))
+        self.assertNotEqual(ship.instance_id, same.instance_id)
 
     def test_omget(self):
         ships = self.r.omget(self.objects.keys())
         self.assertEqual(len(self.objects), len(ships))
         for a, b in zip(self.objects.values(), ships):
-            self.assertEqual(vars(a), vars(b))
+            self.assertEqual(self.Ship.encode(a), self.Ship.encode(b))
 
 class RedisContainerTest(TestCase):
     def setUp(self):
@@ -289,7 +301,7 @@ class RedisContainerTest(TestCase):
             'ship:1': ObjectRedisTest.Ship('ship:1', 'frazi')
         }
         for key, object in self.objects.items():
-            self.r.hmset(key, vars(object))
+            self.r.hmset(key, ObjectRedisTest.Ship.encode(object))
             self.r.sadd('ships', key)
 
         self.ships = RedisContainer(self.r, 'ships')
@@ -298,8 +310,8 @@ class RedisContainerTest(TestCase):
         self.assertEqual(self.objects.keys(), self.ships.keys())
 
     def test_getitem(self):
-        self.assertEqual(vars(self.objects['ship:0']),
-            vars(self.ships['ship:0']))
+        self.assertEqual(ObjectRedisTest.Ship.encode(self.objects['ship:0']),
+                         ObjectRedisTest.Ship.encode(self.ships['ship:0']))
 
     def test_len(self):
         self.assertEqual(len(self.objects), len(self.ships))
