@@ -1,0 +1,31 @@
+[messages control]
+disable=I,
+#   There are built-ins with common names like id
+    redefined-builtin,
+#   Arguments should not be manipulated anyway
+    dangerous-default-value,
+#   Star args are awesome
+    star-args,
+#   Classes with few/many methods may still be good design
+    too-few-public-methods, too-many-public-methods
+
+[reports]
+output-format=colorized
+reports=no
+
+[basic]
+# Do not consider length in name checks
+variable-rgx=[a-z_][a-z0-9_]*$
+const-rgx=[A-Z_][A-Z0-9_]*$
+argument-rgx=%(variable-rgx)s
+attr-rgx=%(variable-rgx)s
+function-rgx=%(variable-rgx)s
+method-rgx=%(variable-rgx)s
+class-attribute-rgx=%(variable-rgx)s|%(const-rgx)s
+# fixed in
+# https://bitbucket.org/logilab/pylint/pull-request/247/use-no-docstring-rgx-option-to-not-emit/diff
+no-docstring-rgx=_.*$
+
+[miscellaneous]
+# Exclude TODO from fixme tags
+notes=FIXME,XXX

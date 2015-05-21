@@ -17,15 +17,14 @@ Setup
 
 Wall requires:
 
- * Python           >= 2.6
- * Tornado          >= 2.3
- * Redis            >= 2.4
- * redis-py         >= 2.4
- * websocket-client >= 0.12 (for *sjmpc.py*)
+* Python >= 2.6
+* Tornado >= 2.3
+* Redis >= 2.4
+* redis-py >= 2.4
 
 Run Wall with:
 
-    ./wall.py <config_file>
+    python walld.py <config_file>
 
  * config_file: path to a config file (optional). Documentation is available in
    the default config file (`wall/res/default.cfg`).
