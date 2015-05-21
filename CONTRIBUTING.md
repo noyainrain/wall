@@ -1,11 +1,5 @@
-Wall Developer Documentation
-============================
-
-## Testing
-
-To run all Wall test cases, type:
-
-    python -m unittest -v wall wall.util wall.bricks.url
+Contributing to Wall
+====================
 
 ## How to Contribute
 
@@ -35,6 +29,12 @@ Please make sure to follow the Wall *Conventions*.
 
 * Pylint >= 1.3 (for `check.py`)
 * websocket-client >= 0.12 (for `sjmpc.py`)
+
+## Testing
+
+To run all Wall test cases, type:
+
+    python -m unittest -v wall wall.util wall.bricks.url
 
 ## Conventions
 
