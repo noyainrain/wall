@@ -4,10 +4,10 @@
 from __future__ import (division, absolute_import, print_function,
     unicode_literals)
 
+import logging
 from collections import Mapping
 from tornado.testing import AsyncTestCase
 from tornado.ioloop import IOLoop
-from logging import getLogger, CRITICAL
 from redis import StrictRedis
 from wall import WallApp, Post, randstr
 
@@ -22,10 +22,6 @@ class TestCase(AsyncTestCase):
      * `app`: Wall application. `TestPost` is available as registered post type.
      * `user`: active user.
     """
-
-    @classmethod
-    def setUpClass(cls):
-        getLogger('wall').setLevel(CRITICAL)
 
     def setUp(self):
         super(TestCase, self).setUp()
