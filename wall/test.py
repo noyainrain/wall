@@ -84,6 +84,14 @@ class CommonPostTest(object):
         post = self.post_type.create(self.app, **self.create_args)
         self.assertTrue(post.id)
 
+    def test_edit(self):
+        self.post.edit(title='Look, a new title!  ')
+        self.assertEqual(self.post.title, 'Look, a new title!')
+
+    def test_edit_empty_title(self):
+        with self.assertRaisesRegexp(ValueError, 'title_empty'):
+            self.post.edit(title='')
+
     def test_json_include_poster(self):
         poster_json = self.post.json(include_poster=True).get('poster')
         self.assertIsInstance(poster_json, Mapping)
