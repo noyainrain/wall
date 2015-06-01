@@ -553,6 +553,14 @@ ns.PostElement = function() {
     this._post = null;
     var template = document.querySelector(".post-template");
     this.element = template.firstElementChild.cloneNode(true);
+
+    this.element.querySelector(".post-edit").addEventListener("click", function(event) {
+        var screenType = ui.editPostScreens[this._post.__type__]
+            || ns.posts.EditPostScreen;
+        var screen = new screenType();
+        screen.post = this._post;
+        ui.showScreen(screen);
+    }.bind(this));
 };
 
 ns.PostElement.prototype = Object.create(wall.Element.prototype, {
@@ -691,8 +699,7 @@ ns.ListElement.prototype = Object.create(wall.Element.prototype, {
     }}
 });
 
-/* ==== PostMenu ==== */
-
+// TODO: rename to DoPostMenu.
 /**
  * Menu for posting.
  *

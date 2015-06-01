@@ -222,8 +222,11 @@ ul.overlay-menu li
 }
 
 .post-meta {
-    margin-bottom: 0;
     font-size: 0.9rem;
+}
+
+.post-actions {
+    margin-bottom: 0;
 }
 
 /* ==== GridPostElement ==== */
