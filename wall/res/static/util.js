@@ -76,6 +76,22 @@ ns.cloneChildNodes = function(node) {
     return fragment;
 };
 
+/**
+ * Load a template into an element `elem`.
+ *
+ * The template is retrieved from the `document` via `selector`. If the template
+ * is not found, an `Error("template_not_found")` is thrown.
+ */
+ns.loadTemplate = function(elem, selector) {
+    var template = document.querySelector(selector);
+    if (!template) {
+        throw new Error("template_not_found");
+    }
+    elem.appendChild(ns.cloneChildNodes(template));
+    // NOTE: with template tag:
+    // elem.appendChild(document.importNode(template.content));
+};
+
 // TODO: document
 ns.send = function(request, data) {
     return new Promise(function(resolve, reject) {
