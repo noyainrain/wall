@@ -12,6 +12,8 @@ wall.remote = {};
  *
  * Attributes:
  *
+ * - `editPostScreens`: registered `EditPostScreen`s indexed by the name of the
+ *   associated post type.
  * - `mainScreen`: main post screen.
  * - `connectionScreen`: connection screen.
  */
@@ -19,6 +21,7 @@ ns.RemoteUi = function() {
     wall.Ui.call(this);
 
     this.screenStack = [];
+    this.editPostScreens = {};
     this.mainScreen = null;
     this.connectionScreen = null;
     this.doPostHandlers = [];
@@ -43,7 +46,9 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                 this._itemActivated.bind(this));
             this.addEventListener("collection_item_deactivated",
                 this._itemDeactivated.bind(this));
-            this.addPostElementType(ns.GridPostElement);
+            this.registerPostElement("GridPost", ns.GridPostElement);
+            this.registerEditPostScreen("TextPost",
+                ns.posts.EditTextPostScreen);
 
             if (!wall.util.isArray(this.config.do_post_handlers, "string")) {
                 throw new wall.util.ConfigurationError(
@@ -165,6 +170,30 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         this.call("collection_post_new",
             $.extend({"collection_id": collectionId, "type": type}, args),
             callback);
+    }},
+
+    /**
+     * Register a new `PostElement` for `postType`.
+     *
+     * `postElement` is the constructor to register. Optionally, an
+     * `EditPostScreen` can be registered along, given by the `editPostScreen`
+     * constructor.
+     */
+    registerPostElement: {value: function(postType, postElement,
+                                          editPostScreen) {
+        this.postElementTypes[postType] = postElement;
+        if (editPostScreen) {
+            this.registerEditPostScreen(postType, editPostScreen);
+        }
+    }},
+
+    /**
+     * Register a new `EditPostScreen` for `postType`.
+     *
+     * `editPostScreen` is the constructor to register.
+     */
+    registerEditPostScreen: {value: function(postType, editPostScreen) {
+        this.editPostScreens[postType] = editPostScreen;
     }},
 
     addDoPostHandler: {value: function(handler) {

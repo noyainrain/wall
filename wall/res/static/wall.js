@@ -167,6 +167,7 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
         }.bind(this));
     }},
 
+    // TODO: rename and move to display (see RemoteUi.registerPostElement)
     /**
      * Extension API: register a new post element type. `postElementType` is a
      * class (constructor) that extends `PostElement`.
