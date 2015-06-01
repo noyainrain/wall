@@ -188,6 +188,12 @@ ul.overlay-menu li
     padding: 0.25rem 0.5rem;
 }
 
+/* ==== EditPostScreen ==== */
+
+.edit-post-screen-content {
+    overflow: visible;
+}
+
 /* ==== Connection Screen ==== */
 
 .connection-screen .screen-content
