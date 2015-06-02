@@ -8,8 +8,8 @@ import sys
 import os
 import json
 import exceptions
+import logging
 from datetime import datetime
-from logging import StreamHandler, Formatter, getLogger, DEBUG
 from ConfigParser import SafeConfigParser, Error as ConfigParserError
 from subprocess import Popen
 from string import ascii_lowercase
@@ -28,6 +28,9 @@ release = 20
 res_path = os.path.join(os.path.dirname(__file__), 'res')
 static_path = os.path.join(res_path, 'static')
 template_path = os.path.join(res_path, 'templates')
+
+# See https://docs.python.org/2/howto/logging.html#library-config
+logging.getLogger('wall').addHandler(logging.NullHandler())
 
 class Object(object):
     """
@@ -196,14 +199,12 @@ class WallApp(Object, EventTarget, Collection, Application):
         Application.__init__(self, template_path=template_path, autoescape=None)
 
         self.user = None
-        self.logger = getLogger('wall')
+        self.logger = logging.getLogger('wall')
         self.bricks = {}
         self.post_types = {}
         self.clients = []
         self.current_post = None
         self._init = True
-
-        self._setup_logger()
 
         config_paths = [os.path.join(res_path, 'default.cfg')]
         if config_path:
@@ -413,14 +414,6 @@ class WallApp(Object, EventTarget, Collection, Application):
         types.update(self.post_types)
         type = types[hash.pop('__type__')]
         return type(app=self, **hash)
-
-    def _setup_logger(self):
-        logger = getLogger()
-        logger.setLevel(DEBUG)
-        handler = StreamHandler()
-        handler.setFormatter(
-            Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s'))
-        logger.addHandler(handler)
 
     def _collection_posted(self, event):
         self.sendall(Message('collection_posted', {
@@ -653,7 +646,7 @@ class Brick(object):
     def __init__(self, app):
         self.app = app
         self.config = app.config
-        self.logger = getLogger('wall.' + self.id)
+        self.logger = logging.getLogger('wall.' + self.id)
 
         # set defaults
         self.static_path = self.static_path or os.path.join(
