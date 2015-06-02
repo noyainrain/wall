@@ -3,13 +3,13 @@ Wall
 
 An interactive display built on web technology.
 
-We use it as jukebox device in our kitchen. People can push content 
+We use it as jukebox device in our kitchen. People can push content
 (youtube-videos, urls, etc) to the display with their mobile devices
 or control the MPD (http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki)
 on the device.
 
-It consist of a python server (built upon tornado) that talks to the display, 
-a browser in fullscreen/kiosk mode, and the clients (browser on your mobile), 
+It consist of a python server (built upon tornado) that talks to the display,
+a browser in fullscreen/kiosk mode, and the clients (browser on your mobile),
 via websockets.
 
 Setup
@@ -32,10 +32,13 @@ Run Wall with:
 Browser Support
 ---------------
 
-* **Display:** Mozilla Firefox 11+, Google Chrome 16+, Opera 12.10+, Internet Explorer 10+, Safari 6+
-* **Client:** Mozilla Firefox for Android 11+, Google Chrome 16+, Opera Mobile 12.10+, Safari Mobile 6.0
+* **Display:** Mozilla Firefox 11+, Google Chrome 16+, Opera 12.10+,
+  Internet Explorer 10+, Safari 6+
+* **Client:** Mozilla Firefox for Android 11+, Google Chrome 16+,
+  Opera Mobile 12.10+, Safari Mobile 6.0
 
-**Note:** The Android stock browser is not supported, because it lacks support of websockets.
+**Note:** The Android stock browser is not supported, because it lacks support
+of websockets.
 
 Built With
 ----------

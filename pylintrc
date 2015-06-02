@@ -13,6 +13,10 @@ disable=I,
 output-format=colorized
 reports=no
 
+[format]
+# Long URLs and strings are okay
+ignore-long-lines=.*(://|'.*'|".*")
+
 [basic]
 # Do not consider length in name checks
 variable-rgx=[a-z_][a-z0-9_]*$

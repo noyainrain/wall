@@ -1,8 +1,5 @@
 /*
  * Wall
- *
- * author: krmnn <thomas@krmnn.de>
- *
  */
 
 wall.volume = {};

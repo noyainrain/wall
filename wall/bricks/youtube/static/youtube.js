@@ -41,7 +41,7 @@ $.extend(ns.Brick.prototype, wall.Brick.prototype, {
     initPost: function(elem, post) {
         $('<div id="youtube-player-container" />').appendTo(elem);
         if(!$.fn.tubeplayer){
-            $.getScript("/static/youtube/jQuery.tubeplayer.js", $.proxy(function(data, textStatus, jqxhr) {
+            $.getScript("/static/youtube/lib/jQuery.tubeplayer.js", $.proxy(function(data, textStatus, jqxhr) {
                 console.log("youtube: loading TubePlayer API: " + textStatus);
                 this.initPlayer(elem, post);
             }, this));
