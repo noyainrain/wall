@@ -43,7 +43,9 @@ To run all Wall test cases, type:
 * Consistency: take a look around and be consistent with what you see
 * [KISS](https://en.wikipedia.org/wiki/KISS_principle)
 * [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)
-* [Style Guide for Python Code](https://www.python.org/dev/peps/pep-0008/)
+* Python: [style guide](https://www.python.org/dev/peps/pep-0008/)
+* HTML: [void elements](http://www.w3.org/TR/html5/syntax.html#void-elements)
+  use self-closing notation, e.g. `<br />`.
 
 ### Methods
 
