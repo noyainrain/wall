@@ -55,8 +55,11 @@ ns.DisplayUi.prototype = Object.create(wall.Ui.prototype, {
     }}
 });
 
-/* ==== PostElement ==== */
-
+/**
+ * Post element.
+ *
+ * Subclass API: subclasses should implement `updateContent()`.
+ */
 ns.PostElement = function(post, ui) {
     wall.PostElement.call(this, post, ui);
 
@@ -76,6 +79,7 @@ ns.PostElement = function(post, ui) {
         if (this.post.is_collection) {
             doc.querySelector(".post-meta").style.display = "none";
         }
+        this.updateContent();
         doc.body.insertBefore(this.content, doc.body.firstElementChild);
         this.contentAttachedCallback();
     }.bind(this));
@@ -83,16 +87,40 @@ ns.PostElement = function(post, ui) {
 };
 
 ns.PostElement.prototype = Object.create(wall.PostElement.prototype, {
-    contentAttachedCallback: {value: function() {}}
+    attachedCallback: {value: function() {
+        ui.addEventListener("post_edited", this);
+    }},
+
+    detachedCallback: {value: function() {
+        ui.removeEventListener("post_edited", this);
+    }},
+
+    contentAttachedCallback: {value: function() {}},
+
+    /**
+     * Subclass API: update the content UI.
+     *
+     * Called when `post` is set or edited. The default implementation does
+     * nothing.
+     */
+    updateContent: {value: function() {}},
+
+    handleEvent: {value: function(event) {
+        if (event.target === ui && event.type === "post_edited") {
+            if (event.args.post.id !== this.post.id) {
+                return;
+            }
+            this.post = event.args.post;
+            this.updateContent();
+        }
+    }}
 });
 
 /* ==== TextPostElement ==== */
 
 ns.TextPostElement = function(post, ui) {
     ns.PostElement.call(this, post, ui);
-    var pre = document.createElement("pre");
-    pre.textContent = this.post.content;
-    this.content.appendChild(pre);
+    this.content.appendChild(document.createElement("pre"));
 };
 
 ns.TextPostElement.prototype = Object.create(ns.PostElement.prototype, {
@@ -106,6 +134,11 @@ ns.TextPostElement.prototype = Object.create(ns.PostElement.prototype, {
     detachedCallback: {value: function() {
         ns.PostElement.prototype.detachedCallback.call(this);
         this.element.contentWindow.removeEventListener("resize", this);
+    }},
+
+    updateContent: {value: function() {
+        this.content.querySelector("pre").textContent = this.post.content;
+        this._layout();
     }},
 
     _layout: {value: function() {

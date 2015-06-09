@@ -357,8 +357,30 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
         }
     },
 
+    attachedCallback: {value: function() {
+        ns.Screen.prototype.attachedCallback.call(this);
+        ui.addEventListener("post_edited", this);
+    }},
+
     detachedCallback: {value: function() {
+        ns.Screen.prototype.detachedCallback.call(this);
+        ui.removeEventListener("post_edited", this);
+        // This is a hack to trigger detachedCallback() for children. TODO:
+        // remove once we switch to webcomponents.js.
         this.post = null;
+    }},
+
+    handleEvent: {value: function(event) {
+        if (event.target === ui && event.type === "post_edited") {
+            if (!this._post || event.args.post.id !== this._post.id) {
+                return;
+            }
+            this._post = event.args.post;
+            this.title = this._post.title;
+            if (this._post.is_collection) {
+                this._postMenu.addTarget(this._post.id, this._post.title);
+            }
+        }
     }}
 });
 
@@ -534,8 +556,6 @@ ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
     }}
 });
 
-/* ==== PostElement ==== */
-
 /**
  * Post element.
  *
@@ -545,8 +565,7 @@ ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
  *
  * - `post`: associated `Post`.
  *
- * Subclass API: subclasses may override the `post` setter to update the UI when
- * `post` is set.
+ * Subclass API: subclasses should implement `updateContent()`.
  */
 ns.PostElement = function() {
     wall.Element.call(this, ui);
@@ -569,8 +588,25 @@ ns.PostElement.prototype = Object.create(wall.Element.prototype, {
                 this._post.poster.name;
             this.element.querySelector(".post-posted").textContent =
                 new Date(this._post.posted).toLocaleString();
+            this.updateContent();
         }
     },
+
+    attachedCallback: {value: function() {
+        ui.addEventListener("post_edited", this);
+    }},
+
+    detachedCallback: {value: function() {
+        ui.removeEventListener("post_edited", this);
+    }},
+
+    /**
+     * Subclass API: update the content UI.
+     *
+     * Called when `post` is set or edited. The default implementation does
+     * nothing.
+     */
+    updateContent: {value: function() {}},
 
     handleEvent: {value: function(event) {
         if (event.currentTarget === this.element.querySelector(".post-edit")
@@ -580,6 +616,12 @@ ns.PostElement.prototype = Object.create(wall.Element.prototype, {
             var screen = new screenType();
             screen.post = this._post;
             ui.showScreen(screen);
+
+        } else if (event.target === ui && event.type === "post_edited") {
+            if (event.args.post.id !== this._post.id) {
+                return;
+            }
+            this.post = event.args.post;
         }
     }}
 });
@@ -605,6 +647,7 @@ ns.GridPostElement.prototype = Object.create(wall.remote.PostElement.prototype,
     attachedCallback: {value: function() {
         this.ui.call("collection_get_items", {collection_id: this.post.id},
             function(posts) {
+                ui.addEventListener("post_edited", this);
                 ui.addEventListener("collection_posted", this);
                 ui.addEventListener("collection_item_removed", this);
                 for (var i = 0; i < posts.length; i++) {
@@ -614,6 +657,7 @@ ns.GridPostElement.prototype = Object.create(wall.remote.PostElement.prototype,
     }},
 
     detachedCallback: {value: function() {
+        ui.removeEventListener("post_edited", this);
         ui.removeEventListener("collection_posted", this);
         ui.removeEventListener("collection_item_removed", this);
     }},
@@ -650,6 +694,16 @@ ns.GridPostElement.prototype = Object.create(wall.remote.PostElement.prototype,
                 && event.type == "actionclick") {
             this.ui.call("collection_remove_item",
                 {collection_id: this.post.id, index: event.detail.index});
+
+        } else if (event.target === ui && event.type === "post_edited") {
+            Array.forEach(this._list.element.children,
+                function(li) {
+                    if (event.args.post.id === li._post.id) {
+                        li._post = event.args.post;
+                        li.querySelector("p").textContent = li._post.title;
+                    }
+                },
+                this);
 
         } else if (event.target === ui && event.type === "collection_posted") {
             if (event.args.collection_id !== this.post.id) {
