@@ -99,9 +99,13 @@ ns.TextPostElement.prototype = Object.create(ns.PostElement.prototype, {
     postType: {value: "TextPost"},
 
     contentAttachedCallback: {value: function() {
-        this.element.contentWindow.addEventListener("resize",
-            this._resized.bind(this));
+        this.element.contentWindow.addEventListener("resize", this);
         this._layout();
+    }},
+
+    detachedCallback: {value: function() {
+        ns.PostElement.prototype.detachedCallback.call(this);
+        this.element.contentWindow.removeEventListener("resize", this);
     }},
 
     _layout: {value: function() {
@@ -116,8 +120,12 @@ ns.TextPostElement.prototype = Object.create(ns.PostElement.prototype, {
         $(pre).fitToParent({maxFontSize: (20 / 1.5) + "vh"});
     }},
 
-    _resized: {value: function(event) {
-        this._layout();
+    handleEvent: {value: function(event) {
+        ns.PostElement.prototype.handleEvent.call(this, event);
+        if (event.currentTarget === this.element.contentWindow
+                && event.type === "resize") {
+            this._layout();
+        }
     }}
 });
 

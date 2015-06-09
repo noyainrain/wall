@@ -43,7 +43,11 @@ ns.EventTarget.prototype = Object.create(Object.prototype, {
         var listeners = this._eventListeners[event.type] || [];
         for (var i = 0; i < listeners.length; i++) {
             var listener = listeners[i];
-            listener.call(this, event);
+            if ("handleEvent" in listener) {
+                listener.handleEvent(event);
+            } else {
+                listener.call(this, event);
+            }
         }
     }}
 });

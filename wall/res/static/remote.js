@@ -553,14 +553,7 @@ ns.PostElement = function() {
     this._post = null;
     var template = document.querySelector(".post-template");
     this.element = template.firstElementChild.cloneNode(true);
-
-    this.element.querySelector(".post-edit").addEventListener("click", function(event) {
-        var screenType = ui.editPostScreens[this._post.__type__]
-            || ns.posts.EditPostScreen;
-        var screen = new screenType();
-        screen.post = this._post;
-        ui.showScreen(screen);
-    }.bind(this));
+    this.element.querySelector(".post-edit").addEventListener("click", this);
 };
 
 ns.PostElement.prototype = Object.create(wall.Element.prototype, {
@@ -577,7 +570,18 @@ ns.PostElement.prototype = Object.create(wall.Element.prototype, {
             this.element.querySelector(".post-posted").textContent =
                 new Date(this._post.posted).toLocaleString();
         }
-    }
+    },
+
+    handleEvent: {value: function(event) {
+        if (event.currentTarget === this.element.querySelector(".post-edit")
+                && event.type === "click") {
+            var screenType = ui.editPostScreens[this._post.__type__]
+                || ns.posts.EditPostScreen;
+            var screen = new screenType();
+            screen.post = this._post;
+            ui.showScreen(screen);
+        }
+    }}
 });
 
 /* ==== GridPostElement ==== */
@@ -586,9 +590,8 @@ ns.GridPostElement = function() {
     wall.remote.PostElement.call(this);
     this.element.classList.add("grid-post");
     this._list = new ns.ListElement();
-    this._list.element.addEventListener("select", this._selected.bind(this));
-    this._list.element.addEventListener("actionclick",
-        this._actionClicked.bind(this));
+    this._list.element.addEventListener("select", this);
+    this._list.element.addEventListener("actionclick", this);
     this.element.querySelector(".post-content").appendChild(this._list.element);
 };
 
@@ -596,21 +599,23 @@ ns.GridPostElement = function() {
  * View for grid posts.
  */
 ns.GridPostElement.prototype = Object.create(wall.remote.PostElement.prototype,
-{
+        {
     postType: {value: "GridPost"},
 
     attachedCallback: {value: function() {
         this.ui.call("collection_get_items", {collection_id: this.post.id},
             function(posts) {
-                this.ui.addEventListener("collection_posted",
-                    this._posted.bind(this));
-                this.ui.addEventListener("collection_item_removed",
-                    this._itemRemoved.bind(this));
-
+                ui.addEventListener("collection_posted", this);
+                ui.addEventListener("collection_item_removed", this);
                 for (var i = 0; i < posts.length; i++) {
                     this._addItem(posts[i]);
                 }
             }.bind(this));
+    }},
+
+    detachedCallback: {value: function() {
+        ui.removeEventListener("collection_posted", this);
+        ui.removeEventListener("collection_item_removed", this);
     }},
 
     _addItem: {value: function(post) {
@@ -631,30 +636,34 @@ ns.GridPostElement.prototype = Object.create(wall.remote.PostElement.prototype,
         this._list.element.removeChild(this._list.element.children[index]);
     }},
 
-    _selected: {value: function(event) {
-        var screen = new ns.PostScreen(this.ui);
-        screen.post = event.detail.li._post;
-        screen.hasPostMenu = false;
-        this.ui.showScreen(screen);
-    }},
+    handleEvent: {value: function(event) {
+        ns.PostElement.prototype.handleEvent.call(this, event);
 
-    _actionClicked: {value: function(event) {
-        this.ui.call("collection_remove_item",
-            {collection_id: this.post.id, index: event.detail.index});
-    }},
+        if (event.currentTarget === this._list.element
+                && event.type === "select") {
+            var screen = new ns.PostScreen(this.ui);
+            screen.post = event.detail.li._post;
+            screen.hasPostMenu = false;
+            this.ui.showScreen(screen);
 
-    _posted: {value: function(event) {
-        if (event.args.collection_id !== this.post.id) {
-            return;
+        } else if (event.currentTarget === this._list.element
+                && event.type == "actionclick") {
+            this.ui.call("collection_remove_item",
+                {collection_id: this.post.id, index: event.detail.index});
+
+        } else if (event.target === ui && event.type === "collection_posted") {
+            if (event.args.collection_id !== this.post.id) {
+                return;
+            }
+            this._addItem(event.args.post);
+
+        } else if (event.target === ui
+                && event.type === "collection_item_removed") {
+            if (event.args.collection_id !== this.post.id) {
+                return;
+            }
+            this._removeItem(event.args.index, event.args.post);
         }
-        this._addItem(event.args.post);
-    }},
-
-    _itemRemoved: {value: function(event) {
-        if (event.args.collection_id !== this.post.id) {
-            return;
-        }
-        this._removeItem(event.args.index, event.args.post);
     }}
 });
 
