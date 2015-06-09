@@ -433,18 +433,10 @@ ns.DoPostScreen.prototype = Object.create(ns.Screen.prototype);
 
 ns.PostNoteScreen = function(ui) {
     ns.DoPostScreen.call(this, ui);
-
-    $(this.content).append($(
-        '<form class="post-note-screen-post">                            ' +
-        '    <textarea name="content"></textarea>                        ' +
-        '    <p class="buttons">                                         ' +
-        '        <button><img src="static/images/post.svg"/>Post</button>' +
-        '    </div>                                                      ' +
-        '</form>                                                         '
-    ));
+    wall.util.loadTemplate(this.element.querySelector(".screen-content"),
+                           ".post-note-screen-template");
     var form = this.content.querySelector(".post-note-screen-post");
     form.addEventListener("submit", this._postSubmitted.bind(this));
-
     this.title = "Post Note";
 };
 
