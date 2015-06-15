@@ -15,6 +15,7 @@
         <script src="/static/wall.js"></script>
         <script src="/static/display.js"></script>
         <script src="/static/remote.js"></script>
+        <script src="/static/remote/posts.js"></script>
 
         <script>
             ES6Promise.r();
@@ -66,6 +67,31 @@
                 </form>
             </div>
 
+            <div class="edit-post-screen-template">
+                <form class="edit-post-screen-edit">
+                    <label>
+                        <input name="title"/>
+                        <small>Title</small>
+                    </label>
+                    <div class="edit-post-screen-content"></div>
+                    <p class="buttons"><button>Done</button></p>
+                </form>
+            </div>
+
+            <div class="edit-text-post-screen-template">
+                <label>
+                    <textarea name="content"></textarea>
+                    <small>Content</small>
+                </label>
+            </div>
+
+            <div class="post-note-screen-template">
+                <form class="post-note-screen-post">
+                    <textarea name="content"></textarea>
+                    <p class="buttons"><button>Post</button></p>
+                </form>
+            </div>
+
             <div class="post-template">
                 <div class="post">
                     <div class="post-content"></div>
@@ -73,7 +99,9 @@
                         posted by <span class="post-poster">?</span> at
                         <span class="post-posted">?</span>
                     </p>
-                    <!-- TODO: menu -->
+                    <ul class="list post-actions">
+                        <li class="post-edit"><p>Edit</p></li>
+                    </ul>
                 </div>
             </div>
 

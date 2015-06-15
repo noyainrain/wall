@@ -12,6 +12,8 @@ wall.remote = {};
  *
  * Attributes:
  *
+ * - `editPostScreens`: registered `EditPostScreen`s indexed by the name of the
+ *   associated post type.
  * - `mainScreen`: main post screen.
  * - `connectionScreen`: connection screen.
  */
@@ -19,6 +21,7 @@ ns.RemoteUi = function() {
     wall.Ui.call(this);
 
     this.screenStack = [];
+    this.editPostScreens = {};
     this.mainScreen = null;
     this.connectionScreen = null;
     this.doPostHandlers = [];
@@ -43,7 +46,9 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
                 this._itemActivated.bind(this));
             this.addEventListener("collection_item_deactivated",
                 this._itemDeactivated.bind(this));
-            this.addPostElementType(ns.GridPostElement);
+            this.registerPostElement("GridPost", ns.GridPostElement);
+            this.registerEditPostScreen("TextPost",
+                ns.posts.EditTextPostScreen);
 
             if (!wall.util.isArray(this.config.do_post_handlers, "string")) {
                 throw new wall.util.ConfigurationError(
@@ -165,6 +170,30 @@ ns.RemoteUi.prototype = Object.create(wall.Ui.prototype, {
         this.call("collection_post_new",
             $.extend({"collection_id": collectionId, "type": type}, args),
             callback);
+    }},
+
+    /**
+     * Register a new `PostElement` for `postType`.
+     *
+     * `postElement` is the constructor to register. Optionally, an
+     * `EditPostScreen` can be registered along, given by the `editPostScreen`
+     * constructor.
+     */
+    registerPostElement: {value: function(postType, postElement,
+                                          editPostScreen) {
+        this.postElementTypes[postType] = postElement;
+        if (editPostScreen) {
+            this.registerEditPostScreen(postType, editPostScreen);
+        }
+    }},
+
+    /**
+     * Register a new `EditPostScreen` for `postType`.
+     *
+     * `editPostScreen` is the constructor to register.
+     */
+    registerEditPostScreen: {value: function(postType, editPostScreen) {
+        this.editPostScreens[postType] = editPostScreen;
     }},
 
     addDoPostHandler: {value: function(handler) {
@@ -328,8 +357,30 @@ ns.PostScreen.prototype = Object.create(ns.Screen.prototype, {
         }
     },
 
+    attachedCallback: {value: function() {
+        ns.Screen.prototype.attachedCallback.call(this);
+        ui.addEventListener("post_edited", this);
+    }},
+
     detachedCallback: {value: function() {
+        ns.Screen.prototype.detachedCallback.call(this);
+        ui.removeEventListener("post_edited", this);
+        // This is a hack to trigger detachedCallback() for children. TODO:
+        // remove once we switch to webcomponents.js.
         this.post = null;
+    }},
+
+    handleEvent: {value: function(event) {
+        if (event.target === ui && event.type === "post_edited") {
+            if (!this._post || event.args.post.id !== this._post.id) {
+                return;
+            }
+            this._post = event.args.post;
+            this.title = this._post.title;
+            if (this._post.is_collection) {
+                this._postMenu.addTarget(this._post.id, this._post.title);
+            }
+        }
     }}
 });
 
@@ -433,18 +484,10 @@ ns.DoPostScreen.prototype = Object.create(ns.Screen.prototype);
 
 ns.PostNoteScreen = function(ui) {
     ns.DoPostScreen.call(this, ui);
-
-    $(this.content).append($(
-        '<form class="post-note-screen-post">                            ' +
-        '    <textarea name="content"></textarea>                        ' +
-        '    <p class="buttons">                                         ' +
-        '        <button><img src="static/images/post.svg"/>Post</button>' +
-        '    </div>                                                      ' +
-        '</form>                                                         '
-    ));
+    wall.util.loadTemplate(this.element.querySelector(".screen-content"),
+                           ".post-note-screen-template");
     var form = this.content.querySelector(".post-note-screen-post");
     form.addEventListener("submit", this._postSubmitted.bind(this));
-
     this.title = "Post Note";
 };
 
@@ -513,8 +556,6 @@ ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
     }}
 });
 
-/* ==== PostElement ==== */
-
 /**
  * Post element.
  *
@@ -524,14 +565,14 @@ ns.PostHistoryScreen.prototype = Object.create(ns.DoPostScreen.prototype, {
  *
  * - `post`: associated `Post`.
  *
- * Subclass API: subclasses may override the `post` setter to update the UI when
- * `post` is set.
+ * Subclass API: subclasses should implement `updateContent()`.
  */
 ns.PostElement = function() {
     wall.Element.call(this, ui);
     this._post = null;
     var template = document.querySelector(".post-template");
     this.element = template.firstElementChild.cloneNode(true);
+    this.element.querySelector(".post-edit").addEventListener("click", this);
 };
 
 ns.PostElement.prototype = Object.create(wall.Element.prototype, {
@@ -547,8 +588,42 @@ ns.PostElement.prototype = Object.create(wall.Element.prototype, {
                 this._post.poster.name;
             this.element.querySelector(".post-posted").textContent =
                 new Date(this._post.posted).toLocaleString();
+            this.updateContent();
         }
-    }
+    },
+
+    attachedCallback: {value: function() {
+        ui.addEventListener("post_edited", this);
+    }},
+
+    detachedCallback: {value: function() {
+        ui.removeEventListener("post_edited", this);
+    }},
+
+    /**
+     * Subclass API: update the content UI.
+     *
+     * Called when `post` is set or edited. The default implementation does
+     * nothing.
+     */
+    updateContent: {value: function() {}},
+
+    handleEvent: {value: function(event) {
+        if (event.currentTarget === this.element.querySelector(".post-edit")
+                && event.type === "click") {
+            var screenType = ui.editPostScreens[this._post.__type__]
+                || ns.posts.EditPostScreen;
+            var screen = new screenType();
+            screen.post = this._post;
+            ui.showScreen(screen);
+
+        } else if (event.target === ui && event.type === "post_edited") {
+            if (event.args.post.id !== this._post.id) {
+                return;
+            }
+            this.post = event.args.post;
+        }
+    }}
 });
 
 /* ==== GridPostElement ==== */
@@ -557,9 +632,8 @@ ns.GridPostElement = function() {
     wall.remote.PostElement.call(this);
     this.element.classList.add("grid-post");
     this._list = new ns.ListElement();
-    this._list.element.addEventListener("select", this._selected.bind(this));
-    this._list.element.addEventListener("actionclick",
-        this._actionClicked.bind(this));
+    this._list.element.addEventListener("select", this);
+    this._list.element.addEventListener("actionclick", this);
     this.element.querySelector(".post-content").appendChild(this._list.element);
 };
 
@@ -567,21 +641,25 @@ ns.GridPostElement = function() {
  * View for grid posts.
  */
 ns.GridPostElement.prototype = Object.create(wall.remote.PostElement.prototype,
-{
+        {
     postType: {value: "GridPost"},
 
     attachedCallback: {value: function() {
         this.ui.call("collection_get_items", {collection_id: this.post.id},
             function(posts) {
-                this.ui.addEventListener("collection_posted",
-                    this._posted.bind(this));
-                this.ui.addEventListener("collection_item_removed",
-                    this._itemRemoved.bind(this));
-
+                ui.addEventListener("post_edited", this);
+                ui.addEventListener("collection_posted", this);
+                ui.addEventListener("collection_item_removed", this);
                 for (var i = 0; i < posts.length; i++) {
                     this._addItem(posts[i]);
                 }
             }.bind(this));
+    }},
+
+    detachedCallback: {value: function() {
+        ui.removeEventListener("post_edited", this);
+        ui.removeEventListener("collection_posted", this);
+        ui.removeEventListener("collection_item_removed", this);
     }},
 
     _addItem: {value: function(post) {
@@ -602,30 +680,44 @@ ns.GridPostElement.prototype = Object.create(wall.remote.PostElement.prototype,
         this._list.element.removeChild(this._list.element.children[index]);
     }},
 
-    _selected: {value: function(event) {
-        var screen = new ns.PostScreen(this.ui);
-        screen.post = event.detail.li._post;
-        screen.hasPostMenu = false;
-        this.ui.showScreen(screen);
-    }},
+    handleEvent: {value: function(event) {
+        ns.PostElement.prototype.handleEvent.call(this, event);
 
-    _actionClicked: {value: function(event) {
-        this.ui.call("collection_remove_item",
-            {collection_id: this.post.id, index: event.detail.index});
-    }},
+        if (event.currentTarget === this._list.element
+                && event.type === "select") {
+            var screen = new ns.PostScreen(this.ui);
+            screen.post = event.detail.li._post;
+            screen.hasPostMenu = false;
+            this.ui.showScreen(screen);
 
-    _posted: {value: function(event) {
-        if (event.args.collection_id !== this.post.id) {
-            return;
+        } else if (event.currentTarget === this._list.element
+                && event.type == "actionclick") {
+            this.ui.call("collection_remove_item",
+                {collection_id: this.post.id, index: event.detail.index});
+
+        } else if (event.target === ui && event.type === "post_edited") {
+            Array.forEach(this._list.element.children,
+                function(li) {
+                    if (event.args.post.id === li._post.id) {
+                        li._post = event.args.post;
+                        li.querySelector("p").textContent = li._post.title;
+                    }
+                },
+                this);
+
+        } else if (event.target === ui && event.type === "collection_posted") {
+            if (event.args.collection_id !== this.post.id) {
+                return;
+            }
+            this._addItem(event.args.post);
+
+        } else if (event.target === ui
+                && event.type === "collection_item_removed") {
+            if (event.args.collection_id !== this.post.id) {
+                return;
+            }
+            this._removeItem(event.args.index, event.args.post);
         }
-        this._addItem(event.args.post);
-    }},
-
-    _itemRemoved: {value: function(event) {
-        if (event.args.collection_id !== this.post.id) {
-            return;
-        }
-        this._removeItem(event.args.index, event.args.post);
     }}
 });
 
@@ -670,8 +762,7 @@ ns.ListElement.prototype = Object.create(wall.Element.prototype, {
     }}
 });
 
-/* ==== PostMenu ==== */
-
+// TODO: rename to DoPostMenu.
 /**
  * Menu for posting.
  *

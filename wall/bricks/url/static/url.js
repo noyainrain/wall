@@ -73,21 +73,12 @@ ns.RemoteUrlPostElement = function() {
 };
 
 ns.RemoteUrlPostElement.prototype = Object.create(
-    wall.remote.PostElement.prototype,
-{
+        wall.remote.PostElement.prototype, {
     postType: {value: "UrlPost"},
 
-    post: {
-        get: Object
-            .getOwnPropertyDescriptor(wall.remote.PostElement.prototype, "post")
-            .get,
-        set: function(value) {
-            Object.getOwnPropertyDescriptor(wall.remote.PostElement.prototype,
-                "post").set.call(this, value);
-            this.element.querySelector(".post-content").textContent =
-                this.post.url;
-        }
-    }
+    updateContent: {value: function() {
+        this.element.querySelector(".post-content").textContent = this.post.url;
+    }}
 });
 
 /* ==== PostUrlScreen ==== */

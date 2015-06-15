@@ -43,7 +43,11 @@ ns.EventTarget.prototype = Object.create(Object.prototype, {
         var listeners = this._eventListeners[event.type] || [];
         for (var i = 0; i < listeners.length; i++) {
             var listener = listeners[i];
-            listener.call(this, event);
+            if ("handleEvent" in listener) {
+                listener.handleEvent(event);
+            } else {
+                listener.call(this, event);
+            }
         }
     }}
 });
@@ -74,6 +78,22 @@ ns.cloneChildNodes = function(node) {
         fragment.appendChild(node.childNodes[i].cloneNode(true));
     }
     return fragment;
+};
+
+/**
+ * Load a template into an element `elem`.
+ *
+ * The template is retrieved from the `document` via `selector`. If the template
+ * is not found, an `Error("template_not_found")` is thrown.
+ */
+ns.loadTemplate = function(elem, selector) {
+    var template = document.querySelector(selector);
+    if (!template) {
+        throw new Error("template_not_found");
+    }
+    elem.appendChild(ns.cloneChildNodes(template));
+    // NOTE: with template tag:
+    // elem.appendChild(document.importNode(template.content));
 };
 
 // TODO: document

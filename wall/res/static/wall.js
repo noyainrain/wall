@@ -50,6 +50,7 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
      * This is an initialization step and may only be called from within `init`.
      */
     initCommon: {value: function() {
+        this.msgHandlers["post_edited"] = this.eventMessage.bind(this);
         this.msgHandlers["collection_posted"] = this.eventMessage.bind(this);
         this.msgHandlers["collection_item_removed"] =
             this.eventMessage.bind(this);
@@ -167,6 +168,7 @@ ns.Ui.prototype = Object.create(wall.util.EventTarget.prototype, {
         }.bind(this));
     }},
 
+    // TODO: rename and move to display (see RemoteUi.registerPostElement)
     /**
      * Extension API: register a new post element type. `postElementType` is a
      * class (constructor) that extends `PostElement`.
