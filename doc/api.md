@@ -68,6 +68,16 @@ Calls
 get_history
 ```
 
+`post_edit: post_id, attrs...`
+
+Edit the post given by `post_id`.
+
+`attrs` are the attributes to modify. Which attributes can be modified depends
+on the post type. See the specific post type's documentation for more
+information.
+
+If a given attribute has an invalid value, a `ValueError` is returned.
+
 ```
 collection_get_items: collection_id
 ```
@@ -86,6 +96,12 @@ collection_remove_item: collection_id, index
 
 Events
 ------
+
+`post_edited`
+
+Dispatched when a post has been edited.
+
+* `post`: the modified post.
 
 ```
 collection_posted: collection_id, post
@@ -145,6 +161,8 @@ Attributes:
 * `poster_id`: id of the `User` who posted the post.
 * `posted`: time the post was posted.
 
+`title` is editable.
+
 ### Post Types
 
 The following are the core post types bundled with Wall. Further post types can
@@ -159,6 +177,8 @@ Extends `Post`.
 Attributes:
 
 * `content`: text content.
+
+`content` is editable.
 
 #### ImagePost
 

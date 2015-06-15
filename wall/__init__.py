@@ -235,6 +235,7 @@ class WallApp(Object, EventTarget, Collection, Application):
 
         self.msg_handlers = {
             'get_history': self.get_history_msg,
+            'post_edit': self.post_edit_msg,
             'collection_get_items': self.collection_get_items_msg,
             'collection_post': self.collection_post_msg,
             'collection_post_new': self.collection_post_new_msg,
@@ -243,6 +244,7 @@ class WallApp(Object, EventTarget, Collection, Application):
             'authenticate': self.authenticate_msg
         }
 
+        self.add_event_listener('post_edit', self._on_post_edit)
         self.add_event_listener('collection_posted', self._collection_posted)
         self.add_event_listener('collection_item_removed',
             self._collection_item_removed)
@@ -362,6 +364,12 @@ class WallApp(Object, EventTarget, Collection, Application):
         return Message('get_history',
             [p.json('common', include_poster=True) for p in self.get_history()])
 
+    def post_edit_msg(self, msg):
+        args = dict(msg.data)
+        post = self.posts[args.pop('post_id')]
+        post.edit(**args)
+        return Message('post_edit')
+
     def collection_get_items_msg(self, msg):
         collection = self.get_collection(msg.data['collection_id'])
         return Message('collection_get_items',
@@ -414,6 +422,11 @@ class WallApp(Object, EventTarget, Collection, Application):
         types.update(self.post_types)
         type = types[hash.pop('__type__')]
         return type(app=self, **hash)
+
+    def _on_post_edit(self, event):
+        self.sendall(Message(
+            'post_edited',
+            {'post': event.args['post'].json(include_poster=True)}))
 
     def _collection_posted(self, event):
         self.sendall(Message('collection_posted', {
@@ -559,9 +572,10 @@ class User(Object):
         return json
 
 class Post(Object):
-    """Post.
+    """Post; see `api.md`.
 
-    See `api.md`.
+    Subclass API: subclasses must implement `create()` and may implement
+    `do_edit()`, `activate()` and `deactivate()`.
     """
 
     @classmethod
@@ -585,6 +599,28 @@ class Post(Object):
     @property
     def poster(self):
         return self.app.users[self.poster_id]
+
+    def edit(self, **attrs):
+        """Edit the post; see `api.md`."""
+        if 'title' in attrs and not attrs['title']:
+            raise ValueError('title_empty')
+        self.do_edit(**attrs)
+        if 'title' in attrs:
+            self.title = attrs['title'].strip()
+        self.app.db.hmset(self.id, self.json())
+        self.app.dispatch_event(Event('post_edit', post=self))
+
+    def do_edit(self, **attrs):
+        """Subclass API: edit the post.
+
+        More precisely, this means validating and then setting the given
+        `attrs`.
+
+        Called by `edit()`, which takes care of validating common post
+        attributes and finally setting the common attributes and storing the
+        modified post in the database. The default implementation does nothing.
+        """
+        pass
 
     def activate(self):
         """
@@ -660,6 +696,7 @@ class TextPost(Post):
 
     @classmethod
     def create(cls, app, **args):
+        # TODO: allow empty content
         try:
             content = args['content'].strip()
         except KeyError:
@@ -677,6 +714,10 @@ class TextPost(Post):
     def __init__(self, content, **args):
         super(TextPost, self).__init__(**args)
         self.content = content
+
+    def do_edit(self, **attrs):
+        if 'content' in attrs:
+            self.content = attrs['content'].strip()
 
 class ImagePost(Post):
     """Image post.
