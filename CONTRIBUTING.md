@@ -46,6 +46,9 @@ To run all Wall test cases, type:
 * Python: [style guide](https://www.python.org/dev/peps/pep-0008/)
 * HTML: [void elements](http://www.w3.org/TR/html5/syntax.html#void-elements)
   use self-closing notation, e.g. `<br />`.
+* For dependencies, the version available in Debian stable is prefered. This
+  should simplify the installation of Wall (dependencies) on a wide range of
+  systems.
 
 ### Methods
 
