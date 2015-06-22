@@ -29,16 +29,14 @@ Run Wall with:
  * config_file: path to a config file (optional). Documentation is available in
    the default config file (`wall/res/default.cfg`).
 
-Browser Support
----------------
+## Platform Support
 
-* **Display:** Mozilla Firefox 11+, Google Chrome 16+, Opera 12.10+,
-  Internet Explorer 10+, Safari 6+
-* **Client:** Mozilla Firefox for Android 11+, Google Chrome 16+,
-  Opera Mobile 12.10+, Safari Mobile 6.0
+The Wall server should work on any [POSIX](https://en.wikipedia.org/wiki/POSIX) system.
 
-**Note:** The Android stock browser is not supported, because it lacks support
-of websockets.
+## Browser Support
+
+The Wall clients support the latest version of popular browsers (i.e. Chrome,
+Firefox, Internet Explorer and Safari; see http://caniuse.com/ ).
 
 Built With
 ----------
