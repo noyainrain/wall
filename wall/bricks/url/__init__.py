@@ -28,8 +28,7 @@ class UrlBrick(Brick):
 
         # ----
 
-        self.add_search_handler(
-            YoutubeSearchHandler(randstr(), 'Youtube', '#ff0000'))
+        self.add_search_handler(YoutubeSearchHandler())
 
         # ----
 
@@ -129,42 +128,37 @@ Brick = UrlBrick
 # ----
 # TODO: move to own module once the new plugin architecture is ready
 
+YOUTUBE_API_KEY = 'AIzaSyBSxGK2RzdlKLVQTkIOuteQHLRxZ-MuJRI'
+
 class YoutubeSearchHandler(SearchHandler):
+    def __init__(self):
+        super(YoutubeSearchHandler, self).__init__(randstr(), 'Youtube',
+                                                   '#ff0000')
+        # See https://developers.google.com/youtube/v3/docs/
+        self._api = WebAPI('https://www.googleapis.com/youtube/v3/',
+                           {'key': YOUTUBE_API_KEY})
+
     def search(self, query, callback):
         def cb(response):
-            # TODO: check response for errors
-
-            data = json.load(response.buffer)
-            entries = data['feed']['entry']
-
+            # At the moment we do not handle quotaExceeded errors, because it is
+            # hard to test and a bit unrealistic for Wall to hit the limit.
             results = []
-            for entry in entries:
-                meta = entry['media$group']
-
-                # construct video URL (with autoplay enabled)
-                video = 'https://www.youtube.com/embed/{0}?autoplay=1'.format(
-                    meta['yt$videoid']['$t'])
-
-                thumbnail = filter(lambda t: t['yt$name'] == 'default',
-                    meta['media$thumbnail'])[0]
-                thumbnail = thumbnail['url']
-
-                result = SearchResult(meta['media$title']['$t'], video, self.id,
-                    thumbnail)
-                results.append(result)
-
+            for item in response.items:
+                # Construct video URL (with autoplay enabled)
+                video = 'https://www.youtube.com/embed/{}?autoplay=1'.format(
+                    item.id.videoId)
+                results.append(SearchResult(
+                    item.snippet.title, video, self.id,
+                    item.snippet.thumbnails.default.url))
             callback(results)
 
-        # Youtube API documentation:
-        # https://developers.google.com/youtube/2.0/developers_guide_protocol
-        client = AsyncHTTPClient()
-        qs = urlencode({
-            'q':           query,
-            'max-results': '5',
-            'alt':         'json',
-            'v':           '2'
-        })
-        client.fetch('https://gdata.youtube.com/feeds/api/videos/?' + qs, cb)
+        # See https://developers.google.com/youtube/v3/docs/search
+        self._api.call('search', {
+            'q': query,
+            'type': 'video',
+            'videoEmbeddable': 'true',
+            'part': 'snippet'
+        }, cb)
 
 # ----
 # TODO: move to own module once the new plugin architecture is ready
